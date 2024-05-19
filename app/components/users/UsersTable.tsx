@@ -1,0 +1,152 @@
+import { Button } from "primereact/button";
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import React, { useEffect, useRef, useState } from "react";
+import { IUser, IUserData } from "../../types";
+import DeleteUserDialog from "./DeleteUserDialog";
+import EditUserDialog from "./EditUserDialog";
+import api from "../../api";
+import { Toast } from "primereact/toast";
+import { Paginator, PaginatorPageChangeEvent } from "primereact/paginator";
+import { roles } from "../consts";
+import { getRoleName } from "@/app/utils";
+
+function UsersTable() {
+  const [users, setUsers] = useState<IUser[]>([]);
+
+  const [user, setUser] = useState<IUser>({} as IUser);
+  console.log(user, 222);
+
+  const [userEditDialog, setUserEditDialog] = useState(false);
+  const [userDeleteDialog, setUserDeleteDialog] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [rows, setRows] = useState<number>(10);
+  const toast = useRef<Toast>(null);
+
+  const showSuccess = (message: string) => {
+    toast.current?.show({
+      severity: "success",
+      summary: "Success",
+      detail: message,
+      life: 3000,
+    });
+  };
+  const editUser = (user: IUser) => {
+    setUser(user);
+    setUserEditDialog(true);
+  };
+
+  const confirmDeleteUser = (user: IUser) => {
+    setUser(user);
+    setUserDeleteDialog(true);
+  };
+
+  const fetchData = async (page = 1) => {
+    try {
+      const { data, meta }: IUserData = await api.getUsers({
+        page,
+        size: rows,
+      });
+      setUsers(data);
+      setTotal(meta?.total);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const onPageChange = (event: PaginatorPageChangeEvent) => {
+    fetchData(event.page + 1);
+  };
+
+  const actionBodyTemplate = (rowData: IUser) => {
+    return (
+      <React.Fragment>
+        <Button
+          icon="pi pi-pencil"
+          rounded
+          text
+          severity="secondary"
+          style={{ marginRight: "10px" }}
+          onClick={() => editUser(rowData)}
+        />
+        <Button
+          icon="pi pi-trash"
+          rounded
+          outlined
+          text
+          severity="danger"
+          onClick={() => confirmDeleteUser(rowData)}
+        />
+      </React.Fragment>
+    );
+  };
+
+  const header = (
+    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <Button
+        label="Add"
+        icon="pi pi-plus"
+        onClick={() => setUserEditDialog(true)}
+      />
+    </div>
+  );
+
+  const roleBody = (rowData: IUser) => {
+    return <div>{getRoleName(rowData.role.id)}</div>;
+  };
+
+  return (
+    <>
+      <DataTable
+        value={users}
+        editMode="row"
+        dataKey="id"
+        header={header}
+        tableStyle={{ minWidth: "50rem" }}
+        style={{ marginBottom: "10px" }}
+      >
+        <Column field="name" header="Name" style={{ width: "20%" }}></Column>
+        <Column
+          field="surname"
+          header="Surname"
+          style={{ width: "20%" }}
+        ></Column>
+        <Column field="email" header="Mail" style={{ width: "20%" }}></Column>
+        <Column
+          field="role"
+          body={roleBody}
+          header="Role"
+          style={{ width: "20%" }}
+        ></Column>
+        <Column
+          body={actionBodyTemplate}
+          exportable={false}
+          style={{ width: "20%" }}
+        ></Column>
+      </DataTable>
+      <Paginator rows={rows} totalRecords={total} onPageChange={onPageChange} />
+      <Toast ref={toast} />
+      <DeleteUserDialog
+        user={user}
+        userDeleteDialog={userDeleteDialog}
+        setUserDeleteDialog={setUserDeleteDialog}
+        setUsers={setUsers}
+        showSuccess={showSuccess}
+      />
+      <EditUserDialog
+        user={user}
+        setUser={setUser}
+        setUsers={setUsers}
+        userEditDialog={userEditDialog}
+        setUserEditDialog={setUserEditDialog}
+        showSuccess={showSuccess}
+      />
+    </>
+  );
+}
+
+export default UsersTable;
