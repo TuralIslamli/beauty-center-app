@@ -28,7 +28,7 @@ function login() {
     try {
       const { data }: any = await api.postLogin(payload);
       localStorage.setItem("token", data.token.access_token);
-      localStorage.setItem("userData", JSON.stringify(data.user));
+      // localStorage.setItem("userData", JSON.stringify(data.user));
       router.push("/");
     } catch (error: any) {
       console.error(error);

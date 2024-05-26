@@ -10,12 +10,18 @@ import { roles, serviceStatuses } from "../consts";
 import { getRoleName } from "@/app/utils";
 import CreateUpdateDialog from "./CreateUpdateDialog";
 import { Tag } from "primereact/tag";
+import { Dialog } from "primereact/dialog";
 
-function ServicesTable() {
+interface IServicesTableProps {
+  userPermissions: string[];
+}
+function ServicesTable({ userPermissions }: IServicesTableProps) {
   const [services, setServices] = useState<IService[]>([]);
 
-  const [service, setService] = useState<IUser>({} as IUser);
+  const [service, setService] = useState<IService>();
   const [dialog, setDialog] = useState(false);
+  const [rejectDialog, setRejectDialog] = useState(false);
+  const [rejectComment, setRejectComment] = useState<string>();
   const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<number>(10);
   const toast = useRef<Toast>(null);
@@ -28,8 +34,8 @@ function ServicesTable() {
       life: 3000,
     });
   };
-  const editService = (user: IUser) => {
-    setService(user);
+  const editService = (newService: IService) => {
+    setService(newService);
     setDialog(true);
   };
 
@@ -54,7 +60,7 @@ function ServicesTable() {
     fetchData(event.page + 1);
   };
 
-  const actionBodyTemplate = (rowData: IUser) => {
+  const actionBodyTemplate = (rowData: IService) => {
     return (
       <React.Fragment>
         <Button
@@ -65,19 +71,11 @@ function ServicesTable() {
           style={{ marginRight: "10px" }}
           onClick={() => editService(rowData)}
         />
-        {/* <Button
-          icon="pi pi-trash"
-          rounded
-          outlined
-          text
-          severity="danger"
-          onClick={() => confirmDeleteUser(rowData)}
-        /> */}
       </React.Fragment>
     );
   };
 
-  const header = (
+  const header = userPermissions.includes("service.create") && (
     <div style={{ display: "flex", justifyContent: "flex-end" }}>
       <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} />
     </div>
@@ -122,14 +120,18 @@ function ServicesTable() {
   };
 
   const statusBody = (rowData: IService) => {
-    // return serviceStatuses.find((status) => status?.id === rowData.status)
-    //   ?.name;
     const status = serviceStatuses.find(
       (status) => status?.id === rowData.status
     )?.name;
+    const onRejectClick = () => {
+      if (status === "Rejected") {
+        setRejectComment(rowData.reject_comment);
+        setRejectDialog(true);
+      }
+    };
     return (
       <Tag
-        // onClick={() => console.log(888)}
+        onClick={onRejectClick}
         icon={status === "Rejected" && "pi pi-info-circle"}
         value={status}
         severity={getSeverity(status)}
@@ -184,30 +186,37 @@ function ServicesTable() {
           body={statusBody}
           style={{ width: "10%" }}
         ></Column>
-        <Column
-          body={actionBodyTemplate}
-          exportable={false}
-          style={{ width: "2%" }}
-        ></Column>
+        {userPermissions.includes("service.update") && (
+          <Column
+            body={actionBodyTemplate}
+            exportable={false}
+            style={{ width: "2%" }}
+          ></Column>
+        )}
       </DataTable>
       <Paginator rows={rows} totalRecords={total} onPageChange={onPageChange} />
       <Toast ref={toast} />
-      {/* <DeleteUserDialog
-        user={user}
-        userDeleteDialog={userDeleteDialog}
-        setUserDeleteDialog={setUserDeleteDialog}
-        setServices={setServices}
+      <CreateUpdateDialog
+        userPermissions={userPermissions}
+        dialog={dialog}
+        setDialog={setDialog}
         showSuccess={showSuccess}
+        setServices={setServices}
+        service={service}
+        setService={setService}
       />
-      <EditUserDialog
-        user={user}
-        setUser={setUser}
-        setServices={setServices}
-        userEditDialog={userEditDialog}
-        setUserEditDialog={setUserEditDialog}
-        showSuccess={showSuccess}
-      /> */}
-      <CreateUpdateDialog dialog={dialog} setDialog={setDialog} />
+      <Dialog
+        header="Reject comment"
+        visible={rejectDialog}
+        style={{ width: "50vw" }}
+        onHide={() => {
+          if (!rejectDialog) return;
+          setRejectDialog(false);
+          setRejectComment("");
+        }}
+      >
+        <p className="m-0">{rejectComment}</p>
+      </Dialog>
     </>
   );
 }

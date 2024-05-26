@@ -3,10 +3,14 @@ export interface IUser {
   name: string;
   surname: string;
   email: string;
-  role: { id: number; name: string };
-  permissions: Array<{ id: number; name: string }>;
+  role: IRole;
 }
 
+export interface IRole {
+  id: number;
+  name: string;
+  permissions: Array<{ id: number; name: string }>;
+}
 export interface IUserFields {
   name: string;
   surname: string;
@@ -56,7 +60,7 @@ export interface IServiceTypeFields {
 }
 
 export interface IServiceTypeRS {
-  data: IServiceType;
+  data: IServiceType[];
 }
 
 export interface IService {
@@ -67,11 +71,14 @@ export interface IService {
   service_type: IServiceType;
   client_name: string;
   client_phone: string;
-  reject_comment?: string;
   created_at: string;
   user: IUser;
+  reject_comment?: string;
 }
 
+export interface IServiceRS {
+  data: IService;
+}
 export interface IServicesData {
   data: IService[];
   meta: { total: number };
@@ -80,8 +87,20 @@ export interface IServicesData {
 export interface IServiceFields {
   service_type_id: number;
   client_name: string;
-  client_phone: string;
-  amount: number;
-  payment_type: number;
-  user_id: number;
+  client_phone?: string;
+  amount?: number;
+  payment_type?: number;
+  user_id?: number;
+  status?: number;
+  reject_comment?: string | null;
+  id?: number;
+}
+
+export interface IDoctor {
+  id: number;
+  full_name?: string;
+}
+
+export interface IDoctorRS {
+  data: IDoctor[];
 }

@@ -2,6 +2,7 @@ import { axiosApi } from "../lib/axios";
 import {
   ILoginFields,
   INavigationProps,
+  IServiceFields,
   IServiceType,
   IServiceTypeFields,
   IUpdateUser,
@@ -11,6 +12,7 @@ import {
 export default {
   postLogin: <T>(payload: ILoginFields): Promise<T> =>
     axiosApi.post("login", payload),
+  getSelfInfo: <T>(): Promise<T> => axiosApi.get("users/self-info"),
   getServiceTypes: <T>({ page, size }: INavigationProps): Promise<T> =>
     axiosApi.get(`service-types?page=${page}&size=${size}`),
   deleteUser: (id: number | undefined) => axiosApi.delete(`users/${id}`),
@@ -43,4 +45,11 @@ export default {
     axiosApi.get(`users?page=${page}&size=${size}`),
   getServices: <T>({ page, size }: INavigationProps): Promise<T> =>
     axiosApi.get(`services?page=${page}&size=${size}`),
+  getDoctors: <T>(): Promise<T> => axiosApi.get("users/input-search"),
+  getInputServices: <T>(): Promise<T> =>
+    axiosApi.get("service-types/input-search"),
+  createService: <T>(payload: IServiceFields): Promise<T> =>
+    axiosApi.post("services", payload),
+  updateService: <T>(payload: IServiceFields): Promise<T> =>
+    axiosApi.put(`services/${payload.id}`, payload),
 };

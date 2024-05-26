@@ -11,12 +11,13 @@ import styles from "./page.module.css";
 import ServiceTypesTable from "./components/serviceTypes/ServiceTypesTable";
 import { getRoleName } from "./utils";
 import ServicesTable from "./components/services/ServicesTable";
+import api from "./api";
+import { IUser, IUserRS } from "./types";
 
 function Page() {
-  const userDataJSON = localStorage.getItem("userData") || "{}";
-  const userData = JSON.parse(userDataJSON);
+  const [userData, setUserData] = useState<IUser>();
   const router = useRouter();
-
+  const userPermissions = userData?.role.permissions.map((item) => item.name);
   const onLogOut = () => {
     localStorage.clear();
     router.push("/login");
@@ -29,7 +30,15 @@ function Page() {
     }
   }, [router]);
 
-  return userData.name ? (
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data }: IUserRS = await api.getSelfInfo();
+      setUserData(data);
+    };
+    fetchData();
+  }, []);
+
+  return userData?.name ? (
     <>
       <header className={styles.header}>
         <div className={styles.info}>
@@ -53,15 +62,21 @@ function Page() {
       <Divider />
       <main className={styles.main}>
         <TabView>
-        <TabPanel header="Services">
-            <ServicesTable />
-          </TabPanel>
-          <TabPanel header="Service types">
-            <ServiceTypesTable />
-          </TabPanel>
-          <TabPanel header="Users">
-            <UsersTable />
-          </TabPanel>
+          {userPermissions?.includes("service.get_all") && (
+            <TabPanel header="Services">
+              <ServicesTable userPermissions={userPermissions} />
+            </TabPanel>
+          )}
+          {userPermissions?.includes("service_type.get_all") && (
+            <TabPanel header="Service types">
+              <ServiceTypesTable userPermissions={userPermissions} />
+            </TabPanel>
+          )}
+          {userPermissions?.includes("user.get_all") && (
+            <TabPanel header="Users">
+              <UsersTable userPermissions={userPermissions} />
+            </TabPanel>
+          )}
         </TabView>
       </main>
     </>

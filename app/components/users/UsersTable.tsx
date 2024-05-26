@@ -11,11 +11,14 @@ import { Paginator, PaginatorPageChangeEvent } from "primereact/paginator";
 import { roles } from "../consts";
 import { getRoleName } from "@/app/utils";
 
-function UsersTable() {
+interface IUserTableProps {
+  userPermissions?: string[];
+}
+
+function UsersTable({ userPermissions }: IUserTableProps) {
   const [users, setUsers] = useState<IUser[]>([]);
 
   const [user, setUser] = useState<IUser>({} as IUser);
-  console.log(user, 222);
 
   const [userEditDialog, setUserEditDialog] = useState(false);
   const [userDeleteDialog, setUserDeleteDialog] = useState(false);
@@ -65,33 +68,40 @@ function UsersTable() {
   const actionBodyTemplate = (rowData: IUser) => {
     return (
       <React.Fragment>
-        <Button
-          icon="pi pi-pencil"
-          rounded
-          text
-          severity="secondary"
-          style={{ marginRight: "10px" }}
-          onClick={() => editUser(rowData)}
-        />
-        <Button
-          icon="pi pi-trash"
-          rounded
-          outlined
-          text
-          severity="danger"
-          onClick={() => confirmDeleteUser(rowData)}
-        />
+        {userPermissions?.includes("user.update") && (
+          <Button
+            icon="pi pi-pencil"
+            rounded
+            text
+            severity="secondary"
+            style={{ marginRight: "10px" }}
+            onClick={() => editUser(rowData)}
+          />
+        )}
+
+        {userPermissions?.includes("user.delete") && (
+          <Button
+            icon="pi pi-trash"
+            rounded
+            outlined
+            text
+            severity="danger"
+            onClick={() => confirmDeleteUser(rowData)}
+          />
+        )}
       </React.Fragment>
     );
   };
 
   const header = (
     <div style={{ display: "flex", justifyContent: "flex-end" }}>
-      <Button
-        label="Add"
-        icon="pi pi-plus"
-        onClick={() => setUserEditDialog(true)}
-      />
+      {userPermissions?.includes("user.create") && (
+        <Button
+          label="Add"
+          icon="pi pi-plus"
+          onClick={() => setUserEditDialog(true)}
+        />
+      )}
     </div>
   );
 
@@ -137,9 +147,9 @@ function UsersTable() {
         setUsers={setUsers}
         showSuccess={showSuccess}
       />
+      {}
       <EditUserDialog
         user={user}
-        setUser={setUser}
         setUsers={setUsers}
         userEditDialog={userEditDialog}
         setUserEditDialog={setUserEditDialog}

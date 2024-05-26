@@ -1,4 +1,5 @@
 export const roles = [
+  { id: 1, name: "Super Admin" },
   { id: 2, name: "Admin" },
   { id: 3, name: "Cashier" },
   { id: 4, name: "Doctor" },
@@ -14,6 +15,7 @@ export const paymentTypes = [
     name: "Cash",
   },
 ];
+
 
 export const serviceStatuses = [
   {

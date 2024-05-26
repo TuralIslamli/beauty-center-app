@@ -14,7 +14,6 @@ import api from "@/app/api";
 
 interface IEditUserProps {
   user?: IUser;
-  setUser: Dispatch<SetStateAction<IUser>>;
   setUsers: Dispatch<SetStateAction<IUser[]>>;
   showSuccess: (message: string) => void;
   userEditDialog: boolean;
@@ -25,7 +24,6 @@ function EditUserDialog({
   user,
   userEditDialog,
   setUserEditDialog,
-  setUser,
   setUsers,
   showSuccess,
 }: IEditUserProps) {
@@ -49,10 +47,10 @@ function EditUserDialog({
   } = useForm<IUserFields>({
     resolver: yupResolver(schema),
     defaultValues: {
-      name: user?.name || undefined,
-      surname: user?.surname || undefined,
-      email: user?.email || undefined,
-      roleId: user?.role?.id || undefined,
+      name: undefined,
+      surname: undefined,
+      email: undefined,
+      roleId: undefined,
       password: user?.id ? undefined : "",
       password_repeat: user?.id ? undefined : "",
     },
@@ -72,34 +70,14 @@ function EditUserDialog({
     setSelectedRole(undefined);
   };
 
-  const onSubmit: SubmitHandler<IUserFields> = async ({
-    name,
-    surname,
-    email,
-    roleId,
-    password,
-    password_repeat,
-  }: IUserFields) => {
-
+  const onSubmit: SubmitHandler<IUserFields> = async (payload: IUserFields) => {
     try {
       const { data }: IUserRS = user?.id
         ? await api.updateUser({
-            name,
-            surname,
-            email,
-            roleId,
-            password,
-            password_repeat,
+            ...payload,
             id: user.id,
           })
-        : await api.createUser({
-            name,
-            surname,
-            email,
-            roleId,
-            password,
-            password_repeat,
-          });
+        : await api.createUser(payload);
       setUsers((prev) => [data, ...prev]);
       showSuccess(
         `User has been successfully ${user?.id ? "created" : "updated"}`

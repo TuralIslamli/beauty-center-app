@@ -14,7 +14,11 @@ import { Toast } from "primereact/toast";
 import AddDialog from "./AddDialog";
 import DeleteServiceTypeDialog from "./DeleteDialog";
 
-function ServiceTypesTable() {
+interface IServiceTypeProps {
+  userPermissions?: string[];
+}
+
+function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
   const [servicesType, setServicesType] = useState<IServiceType>();
   const [deleteDialog, setDeleteDiaolog] = useState(false);
   const [servicesTypes, setServicesTypes] = useState<IServiceType[]>([]);
@@ -128,7 +132,7 @@ function ServiceTypesTable() {
     setDeleteDiaolog(true);
   };
 
-  const header = (
+  const header = userPermissions?.includes("service_type.create") && (
     <div style={{ display: "flex", justifyContent: "flex-end" }}>
       <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} />
     </div>
@@ -172,16 +176,20 @@ function ServiceTypesTable() {
           editor={(options) => priceEditor(options)}
           style={{ width: "40%" }}
         ></Column>
-        <Column
-          rowEditor={allowEdit}
-          headerStyle={{ width: "1%" }}
-          bodyStyle={{ textAlign: "center" }}
-        ></Column>
-        <Column
-          body={actionBodyTemplate}
-          exportable={false}
-          style={{ width: "1%" }}
-        ></Column>
+        {userPermissions?.includes("service_type.update") && (
+          <Column
+            rowEditor={allowEdit}
+            headerStyle={{ width: "10%" }}
+            bodyStyle={{ textAlign: "center" }}
+          ></Column>
+        )}
+        {userPermissions?.includes("service_type.delete") && (
+          <Column
+            body={actionBodyTemplate}
+            exportable={false}
+            style={{ width: "1%" }}
+          ></Column>
+        )}
       </DataTable>
       <Paginator rows={rows} totalRecords={total} onPageChange={onPageChange} />
       <Toast ref={toast} />
