@@ -37,7 +37,9 @@ function AddDialog({
         name,
         price,
       });
-      setServicesTypes((prev) => [...prev, data]);
+      setServicesTypes((prev: any) => {
+        return [...prev, data];
+      });
       showSuccess("Service type has been successfully created");
       setDialog(false);
     } catch (error: any) {
