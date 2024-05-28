@@ -2,15 +2,15 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import React, { useEffect, useRef, useState } from "react";
-import { IService, IServicesData, IUser, IUserData } from "../../types";
+import { IService, IServicesData } from "../../types";
 import api from "../../api";
 import { Toast } from "primereact/toast";
 import { Paginator, PaginatorPageChangeEvent } from "primereact/paginator";
-import { roles, serviceStatuses } from "../consts";
-import { getRoleName } from "@/app/utils";
+import {  serviceStatuses } from "../consts";
 import CreateUpdateDialog from "./CreateUpdateDialog";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
+import ReportsDialog from "./ReportsDialog";
 
 interface IServicesTableProps {
   userPermissions: string[];
@@ -20,8 +20,10 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const [service, setService] = useState<IService>();
   const [dialog, setDialog] = useState(false);
+  const [reportsDialog, setReportsDialog] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState<string>();
+  const [first, setFirst] = useState(0);
   const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<number>(10);
   const toast = useRef<Toast>(null);
@@ -58,6 +60,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const onPageChange = (event: PaginatorPageChangeEvent) => {
     fetchData(event.page + 1);
+    setFirst(event.first);
   };
 
   const actionBodyTemplate = (rowData: IService) => {
@@ -77,6 +80,13 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const header = userPermissions.includes("service.create") && (
     <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <Button
+        label="Reports"
+        icon="pi pi-file-excel"
+        severity="success"
+        onClick={() => setReportsDialog(true)}
+        style={{ marginRight: "10px" }}
+      />
       <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} />
     </div>
   );
@@ -194,7 +204,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           ></Column>
         )}
       </DataTable>
-      <Paginator rows={rows} totalRecords={total} onPageChange={onPageChange} />
+      <Paginator first={first} rows={rows} totalRecords={total} onPageChange={onPageChange} />
       <Toast ref={toast} />
       <CreateUpdateDialog
         userPermissions={userPermissions}
@@ -205,6 +215,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         service={service}
         setService={setService}
       />
+      <ReportsDialog dialog={reportsDialog} setDialog={setReportsDialog} />
       <Dialog
         header="Reject comment"
         visible={rejectDialog}
