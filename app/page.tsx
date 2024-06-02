@@ -1,18 +1,20 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Divider } from "primereact/divider";
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { TabView, TabPanel } from "primereact/tabview";
 import { useRouter } from "next/navigation";
+import { Toast } from "primereact/toast";
 
+import api from "./api";
 import UsersTable from "./components/users/UsersTable";
 import styles from "./page.module.css";
 import ServiceTypesTable from "./components/serviceTypes/ServiceTypesTable";
 import { getRoleName } from "./utils";
 import ServicesTable from "./components/services/ServicesTable";
-import api from "./api";
 import { IUser, IUserRS } from "./types";
+import { setToastInstance } from "@/lib/axios";
 
 function Page() {
   const [userData, setUserData] = useState<IUser>();
@@ -32,11 +34,23 @@ function Page() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data }: IUserRS = await api.getSelfInfo();
-      setUserData(data);
+      try {
+        const { data }: IUserRS = await api.getSelfInfo();
+        setUserData(data);
+      } catch (error) {
+        console.error(error);
+      }
     };
     fetchData();
   }, []);
+
+  const toast = useRef<Toast>(null);
+
+  useEffect(() => {
+    if (toast.current) {
+      setToastInstance(toast.current);
+    }
+  });
 
   return userData?.name ? (
     <>
@@ -79,6 +93,7 @@ function Page() {
           )}
         </TabView>
       </main>
+      <Toast ref={toast} />
     </>
   ) : (
     <></>
