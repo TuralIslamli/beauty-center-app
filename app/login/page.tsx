@@ -28,7 +28,6 @@ function login() {
     try {
       const { data }: any = await api.postLogin(payload);
       localStorage.setItem("token", data.token.access_token);
-      // localStorage.setItem("userData", JSON.stringify(data.user));
       router.push("/");
     } catch (error: any) {
       console.error(error);
@@ -62,7 +61,7 @@ function login() {
           />
         </div>
         <div className={styles.input}>
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">Şifrə</label>
           <Controller
             name="password"
             control={control}
@@ -80,7 +79,7 @@ function login() {
         <Button label="Login" type="submit" />
       </form>
       {errors.password && errors.email && (
-        <Message severity="error" text="Username and password is required" />
+        <Message severity="error" text="Email və şifrə tələb olunur" />
       )}
       {errorMessage && <Message severity="error" text={errorMessage} />}
     </main>

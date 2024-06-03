@@ -1,4 +1,5 @@
 import api from "@/app/api";
+import { formatDate } from "@/app/utils";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Dialog } from "primereact/dialog";
@@ -22,14 +23,6 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
     new Date(),
     new Date(),
   ]);
-
-  const formatDate = (date: any) => {
-    const year = date!.getFullYear();
-    const month = String(date!.getMonth() + 1).padStart(2, "0");
-    const day = String(date!.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  };
 
   return (
     <Dialog
@@ -62,6 +55,7 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
             onChange={(e) => setDailyReportDate(e.value)}
             style={{ width: "170px" }}
             showIcon
+            dateFormat="dd/mm/yy"
           />
         </div>
         <div
@@ -85,6 +79,7 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
             hideOnRangeSelection
             style={{ width: "270px" }}
             showIcon
+            dateFormat="dd/mm/yy"
           />
         </div>
         <div
@@ -107,6 +102,7 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
             }
           />
           <Calendar
+            dateFormat="dd/mm/yy"
             value={generalReportDates}
             onChange={(e) => setGeneralReportDates(e.value)}
             selectionMode="range"

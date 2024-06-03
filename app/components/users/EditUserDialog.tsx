@@ -103,7 +103,7 @@ function EditUserDialog({
     <Dialog
       visible={userEditDialog}
       style={{ width: "328px" }}
-      header="User details"
+      header="İstifadəçi məlumatları"
       modal
       onHide={onHide}
     >
@@ -113,7 +113,7 @@ function EditUserDialog({
           style={{ display: "flex", flexDirection: "column" }}
         >
           <label style={{ marginBottom: "5px" }} htmlFor="name">
-            Name:
+            Ad:
           </label>
           <Controller
             name="name"
@@ -128,7 +128,7 @@ function EditUserDialog({
             )}
           />
           <label style={{ marginBottom: "5px" }} htmlFor="surname">
-            Surname:
+            Soyad:
           </label>
           <Controller
             name="surname"
@@ -159,7 +159,7 @@ function EditUserDialog({
             )}
           />
           <label style={{ marginBottom: "5px" }} htmlFor="email">
-            Role:
+            Rol:
           </label>
           <Controller
             name="roleId"
@@ -177,12 +177,11 @@ function EditUserDialog({
                 placeholder="Select a role"
                 className="w-full md:w-14rem"
                 invalid={!!errors.roleId}
-                // {...field}
               />
             )}
           />
           <label style={{ marginBottom: "5px" }} htmlFor="password">
-            Password:
+            Şifrə:
           </label>
           <Controller
             name="password"
@@ -199,7 +198,7 @@ function EditUserDialog({
             )}
           />
           <label style={{ marginBottom: "5px" }} htmlFor="password_repeat">
-            Confirm password:
+            Şifrənin təstiqi:
           </label>
           <Controller
             name="password_repeat"
@@ -221,7 +220,7 @@ function EditUserDialog({
                 <Message
                   style={{ maxWidth: "180px", height: "45px" }}
                   severity="error"
-                  text="Passwords must match"
+                  text="Şifrələr eyni deyil"
                 />
               )}
             </div>

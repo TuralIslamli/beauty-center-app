@@ -51,7 +51,7 @@ function AddDialog({
     <Dialog
       visible={dialog}
       style={{ width: "25rem" }}
-      header="Service type details"
+      header="Xidmət növü"
       modal
       onHide={() => setDialog(false)}
     >
@@ -60,7 +60,7 @@ function AddDialog({
         style={{ display: "flex", flexDirection: "column" }}
       >
         <label style={{ marginBottom: "5px" }} htmlFor="name">
-          Name:
+          Ad:
         </label>
         <Controller
           name="name"
@@ -76,7 +76,7 @@ function AddDialog({
           )}
         />
         <label style={{ marginBottom: "5px" }} htmlFor="surname">
-          Price:
+          Qiymət:
         </label>
         <Controller
           name="price"

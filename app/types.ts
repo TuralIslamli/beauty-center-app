@@ -43,6 +43,16 @@ export interface INavigationProps {
   page: number;
 }
 
+export interface IServicesTableProps extends INavigationProps {
+  status?: number;
+  from_date: string;
+  to_date: string;
+  client_name?: string;
+  client_phone?: string;
+  service_type_name?: string;
+  user_name?: string;
+}
+
 export interface IServiceTypesData {
   data: IServiceType[];
   meta: { total: number };

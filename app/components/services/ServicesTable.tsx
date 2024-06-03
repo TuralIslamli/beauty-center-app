@@ -1,31 +1,59 @@
-import { Button } from "primereact/button";
-import { Column } from "primereact/column";
+import { useEffect, useRef, useState } from "react";
 import { DataTable } from "primereact/datatable";
-import React, { useEffect, useRef, useState } from "react";
-import { IService, IServicesData } from "../../types";
-import api from "../../api";
+import { Column, ColumnFilterElementTemplateOptions } from "primereact/column";
+import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import { Paginator, PaginatorPageChangeEvent } from "primereact/paginator";
-import {  serviceStatuses } from "../consts";
-import CreateUpdateDialog from "./CreateUpdateDialog";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
+import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
+import {
+  IDoctor,
+  IDoctorRS,
+  IService,
+  IServiceType,
+  IServiceTypeRS,
+  IServicesData,
+} from "../../types";
+import api from "../../api";
+import { serviceStatuses } from "../consts";
+import CreateUpdateDialog from "./CreateUpdateDialog";
 import ReportsDialog from "./ReportsDialog";
+import React from "react";
+import { Calendar } from "primereact/calendar";
+import { formatDate } from "@/app/utils";
+import { InputText } from "primereact/inputtext";
+import { InputMask } from "primereact/inputmask";
 
 interface IServicesTableProps {
   userPermissions: string[];
 }
+
 function ServicesTable({ userPermissions }: IServicesTableProps) {
   const [services, setServices] = useState<IService[]>([]);
-
+  const [filteredStatus, setFilteredStatus] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
+  const [doctors, setDoctors] = useState<IDoctor[]>();
   const [service, setService] = useState<IService>();
+  const [doctor, setDoctor] = useState<IDoctor>();
   const [dialog, setDialog] = useState(false);
+  const [filter, setFilter] = useState(false);
   const [reportsDialog, setReportsDialog] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
+  const [clientName, setClientName] = useState<string>();
+  const [serviceType, setServiceType] = useState<{
+    id: number;
+    name: string;
+  }>();
+  const [clientPhone, setClientPhone] = useState<string>("+994");
   const [rejectComment, setRejectComment] = useState<string>();
   const [first, setFirst] = useState(0);
   const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<number>(10);
+  const [dates, setDates] = useState<any>([new Date(), new Date()]);
   const toast = useRef<Toast>(null);
 
   const showSuccess = (message: string) => {
@@ -36,6 +64,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       life: 3000,
     });
   };
+
   const editService = (newService: IService) => {
     setService(newService);
     setDialog(true);
@@ -46,6 +75,16 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       const { data, meta }: IServicesData = await api.getServices({
         page,
         size: rows,
+        status: filteredStatus?.id,
+        from_date: formatDate(dates[0]),
+        to_date: formatDate(dates[1]),
+        client_name: clientName,
+        client_phone:
+          clientPhone !== "+994"
+            ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
+            : "",
+        service_type_name: serviceType?.name,
+        user_name: doctor?.full_name,
       });
       setServices(data);
       setTotal(meta?.total);
@@ -55,6 +94,30 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   };
 
   useEffect(() => {
+    if (dates[1]) {
+      fetchData();
+    }
+  }, [
+    filteredStatus?.name,
+    dates[1],
+    clientName,
+    clientPhone,
+    serviceType,
+    doctor,
+  ]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (userPermissions.includes("user.input_search")) {
+        const { data: doctorsData }: IDoctorRS = await api.getDoctors();
+        setDoctors(doctorsData);
+      }
+      if (userPermissions.includes("service_type.input_search")) {
+        const { data: servicesData }: IServiceTypeRS =
+          await api.getInputServices();
+        setServiceTypes(servicesData);
+      }
+    };
     fetchData();
   }, []);
 
@@ -79,15 +142,28 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   };
 
   const header = userPermissions.includes("service.create") && (
-    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-      {/* <Button
-        label="Reports"
-        icon="pi pi-file-excel"
-        severity="success"
-        onClick={() => setReportsDialog(true)}
-        style={{ marginRight: "10px" }}
-      /> */}
-      <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} />
+    <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <Button
+        type="button"
+        icon="pi pi-filter-slash"
+        label="Filter"
+        outlined
+        onClick={() => setFilter((prev) => !prev)}
+      />
+      <div>
+        {/* <Button
+          label="Reports"
+          icon="pi pi-file-excel"
+          severity="success"
+          onClick={() => setReportsDialog(true)}
+          style={{ marginRight: "10px" }}
+        /> */}
+        <Button
+          label="Əlavə et"
+          icon="pi pi-plus"
+          onClick={() => setDialog(true)}
+        />
+      </div>
     </div>
   );
 
@@ -148,46 +224,155 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       />
     );
   };
+
+  const statusItemTemplate = (option: any) => {
+    return <Tag value={option.name} severity={getSeverity(option.name)} />;
+  };
+
+  const statusRowFilterTemplate = () => {
+    return (
+      <Dropdown
+        value={filteredStatus}
+        options={serviceStatuses}
+        onChange={(e: DropdownChangeEvent) => {
+          setFilteredStatus(e.value);
+        }}
+        itemTemplate={statusItemTemplate}
+        placeholder="Select one"
+        className="p-column-filter"
+        showClear
+        style={{ minWidth: "10rem" }}
+        optionLabel="name"
+      />
+    );
+  };
+
+  const serviceTypeRowFilterTemplate = () => {
+    return (
+      <Dropdown
+        filter
+        style={{ marginBottom: "10px" }}
+        value={serviceType}
+        onChange={(e) => {
+          setServiceType(e.value);
+        }}
+        options={serviceTypes}
+        placeholder="Select a service"
+        optionLabel="name"
+        showClear
+      />
+    );
+  };
+
+  const doctorsRowFilterTemplate = () => {
+    return (
+      <Dropdown
+        filter
+        style={{ marginBottom: "10px" }}
+        value={doctor}
+        onChange={(e) => {
+          setDoctor(e.value);
+        }}
+        options={doctors}
+        placeholder="Select a doctor"
+        optionLabel="full_name"
+        showClear
+      />
+    );
+  };
+
+  const dateRowFilterTemplate = () => {
+    return (
+      <Calendar
+        value={dates}
+        onChange={(e) => setDates(e.value)}
+        selectionMode="range"
+        readOnlyInput
+        hideOnRangeSelection
+        style={{ width: "220px" }}
+        dateFormat="dd/mm/yy"
+      />
+    );
+  };
+
+  const clientRowFilterTemplate = () => {
+    return (
+      <InputText
+        placeholder="Search by name"
+        style={{ width: "160px" }}
+        value={clientName}
+        onChange={(e) => setClientName(e.target.value)}
+      />
+    );
+  };
+
+  const phoneRowFilterTemplate = () => {
+    return (
+      <InputMask
+        style={{ width: "180px" }}
+        id="client_phone"
+        mask="+999 99 999-99-99"
+        placeholder="+994 99 999-99-99"
+        value={clientPhone}
+        onChange={(e) => setClientPhone(e.target.value || "")}
+      />
+    );
+  };
+
   return (
     <>
       <DataTable
         value={services}
-        editMode="row"
         dataKey="id"
         header={header}
         tableStyle={{ minWidth: "50rem" }}
         style={{ marginBottom: "10px" }}
+        filterDisplay={filter ? "row" : undefined}
       >
         <Column field="id" header="Id" style={{ width: "2%" }}></Column>
         <Column
           dataType="date"
-          header="Date"
+          header="Tarix"
           body={dateBodyTemplate}
           style={{ width: "10%" }}
+          showFilterMenu={false}
+          filter
+          filterElement={dateRowFilterTemplate}
         ></Column>
         <Column
           field="client_name"
-          header="Client"
+          header="Müştəri"
           style={{ width: "10%" }}
+          filter
+          filterElement={clientRowFilterTemplate}
+          showFilterMenu={false}
         ></Column>
         <Column
           field="client_phone"
-          header="Phone"
+          header="Telefon"
           style={{ width: "10%" }}
+          filter
+          filterElement={phoneRowFilterTemplate}
+          showFilterMenu={false}
         ></Column>
         <Column
           field="service_type.name"
-          header="Service"
+          header="Xidmət"
           style={{ width: "10%" }}
+          showFilterMenu={false}
+          filter={userPermissions.includes("service.variable.service_type_id")}
+          filterElement={serviceTypeRowFilterTemplate}
         ></Column>
         <Column
-          field="service_type.name"
-          header="Doctor"
+          header="Həkim"
           body={getDoctorFullName}
           style={{ width: "10%" }}
+          showFilterMenu={false}
+          filter={userPermissions.includes("service.variable.user_id")}
+          filterElement={doctorsRowFilterTemplate}
         ></Column>
         <Column
-          header="Amount"
+          header="Məbləğ"
           body={priceBodyTemplate}
           style={{ width: "10%" }}
         ></Column>
@@ -195,6 +380,9 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           header="Status"
           body={statusBody}
           style={{ width: "10%" }}
+          showFilterMenu={false}
+          filter
+          filterElement={statusRowFilterTemplate}
         ></Column>
         {userPermissions.includes("service.update") && (
           <Column
@@ -204,7 +392,12 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           ></Column>
         )}
       </DataTable>
-      <Paginator first={first} rows={rows} totalRecords={total} onPageChange={onPageChange} />
+      <Paginator
+        first={first}
+        rows={rows}
+        totalRecords={total}
+        onPageChange={onPageChange}
+      />
       <Toast ref={toast} />
       <CreateUpdateDialog
         userPermissions={userPermissions}

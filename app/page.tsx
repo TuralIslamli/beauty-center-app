@@ -77,17 +77,17 @@ function Page() {
       <main className={styles.main}>
         <TabView>
           {userPermissions?.includes("service.get_all") && (
-            <TabPanel header="Services">
+            <TabPanel header="Xidmətlər">
               <ServicesTable userPermissions={userPermissions} />
             </TabPanel>
           )}
           {userPermissions?.includes("service_type.get_all") && (
-            <TabPanel header="Service types">
+            <TabPanel header="Xidmət növləri">
               <ServiceTypesTable userPermissions={userPermissions} />
             </TabPanel>
           )}
           {userPermissions?.includes("user.get_all") && (
-            <TabPanel header="Users">
+            <TabPanel header="İstifadəçilər">
               <UsersTable userPermissions={userPermissions} />
             </TabPanel>
           )}

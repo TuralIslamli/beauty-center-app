@@ -5,6 +5,7 @@ import {
   IServiceFields,
   IServiceType,
   IServiceTypeFields,
+  IServicesTableProps,
   IUpdateUser,
   IUserFields,
 } from "./types";
@@ -43,8 +44,28 @@ export default {
     axiosApi.delete(`service-types/${id}`),
   getUsers: <T>({ page, size }: INavigationProps): Promise<T> =>
     axiosApi.get(`users?page=${page}&size=${size}`),
-  getServices: <T>({ page, size }: INavigationProps): Promise<T> =>
-    axiosApi.get(`services?page=${page}&size=${size}`),
+  getServices: <T>({
+    page,
+    size,
+    status,
+    from_date,
+    to_date,
+    client_name,
+    client_phone,
+    service_type_name,
+    user_name
+  }: IServicesTableProps): Promise<T> =>
+    axiosApi.get(`services?page=${page}&size=${size}&sort=desc`, {
+      params: {
+        status,
+        from_date,
+        to_date,
+        client_name,
+        client_phone,
+        service_type_name,
+        user_name
+      },
+    }),
   getDoctors: <T>(): Promise<T> => axiosApi.get("users/input-search"),
   getInputServices: <T>(): Promise<T> =>
     axiosApi.get("service-types/input-search"),

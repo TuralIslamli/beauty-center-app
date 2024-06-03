@@ -134,7 +134,7 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
 
   const header = userPermissions?.includes("service_type.create") && (
     <div style={{ display: "flex", justifyContent: "flex-end" }}>
-      <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} />
+      <Button label="Əlavə et" icon="pi pi-plus" onClick={() => setDialog(true)} />
     </div>
   );
 
@@ -165,13 +165,13 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
       >
         <Column
           field="name"
-          header="Name"
+          header="Ad"
           editor={(options) => textEditor(options)}
           style={{ width: "40%" }}
         ></Column>
         <Column
           field="price"
-          header="Price"
+          header="Qiymət"
           body={priceBodyTemplate}
           editor={(options) => priceEditor(options)}
           style={{ width: "40%" }}

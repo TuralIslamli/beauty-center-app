@@ -97,7 +97,7 @@ function UsersTable({ userPermissions }: IUserTableProps) {
     <div style={{ display: "flex", justifyContent: "flex-end" }}>
       {userPermissions?.includes("user.create") && (
         <Button
-          label="Add"
+          label="Əlavə et"
           icon="pi pi-plus"
           onClick={() => setUserEditDialog(true)}
         />
@@ -119,17 +119,17 @@ function UsersTable({ userPermissions }: IUserTableProps) {
         tableStyle={{ minWidth: "50rem" }}
         style={{ marginBottom: "10px" }}
       >
-        <Column field="name" header="Name" style={{ width: "20%" }}></Column>
+        <Column field="name" header="Ad" style={{ width: "20%" }}></Column>
         <Column
           field="surname"
-          header="Surname"
+          header="Soyad"
           style={{ width: "20%" }}
         ></Column>
         <Column field="email" header="Mail" style={{ width: "20%" }}></Column>
         <Column
           field="role"
           body={roleBody}
-          header="Role"
+          header="Rol"
           style={{ width: "20%" }}
         ></Column>
         <Column
