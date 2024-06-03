@@ -11,7 +11,7 @@ export const paymentTypes = [
   },
   {
     id: 1,
-    name: 'Cash',
+    name: 'Card',
   },
 ];
 

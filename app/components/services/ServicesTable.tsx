@@ -86,8 +86,8 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         severity="success"
         onClick={() => setReportsDialog(true)}
         style={{ marginRight: "10px" }}
-      />
-      <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} /> */}
+      /> */}
+      <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} />
     </div>
   );
 
