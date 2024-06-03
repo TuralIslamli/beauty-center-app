@@ -174,7 +174,7 @@ function EditUserDialog({
                 }}
                 options={roles}
                 optionLabel="name"
-                placeholder="Select a role"
+                placeholder="Rol seçin"
                 className="w-full md:w-14rem"
                 invalid={!!errors.roleId}
               />

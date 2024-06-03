@@ -239,7 +239,7 @@ const CreateUpdateDialog = ({
                   }}
                   optionLabel="full_name"
                   options={doctors}
-                  placeholder="Select a doctor"
+                  placeholder="Doktor seçin"
                   invalid={!!errors.user_id}
                 />
               )}
@@ -266,7 +266,7 @@ const CreateUpdateDialog = ({
                   }}
                   options={serviceTypes}
                   optionLabel="name"
-                  placeholder="Select a service"
+                  placeholder="Xidmət seçin"
                   className="w-full md:w-14rem"
                   invalid={!!errors.service_type_id}
                 />

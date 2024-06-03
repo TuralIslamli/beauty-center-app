@@ -257,7 +257,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           setServiceType(e.value);
         }}
         options={serviceTypes}
-        placeholder="Select a service"
+        placeholder="Xidmət seçin"
         optionLabel="name"
         showClear
       />
@@ -274,7 +274,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           setDoctor(e.value);
         }}
         options={doctors}
-        placeholder="Select a doctor"
+        placeholder="Həkim seçin"
         optionLabel="full_name"
         showClear
       />
@@ -298,7 +298,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const clientRowFilterTemplate = () => {
     return (
       <InputText
-        placeholder="Search by name"
+        placeholder="Ad il' axtarış"
         style={{ width: "160px" }}
         value={clientName}
         onChange={(e) => setClientName(e.target.value)}
