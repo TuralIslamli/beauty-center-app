@@ -70,7 +70,7 @@ function AddDialog({
             <InputText
               style={{ marginBottom: "10px" }}
               id="name"
-              invalid={!!errors.name}
+              invalid={!!errors?.name}
               {...field}
             />
           )}

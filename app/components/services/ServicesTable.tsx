@@ -96,7 +96,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   };
 
   const getDoctorFullName = (rowData: IService) => {
-    return `${rowData.user.name} ${rowData.user.surname}`;
+    return `${rowData.user?.name} ${rowData.user?.surname}`;
   };
 
   const priceBodyTemplate = (rowData: IService) => {

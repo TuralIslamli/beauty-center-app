@@ -19,7 +19,7 @@ import { setToastInstance } from "@/lib/axios";
 function Page() {
   const [userData, setUserData] = useState<IUser>();
   const router = useRouter();
-  const userPermissions = userData?.role.permissions.map((item) => item.name);
+  const userPermissions = userData?.role.permissions.map((item) => item?.name);
   const onLogOut = () => {
     localStorage.clear();
     router.push("/login");

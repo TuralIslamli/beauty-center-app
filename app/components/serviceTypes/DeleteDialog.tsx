@@ -66,7 +66,7 @@ function DeleteServiceTypeDialog({
         />
         {serviceType && (
           <span>
-            Are you sure you want to delete <b>{serviceType.name}</b>?
+            Are you sure you want to delete <b>{serviceType?.name}</b>?
           </span>
         )}
       </div>

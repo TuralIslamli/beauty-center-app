@@ -65,7 +65,7 @@ function DeleteUserDialog({
           <span>
             Are you sure you want to delete{" "}
             <b>
-              {user.name} {user.surname}
+              {user?.name} {user?.surname}
             </b>
             ?
           </span>

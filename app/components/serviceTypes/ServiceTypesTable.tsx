@@ -107,7 +107,7 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
   };
 
   const allowEdit = (rowData: IServiceType) => {
-    return rowData.name !== "Blue Band";
+    return rowData?.name !== "Blue Band";
   };
 
   const fetchData = async (page = 1) => {

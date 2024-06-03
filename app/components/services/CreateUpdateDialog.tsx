@@ -7,20 +7,20 @@ import {
   IServiceType,
   IServiceTypeRS,
   IUser,
-} from "@/app/types";
-import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
-import { InputMask } from "primereact/inputmask";
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { Button } from "primereact/button";
-import { Dropdown } from "primereact/dropdown";
-import { InputNumber } from "primereact/inputnumber";
-import { RadioButton, RadioButtonChangeEvent } from "primereact/radiobutton";
-import api from "@/app/api";
-import { paymentTypes, serviceStatuses } from "../consts";
-import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
+} from '@/app/types';
+import { Dialog } from 'primereact/dialog';
+import { InputText } from 'primereact/inputtext';
+import { InputMask } from 'primereact/inputmask';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
+import { InputNumber } from 'primereact/inputnumber';
+import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
+import api from '@/app/api';
+import { paymentTypes, serviceStatuses } from '../consts';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
 interface IDialogProps {
   dialog: boolean;
@@ -45,7 +45,7 @@ const CreateUpdateDialog = ({
     useState<IServiceType>();
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
   const [selectedPayment, setSelectedPayment] = useState({
-    name: "Cash",
+    name: 'Cash',
     id: 0,
   });
   const [selectedStatus, setSelectedStatus] = useState<{
@@ -58,21 +58,21 @@ const CreateUpdateDialog = ({
   const schema = yup.object().shape({
     service_type_id: yup.number().required(),
     client_name: yup.string().required(),
-    client_phone: userPermissions.includes("service.variable.phone")
+    client_phone: userPermissions.includes('service.variable.phone')
       ? yup.string().required()
       : yup.string(),
-    amount: userPermissions.includes("service.variable.amount")
+    amount: userPermissions.includes('service.variable.amount')
       ? yup.number().required()
       : yup.number(),
-    payment_type: userPermissions.includes("service.variable.payment_type")
+    payment_type: userPermissions.includes('service.variable.payment_type')
       ? yup.number().required()
       : yup.number(),
-    user_id: userPermissions.includes("service.variable.user_id")
+    user_id: userPermissions.includes('service.variable.user_id')
       ? yup.number().required()
       : yup.number(),
     reject_comment:
       selectedStatus?.id === 2 &&
-      userPermissions.includes("service.variable.reject_comment")
+      userPermissions.includes('service.variable.reject_comment')
         ? yup.string().required()
         : yup.string().nullable(),
   });
@@ -110,23 +110,23 @@ const CreateUpdateDialog = ({
 
   useEffect(() => {
     if (service?.id) {
-      setValue("client_name", service.client_name);
-      setValue("client_phone", service.client_phone);
-      setValue("user_id", service.user.id);
-      setValue("service_type_id", service.service_type.id);
-      setValue("amount", +service.amount);
+      setValue('client_name', service.client_name);
+      setValue('client_phone', service.client_phone);
+      setValue('user_id', service.user.id);
+      setValue('service_type_id', service.service_type.id);
+      setValue('amount', +service.amount);
 
-      setValue("payment_type", service.payment_type || 0);
-      setValue("reject_comment", service.reject_comment);
+      setValue('payment_type', service.payment_type || 0);
+      setValue('reject_comment', service.reject_comment);
       const actualStatus = () => {
         return service.status !== 0
           ? serviceStatuses.find((status) => status?.id === service.status)
           : {
               id: 1,
-              name: "Accepted",
+              name: 'Accepted',
             };
       };
-      setValue("status", actualStatus()?.id);
+      setValue('status', actualStatus()?.id);
       setSelectedStatus(actualStatus);
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user.id));
       setSelectedServiceType(
@@ -137,11 +137,11 @@ const CreateUpdateDialog = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (userPermissions.includes("user.input_search")) {
+      if (userPermissions.includes('user.input_search')) {
         const { data: doctorsData }: IDoctorRS = await api.getDoctors();
         setDoctors(doctorsData);
       }
-      if (userPermissions.includes("service_type.input_search")) {
+      if (userPermissions.includes('service_type.input_search')) {
         const { data: servicesData }: IServiceTypeRS =
           await api.getInputServices();
         setServiceTypes(servicesData);
@@ -160,15 +160,15 @@ const CreateUpdateDialog = ({
       visible={dialog}
       modal
       onHide={onHide}
-      style={{ minWidth: "500px" }}
+      style={{ minWidth: '500px' }}
     >
       <form
         onSubmit={handleSubmit(onSubmit)}
-        style={{ display: "flex", flexDirection: "column" }}
+        style={{ display: 'flex', flexDirection: 'column' }}
       >
-        {userPermissions.includes("service.variable.client_name") && (
+        {userPermissions.includes('service.variable.client_name') && (
           <>
-            <label style={{ marginBottom: "5px" }} htmlFor="name">
+            <label style={{ marginBottom: '5px' }} htmlFor="name">
               Client name:
             </label>
             <Controller
@@ -177,7 +177,7 @@ const CreateUpdateDialog = ({
               rules={{ required: true }}
               render={({ field }) => (
                 <InputText
-                  style={{ marginBottom: "10px" }}
+                  style={{ marginBottom: '10px' }}
                   id="name"
                   invalid={!!errors.client_name}
                   {...field}
@@ -187,9 +187,9 @@ const CreateUpdateDialog = ({
           </>
         )}
 
-        {userPermissions.includes("service.variable.phone") && (
+        {userPermissions.includes('service.variable.phone') && (
           <>
-            <label style={{ marginBottom: "5px" }} htmlFor="name">
+            <label style={{ marginBottom: '5px' }} htmlFor="name">
               Client phone:
             </label>
             <Controller
@@ -198,7 +198,7 @@ const CreateUpdateDialog = ({
               rules={{ required: true, minLength: 12 }}
               render={({ field }) => (
                 <InputMask
-                  style={{ marginBottom: "10px" }}
+                  style={{ marginBottom: '10px' }}
                   id="client_phone"
                   mask="+999 99 999-99-99"
                   placeholder="(+994)99 999-99-99"
@@ -210,9 +210,9 @@ const CreateUpdateDialog = ({
           </>
         )}
 
-        {userPermissions.includes("service.variable.user_id") && (
+        {userPermissions.includes('service.variable.user_id') && (
           <>
-            <label style={{ marginBottom: "5px" }} htmlFor="email">
+            <label style={{ marginBottom: '5px' }} htmlFor="email">
               Doctor:
             </label>
             <Controller
@@ -222,11 +222,11 @@ const CreateUpdateDialog = ({
               render={({ field }) => (
                 <Dropdown
                   filter
-                  style={{ marginBottom: "10px" }}
+                  style={{ marginBottom: '10px' }}
                   value={selectedDoctor}
                   onChange={(e) => {
                     setSelectedDoctor(e.value);
-                    setValue("user_id", e.value.id);
+                    setValue('user_id', e.value.id);
                   }}
                   optionLabel="full_name"
                   options={doctors}
@@ -237,9 +237,9 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-        {userPermissions.includes("service.variable.service_type_id") && (
+        {userPermissions.includes('service.variable.service_type_id') && (
           <>
-            <label style={{ marginBottom: "5px" }} htmlFor="email">
+            <label style={{ marginBottom: '5px' }} htmlFor="email">
               Service:
             </label>
             <Controller
@@ -248,12 +248,12 @@ const CreateUpdateDialog = ({
               render={({ field }) => (
                 <Dropdown
                   filter
-                  style={{ marginBottom: "10px" }}
+                  style={{ marginBottom: '10px' }}
                   value={selectedServiceType}
                   onChange={(e) => {
                     setSelectedServiceType(e.value);
-                    setValue("service_type_id", e.value.id);
-                    setValue("amount", e.value.price);
+                    setValue('service_type_id', e.value.id);
+                    setValue('amount', e.value.price);
                   }}
                   options={serviceTypes}
                   optionLabel="name"
@@ -265,7 +265,7 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-        <label style={{ marginBottom: "5px" }} htmlFor="email">
+        <label style={{ marginBottom: '5px' }} htmlFor="email">
           Amount:
         </label>
         <Controller
@@ -274,22 +274,22 @@ const CreateUpdateDialog = ({
           render={({ field }) => (
             <InputNumber
               onBlur={field.onBlur}
-              disabled={!userPermissions.includes("service.variable.amount")}
+              disabled={!userPermissions.includes('service.variable.amount')}
               ref={field.ref}
               value={field?.value || 0}
               onValueChange={(e) => field.onChange(e)}
               mode="currency"
               currency="AZN"
               locale="de-DE"
-              style={{ marginBottom: "10px" }}
+              style={{ marginBottom: '10px' }}
               invalid={!!errors.amount}
             />
           )}
         />
-        {userPermissions.includes("service.variable.reject_comment") &&
+        {userPermissions.includes('service.variable.reject_comment') &&
           selectedStatus?.id === 2 && (
             <>
-              <label style={{ marginBottom: "5px" }} htmlFor="name">
+              <label style={{ marginBottom: '5px' }} htmlFor="name">
                 Reject comment:
               </label>
               <Controller
@@ -298,45 +298,45 @@ const CreateUpdateDialog = ({
                 rules={{ required: true }}
                 render={({ field }) => (
                   <InputText
-                    style={{ marginBottom: "10px" }}
+                    style={{ marginBottom: '10px' }}
                     id="name"
                     invalid={!!errors.reject_comment}
                     {...field}
-                    value={field.value ?? ""}
+                    value={field.value ?? ''}
                   />
                 )}
               />
             </>
           )}
 
-        {userPermissions.includes("service.variable.payment_type") && (
-          <div style={{ display: "flex", marginBottom: "10px" }}>
+        {userPermissions.includes('service.variable.payment_type') && (
+          <div style={{ display: 'flex', marginBottom: '10px' }}>
             {paymentTypes.map((payment) => {
               return (
                 <div key={payment.id}>
                   <RadioButton
-                    inputId={payment.name}
+                    inputId={payment?.name}
                     name="category"
                     value={payment}
                     onChange={(e: RadioButtonChangeEvent) => {
                       setSelectedPayment(e.value);
-                      setValue("payment_type", e.value.id);
+                      setValue('payment_type', e.value.id);
                     }}
                     checked={selectedPayment?.id === payment.id}
                   />
                   <label
-                    htmlFor={payment.name}
-                    style={{ marginRight: "10px", marginLeft: "4px" }}
+                    htmlFor={payment?.name}
+                    style={{ marginRight: '10px', marginLeft: '4px' }}
                   >
-                    {payment.name}
+                    {payment?.name}
                   </label>
                 </div>
               );
             })}
           </div>
         )}
-        {userPermissions.includes("service.variable.status") && service?.id && (
-          <div style={{ display: "flex", marginBottom: "10px" }}>
+        {userPermissions.includes('service.variable.status') && service?.id && (
+          <div style={{ display: 'flex', marginBottom: '10px' }}>
             {serviceStatuses.map((status) => {
               return (
                 status?.id !== 0 && (
@@ -347,14 +347,11 @@ const CreateUpdateDialog = ({
                       value={status}
                       onChange={(e: RadioButtonChangeEvent) => {
                         setSelectedStatus(e.value);
-                        setValue("status", e.value.id);
+                        setValue('status', e.value.id);
                       }}
                       checked={selectedStatus?.id === status!.id}
                     />
-                    <label
-                      htmlFor={status!.name}
-                      style={{ marginRight: "10px", marginLeft: "4px" }}
-                    >
+                    <label style={{ marginRight: '10px', marginLeft: '4px' }}>
                       {status!.name}
                     </label>
                   </div>
@@ -363,7 +360,7 @@ const CreateUpdateDialog = ({
             })}
           </div>
         )}
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button label="Save" type="submit" />
         </div>
       </form>
