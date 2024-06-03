@@ -80,14 +80,14 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const header = userPermissions.includes("service.create") && (
     <div style={{ display: "flex", justifyContent: "flex-end" }}>
-      <Button
+      {/* <Button
         label="Reports"
         icon="pi pi-file-excel"
         severity="success"
         onClick={() => setReportsDialog(true)}
         style={{ marginRight: "10px" }}
       />
-      <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} />
+      <Button label="Add" icon="pi pi-plus" onClick={() => setDialog(true)} /> */}
     </div>
   );
 

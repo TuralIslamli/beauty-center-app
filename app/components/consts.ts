@@ -1,34 +1,32 @@
 export const roles = [
-  { id: 1, name: "Super Admin" },
-  { id: 2, name: "Admin" },
-  { id: 3, name: "Cashier" },
-  { id: 4, name: "Doctor" },
+  { id: 2, name: 'Admin' },
+  { id: 3, name: 'Cashier' },
+  { id: 4, name: 'Doctor' },
 ];
 
 export const paymentTypes = [
   {
     id: 0,
-    name: "Cash",
+    name: 'Cash',
   },
   {
     id: 1,
-    name: "Cash",
+    name: 'Cash',
   },
 ];
-
 
 export const serviceStatuses = [
   {
     id: 0,
-    name: "New",
+    name: 'New',
   },
   {
     id: 1,
-    name: "Accepted",
+    name: 'Accepted',
   },
   ,
   {
     id: 2,
-    name: "Rejected",
+    name: 'Rejected',
   },
 ];
