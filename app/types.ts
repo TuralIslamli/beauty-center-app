@@ -39,8 +39,8 @@ export interface ILoginFields {
 }
 
 export interface INavigationProps {
-  size: number;
-  page: number;
+  size?: number;
+  page?: number;
 }
 
 export interface IServicesTableProps extends INavigationProps {

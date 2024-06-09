@@ -126,6 +126,21 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     setFirst(event.first);
   };
 
+  const onDownloadAllReports = () => {
+    api.getAllReportsExcel({
+      status: filteredStatus?.id,
+      from_date: formatDate(dates[0]),
+      to_date: formatDate(dates[1]),
+      client_name: clientName,
+      client_phone:
+        clientPhone !== "+994"
+          ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
+          : "",
+      service_type_name: serviceType?.name,
+      user_name: doctor?.full_name,
+    });
+  };
+
   const actionBodyTemplate = (rowData: IService) => {
     return (
       <React.Fragment>
@@ -151,6 +166,25 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         onClick={() => setFilter((prev) => !prev)}
       />
       <div>
+        {userPermissions.includes("service.all_reports") &&
+          !!services.length && (
+            <Button
+              label="Export"
+              icon="pi pi-upload"
+              severity="success"
+              onClick={onDownloadAllReports}
+              style={{ marginRight: "10px" }}
+            />
+          )}
+        {/* {userPermissions.includes("service.daily_report") && (
+          <Button
+            label="Gün sonu"
+            icon="pi pi-file-excel"
+            severity="success"
+            onClick={() => setReportsDialog(true)}
+            style={{ marginRight: "10px" }}
+          />
+        )} */}
         {/* <Button
           label="Reports"
           icon="pi pi-file-excel"
@@ -298,7 +332,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const clientRowFilterTemplate = () => {
     return (
       <InputText
-        placeholder="Ad il' axtarış"
+        placeholder="Ad ilə axtarış"
         style={{ width: "160px" }}
         value={clientName}
         onChange={(e) => setClientName(e.target.value)}
@@ -347,14 +381,16 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           filterElement={clientRowFilterTemplate}
           showFilterMenu={false}
         ></Column>
-        <Column
-          field="client_phone"
-          header="Telefon"
-          style={{ width: "10%" }}
-          filter
-          filterElement={phoneRowFilterTemplate}
-          showFilterMenu={false}
-        ></Column>
+        {userPermissions.includes("service.variable.select_phone") && (
+          <Column
+            field="client_phone"
+            header="Telefon"
+            style={{ width: "10%" }}
+            filter
+            filterElement={phoneRowFilterTemplate}
+            showFilterMenu={false}
+          ></Column>
+        )}
         <Column
           field="service_type.name"
           header="Xidmət"

@@ -43,13 +43,6 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
             marginBottom: "10px",
           }}
         >
-          <Button
-            icon="pi pi-file-excel"
-            severity="success"
-            label="Dailly report"
-            style={{ width: "180px" }}
-            onClick={() => api.getDailyReportExcel(formatDate(dailyReportDate))}
-          />
           <Calendar
             value={dailyReportDate}
             onChange={(e) => setDailyReportDate(e.value)}
@@ -57,8 +50,15 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
             showIcon
             dateFormat="dd/mm/yy"
           />
+          <Button
+            severity="success"
+            label="Export"
+            icon="pi pi-upload"
+            style={{ width: "180px" }}
+            onClick={() => api.getDailyReportExcel(formatDate(dailyReportDate))}
+          />
         </div>
-        <div
+        {/* <div
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -81,8 +81,8 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
             showIcon
             dateFormat="dd/mm/yy"
           />
-        </div>
-        <div
+        </div> */}
+        {/* <div
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -111,7 +111,7 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
             style={{ width: "270px" }}
             showIcon
           />
-        </div>
+        </div> */}
       </div>
     </Dialog>
   );

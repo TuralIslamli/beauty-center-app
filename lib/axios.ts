@@ -1,4 +1,9 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { redirect } from "next/navigation";
 
 let toast: any = null;
@@ -27,15 +32,23 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response.data,
   async (error: AxiosError<any>) => {
-    if (error.response && error.response.data.message === "USER_NOT_AUTHORIZED") {
+    console.log(error, "error");
+
+    if (
+      error.response &&
+      error.response.data.message === "USER_NOT_AUTHORIZED"
+    ) {
       localStorage.clear();
       redirect("/login");
-    } else if (error.response && error.response.data.message) {
+    } else if (
+      (error.response && error.response.data.message) ||
+      error.message
+    ) {
       if (toast) {
         toast.show({
           severity: "error",
           summary: "Error",
-          detail: error.response.data.message,
+          detail: error.message || error.response!.data.message,
           life: 3000,
         });
       }

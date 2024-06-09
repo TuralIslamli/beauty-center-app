@@ -53,7 +53,7 @@ export default {
     client_name,
     client_phone,
     service_type_name,
-    user_name
+    user_name,
   }: IServicesTableProps): Promise<T> =>
     axiosApi.get(`services?page=${page}&size=${size}&sort=desc`, {
       params: {
@@ -63,7 +63,7 @@ export default {
         client_name,
         client_phone,
         service_type_name,
-        user_name
+        user_name,
       },
     }),
   getDoctors: <T>(): Promise<T> => axiosApi.get("users/input-search"),
@@ -93,27 +93,44 @@ export default {
       console.error("Error downloading the file", error);
     }
   },
-  getGeneralReportExcel: async (payload: string[]) => {
+  getAllReportsExcel: async ({
+    status,
+    from_date,
+    to_date,
+    client_name,
+    client_phone,
+    service_type_name,
+    user_name,
+  }: IServicesTableProps) => {
     try {
-      const response = await axiosApi.get(
-        `services/daily-report?excel_export=true&from_date=${payload[0]}&to_date=${payload[1]}`,
-        {
+      await axiosApi
+        .get(`services/all-reports?excel_export=true&sort=desc`, {
           responseType: "blob",
-        }
-      );
-      const blob = new Blob([response.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `general_report_${payload[0]}/${payload[1]}.xlsx`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+          params: {
+            status,
+            from_date,
+            to_date,
+            client_name,
+            client_phone,
+            service_type_name,
+            user_name,
+          },
+        })
+        .then((data: any) => {
+          const blob = new Blob([data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute(
+            "download",
+            `general_report_${from_date}/${to_date}.xlsx`
+          );
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
     } catch (error) {
       console.error("Error downloading the file", error);
     }
