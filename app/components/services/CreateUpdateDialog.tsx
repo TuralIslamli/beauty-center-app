@@ -286,7 +286,6 @@ const CreateUpdateDialog = ({
           render={({ field }) => (
             <InputNumber
               onBlur={field.onBlur}
-              disabled={!userPermissions.includes("service.variable.amount")}
               ref={field.ref}
               value={field?.value || 0}
               onValueChange={(e) => field.onChange(e)}
