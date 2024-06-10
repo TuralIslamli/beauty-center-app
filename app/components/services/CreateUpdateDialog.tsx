@@ -171,7 +171,10 @@ const CreateUpdateDialog = ({
       visible={dialog}
       modal
       onHide={onHide}
-      style={{ minWidth: "500px" }}
+      style={{
+        maxWidth: "500px",
+        width: "100%",
+      }}
     >
       <form
         onSubmit={handleSubmit(onSubmit)}

@@ -24,6 +24,7 @@ import { Calendar } from "primereact/calendar";
 import { formatDate } from "@/app/utils";
 import { InputText } from "primereact/inputtext";
 import { InputMask } from "primereact/inputmask";
+import { Message } from "primereact/message";
 
 interface IServicesTableProps {
   userPermissions: string[];
@@ -70,7 +71,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     setDialog(true);
   };
 
-  const fetchData = async (page = 1) => {
+  const getServices = async (page = 1) => {
     try {
       const { data, meta }: IServicesData = await api.getServices({
         page,
@@ -95,7 +96,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   useEffect(() => {
     if (dates[1]) {
-      fetchData();
+      getServices();
     }
   }, [
     filteredStatus?.name,
@@ -122,7 +123,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   }, []);
 
   const onPageChange = (event: PaginatorPageChangeEvent) => {
-    fetchData(event.page + 1);
+    getServices(event.page + 1);
     setFirst(event.first);
   };
 
@@ -158,13 +159,24 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const header = userPermissions.includes("service.create") && (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
-      <Button
-        type="button"
-        icon="pi pi-filter-slash"
-        label="Filter"
-        outlined
-        onClick={() => setFilter((prev) => !prev)}
-      />
+      <div>
+        {userPermissions.includes("service.all_reports") && (
+          <Button
+            type="button"
+            icon="pi pi-filter-slash"
+            label="Filter"
+            onClick={() => setFilter((prev) => !prev)}
+            style={{ marginRight: "20px" }}
+          />
+        )}
+
+        <Button
+          icon="pi pi-refresh"
+          rounded
+          raised
+          onClick={() => getServices()}
+        />
+      </div>
       <div>
         {userPermissions.includes("service.all_reports") &&
           !!services.length && (
@@ -176,7 +188,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
               style={{ marginRight: "10px" }}
             />
           )}
-        {/* {userPermissions.includes("service.daily_report") && (
+        {userPermissions.includes("service.daily_report") && (
           <Button
             label="Gün sonu"
             icon="pi pi-file-excel"
@@ -184,14 +196,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
             onClick={() => setReportsDialog(true)}
             style={{ marginRight: "10px" }}
           />
-        )} */}
-        {/* <Button
-          label="Reports"
-          icon="pi pi-file-excel"
-          severity="success"
-          onClick={() => setReportsDialog(true)}
-          style={{ marginRight: "10px" }}
-        /> */}
+        )}
         <Button
           label="Əlavə et"
           icon="pi pi-plus"
@@ -353,6 +358,14 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     );
   };
 
+  const content = (
+    <div>
+      <div className="ml-2">Nağd: 1000 AZN</div>
+      <div className="ml-2">Kart: 1000 AZN</div>
+      <div className="ml-2">Toplam: 2000 AZN</div>
+    </div>
+  );
+
   return (
     <>
       <DataTable
@@ -434,6 +447,17 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         totalRecords={total}
         onPageChange={onPageChange}
       />
+      <Message
+        style={{
+          border: "solid #696cff",
+          borderWidth: "0 0 0 6px",
+          marginTop: "20px",
+        }}
+        severity="info"
+        content={content}
+      >
+        aaaa
+      </Message>
       <Toast ref={toast} />
       <CreateUpdateDialog
         userPermissions={userPermissions}
