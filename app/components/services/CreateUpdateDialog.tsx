@@ -28,7 +28,7 @@ interface IDialogProps {
   setDialog: (state: boolean) => void;
   userPermissions: string[];
   showSuccess: (message: string) => void;
-  setServices: Dispatch<SetStateAction<IService[]>>;
+  getServices: () => Promise<void>;
   service?: IService;
   setService: Dispatch<SetStateAction<IService | undefined>>;
 }
@@ -38,7 +38,7 @@ const CreateUpdateDialog = ({
   setDialog,
   userPermissions,
   showSuccess,
-  setServices,
+  getServices,
   service,
   setService,
 }: IDialogProps) => {
@@ -118,13 +118,7 @@ const CreateUpdateDialog = ({
               .replace(/[\s-]/g, ""),
           });
       showSuccess(`Service has been successfull created`);
-      setServices((prev) => {
-        if (service?.id) {
-          return prev.map((item) => (item.id === service.id ? data : item));
-        } else {
-          return [data, ...prev];
-        }
-      });
+      getServices();
       setDialog(false);
     } catch (error) {
       console.error(error);
