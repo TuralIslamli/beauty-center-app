@@ -34,8 +34,8 @@ function BonusesTable() {
   const fetchData = async () => {
     try {
       const { data }: IBonusesRS = await api.getBonuses({
-        from_date: dates[0],
-        to_date: dates[1],
+        from_date: formatDate(dates[0]),
+        to_date: formatDate(dates[0]),
         user_id: doctor?.id,
       });
       setBonuses(data);
