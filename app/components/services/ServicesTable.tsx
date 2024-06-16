@@ -14,6 +14,7 @@ import {
   IServiceType,
   IServiceTypeRS,
   IServicesData,
+  ITotalAmount,
 } from "../../types";
 import api from "../../api";
 import { serviceStatuses } from "../consts";
@@ -25,6 +26,7 @@ import { formatDate } from "@/app/utils";
 import { InputText } from "primereact/inputtext";
 import { InputMask } from "primereact/inputmask";
 import { Message } from "primereact/message";
+import { MultiSelect } from "primereact/multiselect";
 
 interface IServicesTableProps {
   userPermissions: string[];
@@ -45,15 +47,14 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const [reportsDialog, setReportsDialog] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
   const [clientName, setClientName] = useState<string>();
-  const [serviceType, setServiceType] = useState<{
-    id: number;
-    name: string;
-  }>();
+  const [serviceTypesFilter, setServiceTypesFilter] =
+    useState<IServiceType[]>();
   const [clientPhone, setClientPhone] = useState<string>("+994");
   const [rejectComment, setRejectComment] = useState<string>();
   const [first, setFirst] = useState(0);
   const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<number>(10);
+  const [totalAmount, setTotalAmount] = useState<ITotalAmount>();
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
   const toast = useRef<Toast>(null);
 
@@ -84,11 +85,26 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           clientPhone !== "+994"
             ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
             : "",
-        service_type_name: serviceType?.name,
-        user_name: doctor?.full_name,
+        service_types: serviceTypesFilter?.map((i) => i.id),
+        user_id: doctor?.id,
       });
       setServices(data);
       setTotal(meta?.total);
+
+      const total: ITotalAmount = await api.getTotalAmount({
+        status: filteredStatus?.id,
+        from_date: formatDate(dates[0]),
+        to_date: formatDate(dates[1]),
+        client_name: clientName,
+        client_phone:
+          clientPhone !== "+994"
+            ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
+            : "",
+        service_types: serviceTypesFilter?.map((i) => i.id),
+        user_id: doctor?.id,
+      });
+
+      setTotalAmount(total);
     } catch (error) {
       console.error(error);
     }
@@ -103,7 +119,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     dates[1],
     clientName,
     clientPhone,
-    serviceType,
+    serviceTypesFilter?.length,
     doctor,
   ]);
 
@@ -137,8 +153,8 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         clientPhone !== "+994"
           ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
           : "",
-      service_type_name: serviceType?.name,
-      user_name: doctor?.full_name,
+      service_types: serviceTypesFilter?.map((i) => i.id),
+      user_id: doctor?.id,
     });
   };
 
@@ -264,6 +280,13 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     );
   };
 
+  const serviceTypesBody = (rowData: IService) => (
+    <div>
+      {rowData.service_types.map((i) => (
+        <div>{i.name}</div>
+      ))}
+    </div>
+  );
   const statusItemTemplate = (option: any) => {
     return <Tag value={option.name} severity={getSeverity(option.name)} />;
   };
@@ -288,12 +311,12 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const serviceTypeRowFilterTemplate = () => {
     return (
-      <Dropdown
+      <MultiSelect
         filter
         style={{ marginBottom: "10px" }}
-        value={serviceType}
+        value={serviceTypesFilter}
         onChange={(e) => {
-          setServiceType(e.value);
+          setServiceTypesFilter(e.value);
         }}
         options={serviceTypes}
         placeholder="Xidmət seçin"
@@ -360,9 +383,9 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const content = (
     <div>
-      <div className="ml-2">Nağd: 1000 AZN</div>
-      <div className="ml-2">Kart: 1000 AZN</div>
-      <div className="ml-2">Toplam: 2000 AZN</div>
+      <div className="ml-2">Nağd: {totalAmount?.cash} AZN</div>
+      <div className="ml-2">Kart: {totalAmount?.pos} AZN</div>
+      <div className="ml-2">Toplam: {totalAmount?.total} AZN</div>
     </div>
   );
 
@@ -405,12 +428,12 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           ></Column>
         )}
         <Column
-          field="service_type.name"
           header="Xidmət"
           style={{ width: "10%" }}
           showFilterMenu={false}
           filter={userPermissions.includes("service.variable.service_type_id")}
           filterElement={serviceTypeRowFilterTemplate}
+          body={serviceTypesBody}
         ></Column>
         <Column
           header="Həkim"
@@ -455,9 +478,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         }}
         severity="info"
         content={content}
-      >
-        aaaa
-      </Message>
+      />
       <Toast ref={toast} />
       <CreateUpdateDialog
         userPermissions={userPermissions}

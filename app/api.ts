@@ -52,8 +52,8 @@ export default {
     to_date,
     client_name,
     client_phone,
-    service_type_name,
-    user_name,
+    service_types,
+    user_id,
   }: IServicesTableProps): Promise<T> =>
     axiosApi.get(`services?page=${page}&size=${size}&sort=desc`, {
       params: {
@@ -62,10 +62,30 @@ export default {
         to_date,
         client_name,
         client_phone,
-        service_type_name,
-        user_name,
+        service_types,
+        user_id,
       },
     }),
+    getTotalAmount: <T>({
+      status,
+      from_date,
+      to_date,
+      client_name,
+      client_phone,
+      service_types,
+      user_id,
+    }: IServicesTableProps): Promise<T> =>
+      axiosApi.get(`services/total-amounts`, {
+        params: {
+          status,
+          from_date,
+          to_date,
+          client_name,
+          client_phone,
+          service_types,
+          user_id,
+        },
+      }),
   getDoctors: <T>(): Promise<T> => axiosApi.get("users/input-search"),
   getInputServices: <T>(): Promise<T> =>
     axiosApi.get("service-types/input-search"),
@@ -104,8 +124,8 @@ export default {
     to_date,
     client_name,
     client_phone,
-    service_type_name,
-    user_name,
+    service_types,
+    user_id,
   }: IServicesTableProps) => {
     try {
       await axiosApi
@@ -117,8 +137,8 @@ export default {
             to_date,
             client_name,
             client_phone,
-            service_type_name,
-            user_name,
+            service_types,
+            user_id,
           },
         })
         .then((data: any) => {

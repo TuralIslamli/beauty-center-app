@@ -1,3 +1,9 @@
+export interface ITotalAmount {
+  pos: string;
+  cash: string;
+  total: string;
+}
+
 export interface IUser {
   id: number;
   name: string;
@@ -49,8 +55,8 @@ export interface IServicesTableProps extends INavigationProps {
   to_date: string;
   client_name?: string;
   client_phone?: string;
-  service_type_name?: string;
-  user_name?: string;
+  service_types?: IServiceType[] | number[];
+  user_id?: number;
 }
 
 export interface IServiceTypesData {
@@ -61,7 +67,7 @@ export interface IServiceTypesData {
 export interface IServiceType {
   id: number;
   name: string;
-  price: number;
+  price: string;
 }
 
 export interface IServiceTypeFields {
@@ -78,7 +84,7 @@ export interface IService {
   status: number;
   amount: string;
   payment_type: number;
-  service_type: IServiceType;
+  service_types: IServiceType[];
   client_name: string;
   client_phone: string;
   created_at: string;
@@ -95,7 +101,7 @@ export interface IServicesData {
 }
 
 export interface IServiceFields {
-  service_type_id: number;
+  service_types: { id: number }[];
   client_name: string;
   client_phone?: string;
   amount?: number;

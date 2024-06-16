@@ -32,8 +32,6 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response.data,
   async (error: AxiosError<any>) => {
-    console.log(error, "error");
-
     if (
       error.response &&
       error.response.data.message === "USER_NOT_AUTHORIZED"

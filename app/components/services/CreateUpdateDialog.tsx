@@ -21,6 +21,7 @@ import api from "@/app/api";
 import { paymentTypes, serviceStatuses } from "../consts";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { MultiSelect } from "primereact/multiselect";
 
 interface IDialogProps {
   dialog: boolean;
@@ -41,13 +42,12 @@ const CreateUpdateDialog = ({
   service,
   setService,
 }: IDialogProps) => {
-  const [selectedServiceType, setSelectedServiceType] =
-    useState<IServiceType>();
+  const [selectedServiceTypes, setSelectedServiceTypes] =
+    useState<IServiceType[]>();
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
-  const [selectedPayment, setSelectedPayment] = useState({
-    name: "Cash",
-    id: 0,
-  });
+  const [selectedPayment, setSelectedPayment] = useState(
+    paymentTypes.find((i) => i.id === 0)
+  );
   const [selectedStatus, setSelectedStatus] = useState<{
     id: number;
     name: string;
@@ -56,7 +56,14 @@ const CreateUpdateDialog = ({
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
 
   const schema = yup.object().shape({
-    service_type_id: yup.number().required(),
+    service_types: yup
+      .array()
+      .of(
+        yup.object().shape({
+          id: yup.number().required(),
+        })
+      )
+      .required(),
     client_name: yup.string().required(),
     client_phone: userPermissions.includes("service.variable.phone")
       ? yup.string().required()
@@ -85,6 +92,9 @@ const CreateUpdateDialog = ({
     reset,
   } = useForm<IServiceFields>({
     resolver: yupResolver(schema),
+    defaultValues: {
+      payment_type: 0,
+    },
   });
 
   const onSubmit: SubmitHandler<IServiceFields> = async (
@@ -124,7 +134,10 @@ const CreateUpdateDialog = ({
       setValue("client_name", service.client_name);
       setValue("client_phone", service.client_phone);
       setValue("user_id", service.user.id);
-      setValue("service_type_id", service.service_type?.id);
+      setValue(
+        "service_types",
+        service.service_types?.map((i) => ({ id: i.id }))
+      );
       setValue("amount", +service.amount);
 
       setValue("payment_type", service.payment_type || 0);
@@ -140,11 +153,12 @@ const CreateUpdateDialog = ({
       setValue("status", actualStatus()?.id);
       setSelectedStatus(actualStatus);
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user.id));
-      setSelectedServiceType(
-        serviceTypes?.find((ser) => ser.id === service.service_type?.id)
+      setSelectedPayment(
+        paymentTypes.find((i) => i.id === service.payment_type)
       );
+      setSelectedServiceTypes(service.service_types);
     }
-  }, [service, setValue]);
+  }, [service, setValue, doctors]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -161,11 +175,33 @@ const CreateUpdateDialog = ({
     fetchData();
   }, []);
 
+  const handleMultiSelectChange = (e: any) => {
+    const selectedTypes = e.value;
+    setSelectedServiceTypes(selectedTypes);
+    setValue(
+      "service_types",
+      selectedTypes.map((i: IServiceType) => ({ id: i.id }))
+    );
+    setValue(
+      "amount",
+      selectedTypes.reduce(
+        (accumulator: number, currentValue: IServiceType) =>
+          accumulator + +currentValue.price,
+        0
+      )
+    );
+  };
+
   const onHide = () => {
     setDialog(false);
     reset();
-    setService({} as IService);
+    setService(undefined);
+    setSelectedServiceTypes(undefined);
+    setSelectedDoctor(undefined);
+    setSelectedPayment(paymentTypes.find((i) => i.id === 0));
+    setSelectedStatus(undefined);
   };
+
   return (
     <Dialog
       visible={dialog}
@@ -255,23 +291,18 @@ const CreateUpdateDialog = ({
               Xidmət:
             </label>
             <Controller
-              name="service_type_id"
+              name="service_types"
               control={control}
               render={({ field }) => (
-                <Dropdown
-                  filter
+                <MultiSelect
                   style={{ marginBottom: "10px" }}
-                  value={selectedServiceType}
-                  onChange={(e) => {
-                    setSelectedServiceType(e.value);
-                    setValue("service_type_id", e.value.id);
-                    setValue("amount", e.value.price);
-                  }}
+                  value={selectedServiceTypes}
+                  onChange={handleMultiSelectChange}
                   options={serviceTypes}
                   optionLabel="name"
                   placeholder="Xidmət seçin"
-                  className="w-full md:w-14rem"
-                  invalid={!!errors.service_type_id}
+                  className="w-full md:w-20rem"
+                  invalid={!!errors.service_types}
                 />
               )}
             />

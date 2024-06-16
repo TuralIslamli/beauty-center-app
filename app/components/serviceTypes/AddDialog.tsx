@@ -24,6 +24,7 @@ function AddDialog({
     control,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<IServiceTypeFields>();
 
   const onSubmit: SubmitHandler<IServiceTypeFields> = async ({
@@ -42,6 +43,7 @@ function AddDialog({
       });
       showSuccess("Service type has been successfully created");
       setDialog(false);
+      reset();
     } catch (error: any) {
       console.error(error);
     }
