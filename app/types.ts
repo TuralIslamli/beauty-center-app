@@ -120,3 +120,17 @@ export interface IDoctor {
 export interface IDoctorRS {
   data: IDoctor[];
 }
+
+export interface IBonusesProps {
+  from_date?: string;
+  to_date?: string;
+  user_id?: number;
+}
+
+export interface IBonus {
+  total_amount: string;
+  user: IUser;
+}
+export interface IBonusesRS {
+  data: IBonus[];
+}

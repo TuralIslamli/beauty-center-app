@@ -1,5 +1,6 @@
 import { axiosApi } from "../lib/axios";
 import {
+  IBonusesProps,
   ILoginFields,
   INavigationProps,
   IServiceFields,
@@ -66,26 +67,26 @@ export default {
         user_id,
       },
     }),
-    getTotalAmount: <T>({
-      status,
-      from_date,
-      to_date,
-      client_name,
-      client_phone,
-      service_types,
-      user_id,
-    }: IServicesTableProps): Promise<T> =>
-      axiosApi.get(`services/total-amounts`, {
-        params: {
-          status,
-          from_date,
-          to_date,
-          client_name,
-          client_phone,
-          service_types,
-          user_id,
-        },
-      }),
+  getTotalAmount: <T>({
+    status,
+    from_date,
+    to_date,
+    client_name,
+    client_phone,
+    service_types,
+    user_id,
+  }: IServicesTableProps): Promise<T> =>
+    axiosApi.get(`services/total-amounts`, {
+      params: {
+        status,
+        from_date,
+        to_date,
+        client_name,
+        client_phone,
+        service_types,
+        user_id,
+      },
+    }),
   getDoctors: <T>(): Promise<T> => axiosApi.get("users/input-search"),
   getInputServices: <T>(): Promise<T> =>
     axiosApi.get("service-types/input-search"),
@@ -151,6 +152,44 @@ export default {
           link.setAttribute(
             "download",
             `general_report_${from_date}/${to_date}.xlsx`
+          );
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
+    } catch (error) {
+      console.error("Error downloading the file", error);
+    }
+  },
+  getBonuses: <T>({ from_date, to_date, user_id }: IBonusesProps): Promise<T> =>
+    axiosApi.get(`services/bonus-reports`, {
+      params: {
+        from_date,
+        to_date,
+        user_id,
+      },
+    }),
+  getBonusesExcel: async ({ from_date, to_date, user_id }: IBonusesProps) => {
+    try {
+      await axiosApi
+        .get(`services/bonus-reports?excel_export=true`, {
+          responseType: "blob",
+          params: {
+            from_date,
+            to_date,
+            user_id,
+          },
+        })
+        .then((data: any) => {
+          const blob = new Blob([data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute(
+            "download",
+            `bonus_report_${from_date}/${to_date}.xlsx`
           );
           document.body.appendChild(link);
           link.click();

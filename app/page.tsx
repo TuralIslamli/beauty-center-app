@@ -15,6 +15,7 @@ import { getRoleName } from "./utils";
 import ServicesTable from "./components/services/ServicesTable";
 import { IUser, IUserRS } from "./types";
 import { setToastInstance } from "@/lib/axios";
+import BonusesTable from "./components/bonuses/BonusesTable";
 
 function Page() {
   const [userData, setUserData] = useState<IUser>();
@@ -89,6 +90,11 @@ function Page() {
           {userPermissions?.includes("user.get_all") && (
             <TabPanel header="İstifadəçilər">
               <UsersTable userPermissions={userPermissions} />
+            </TabPanel>
+          )}
+          {userPermissions?.includes("service.bonus_reports") && (
+            <TabPanel header="Bonuslar">
+              <BonusesTable />
             </TabPanel>
           )}
         </TabView>
