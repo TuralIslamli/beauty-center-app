@@ -93,7 +93,9 @@ const CreateUpdateDialog = ({
   } = useForm<IServiceFields>({
     resolver: yupResolver(schema),
     defaultValues: {
-      payment_type: 0,
+      payment_type: userPermissions.includes("service.variable.payment_type")
+        ? 0
+        : undefined,
     },
   });
 
