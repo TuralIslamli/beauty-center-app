@@ -94,20 +94,22 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       setServices(data);
       setTotal(meta?.total);
 
-      const total: ITotalAmount = await api.getTotalAmount({
-        status: filteredStatus?.id,
-        from_date: formatDate(dates[0]),
-        to_date: formatDate(dates[1]),
-        client_name: clientName,
-        client_phone:
-          clientPhone !== "+994"
-            ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
-            : "",
-        service_types: serviceTypesFilter?.map((i) => i.id),
-        user_id: doctor?.id,
-      });
+      if (userPermissions.includes("service.get_all.total_amount")) {
+        const total: ITotalAmount = await api.getTotalAmount({
+          status: filteredStatus?.id,
+          from_date: formatDate(dates[0]),
+          to_date: formatDate(dates[1]),
+          client_name: clientName,
+          client_phone:
+            clientPhone !== "+994"
+              ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
+              : "",
+          service_types: serviceTypesFilter?.map((i) => i.id),
+          user_id: doctor?.id,
+        });
 
-      setTotalAmount(total);
+        setTotalAmount(total);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -491,7 +493,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
             totalRecords={total}
             onPageChange={onPageChange}
           />
-          {userPermissions.includes("services.total_amount") && (
+          {userPermissions.includes("service.get_all.total_amount") && (
             <Message
               style={{
                 border: "solid #696cff",
