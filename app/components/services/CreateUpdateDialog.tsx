@@ -129,7 +129,7 @@ const CreateUpdateDialog = ({
     if (service?.id) {
       setValue("client_name", service.client_name);
       setValue("client_phone", service.client_phone);
-      setValue("user_id", service.user.id);
+      setValue("user_id", service.user?.id);
       setValue(
         "service_types",
         service.service_types?.map((i) => ({ id: i.id }))
@@ -148,7 +148,7 @@ const CreateUpdateDialog = ({
       };
       setValue("status", actualStatus()?.id);
       setSelectedStatus(actualStatus);
-      setSelectedDoctor(doctors?.find((doc) => doc.id === service.user.id));
+      setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
       setSelectedPayment(
         paymentTypes.find((i) => i.id === service.payment_type)
       );
