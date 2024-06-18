@@ -53,6 +53,7 @@ const CreateUpdateDialog = ({
     name: string;
   }>();
   const [doctors, setDoctors] = useState<IDoctor[]>();
+  const [isDisabled, setIsDisabled] = useState(false);
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
 
   const schema = yup.object().shape({
@@ -102,8 +103,9 @@ const CreateUpdateDialog = ({
   const onSubmit: SubmitHandler<IServiceFields> = async (
     payload: IServiceFields
   ) => {
+    setIsDisabled(true);
     try {
-      const { data }: IServiceRS = service?.id
+      service?.id
         ? await api.updateService({
             ...payload,
             id: service.id,
@@ -122,6 +124,8 @@ const CreateUpdateDialog = ({
       setDialog(false);
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsDisabled(false);
     }
   };
 
@@ -402,7 +406,7 @@ const CreateUpdateDialog = ({
           </div>
         )}
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button label="Save" type="submit" />
+          <Button label="Save" disabled={isDisabled} type="submit" />
         </div>
       </form>
     </Dialog>
