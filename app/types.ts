@@ -54,7 +54,7 @@ export interface IServicesTableProps extends INavigationProps {
   from_date: string;
   to_date: string;
   client_name?: string;
-  client_phone?: string;
+  client_phone?: number | null;
   service_types?: IServiceType[] | number[];
   user_id?: number;
 }

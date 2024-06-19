@@ -24,10 +24,11 @@ import React from "react";
 import { Calendar } from "primereact/calendar";
 import { formatDate } from "@/app/utils";
 import { InputText } from "primereact/inputtext";
-import { InputMask } from "primereact/inputmask";
 import { Message } from "primereact/message";
 import { MultiSelect } from "primereact/multiselect";
-import { ProgressSpinner } from "primereact/progressspinner";
+import { Skeleton } from "primereact/skeleton";
+import { InputNumber } from "primereact/inputnumber";
+import { useDebounce } from "primereact/hooks";
 
 interface IServicesTableProps {
   userPermissions: string[];
@@ -47,10 +48,12 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const [filter, setFilter] = useState(false);
   const [reportsDialog, setReportsDialog] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
-  const [clientName, setClientName] = useState<string>();
+  const [clientName, debouncedClientName, setClientName] = useDebounce("", 400);
   const [serviceTypesFilter, setServiceTypesFilter] =
     useState<IServiceType[]>();
-  const [clientPhone, setClientPhone] = useState<string>("+994");
+  const [clientPhone, debouncedClientPhone, setClientPhone] = useDebounce<
+    number | null
+  >(null, 400);
   const [rejectComment, setRejectComment] = useState<string>();
   const [first, setFirst] = useState(0);
   const [total, setTotal] = useState(0);
@@ -59,6 +62,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const [totalAmount, setTotalAmount] = useState<ITotalAmount>();
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
   const toast = useRef<Toast>(null);
+  const navigationRef = useRef<HTMLDivElement>(null);
 
   const showSuccess = (message: string) => {
     toast.current?.show({
@@ -74,7 +78,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     setDialog(true);
   };
 
-  const getServices = async (page = 1) => {
+  const getServices = async (page = 1, isOnPageChange?: boolean) => {
     setIsLoading(true);
     try {
       const { data, meta }: IServicesData = await api.getServices({
@@ -83,14 +87,12 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         status: filteredStatus?.id,
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
-        client_name: clientName,
-        client_phone:
-          clientPhone !== "+994"
-            ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
-            : "",
+        client_name: debouncedClientName,
+        client_phone: debouncedClientPhone,
         service_types: serviceTypesFilter?.map((i) => i.id),
         user_id: doctor?.id,
       });
+
       setServices(data);
       setTotal(meta?.total);
 
@@ -99,11 +101,8 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           status: filteredStatus?.id,
           from_date: formatDate(dates[0]),
           to_date: formatDate(dates[1]),
-          client_name: clientName,
-          client_phone:
-            clientPhone !== "+994"
-              ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
-              : "",
+          client_name: debouncedClientName,
+          client_phone: debouncedClientPhone,
           service_types: serviceTypesFilter?.map((i) => i.id),
           user_id: doctor?.id,
         });
@@ -114,6 +113,8 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       console.error(error);
     } finally {
       setIsLoading(false);
+      isOnPageChange &&
+        navigationRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -124,8 +125,8 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   }, [
     filteredStatus?.name,
     dates[1],
-    clientName,
-    clientPhone,
+    debouncedClientName,
+    debouncedClientPhone,
     serviceTypesFilter?.length,
     doctor,
   ]);
@@ -146,8 +147,8 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   }, []);
 
   const onPageChange = (event: PaginatorPageChangeEvent) => {
-    getServices(event.page + 1);
     setFirst(event.first);
+    getServices(event.page + 1, true);
   };
 
   const onDownloadAllReports = () => {
@@ -155,18 +156,17 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       status: filteredStatus?.id,
       from_date: formatDate(dates[0]),
       to_date: formatDate(dates[1]),
-      client_name: clientName,
-      client_phone:
-        clientPhone !== "+994"
-          ? clientPhone?.toString()?.replace(/[\s-_]/g, "")
-          : "",
+      client_name: debouncedClientName,
+      client_phone: debouncedClientPhone,
       service_types: serviceTypesFilter?.map((i) => i.id),
       user_id: doctor?.id,
     });
   };
 
-  const actionBodyTemplate = (rowData: IService) => {
-    return (
+  const actionBodyTemplate = (rowData: IService) =>
+    isLoading ? (
+      <Skeleton height="30px" />
+    ) : (
       <React.Fragment>
         <Button
           icon="pi pi-pencil"
@@ -178,7 +178,6 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         />
       </React.Fragment>
     );
-  };
 
   const header = userPermissions.includes("service.create") && (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -229,13 +228,21 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     </div>
   );
 
-  const dateBodyTemplate = (rowData: IService) => {
-    return rowData.created_at.split(" ")[0];
-  };
+  const dateBodyTemplate = (rowData: IService) =>
+    isLoading ? <Skeleton width="100px" /> : rowData.created_at.split(" ")[0];
 
-  const getDoctorFullName = (rowData: IService) => {
-    return `${rowData.user?.name} ${rowData.user?.surname}`;
-  };
+  const getDoctorFullName = (rowData: IService) =>
+    isLoading ? (
+      <Skeleton width="150px" />
+    ) : (
+      `${rowData.user?.name} ${rowData.user?.surname}`
+    );
+
+  const clientNameBody = (rowData: IService) =>
+    isLoading ? <Skeleton width="150px" /> : <div>{rowData.client_name}</div>;
+
+  const clientPhoneBody = (rowData: IService) =>
+    isLoading ? <Skeleton width="150px" /> : <div>{rowData.client_phone}</div>;
 
   const priceBodyTemplate = (rowData: IService) => {
     const formatter = new Intl.NumberFormat("az-AZ", {
@@ -251,7 +258,11 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       .map((part) => part.value)
       .join("");
 
-    return `${formattedPrice} ${currencySymbol}`;
+    return isLoading ? (
+      <Skeleton width="100px" />
+    ) : (
+      `${formattedPrice} ${currencySymbol}`
+    );
   };
 
   const getSeverity = (status?: string) => {
@@ -277,7 +288,9 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         setRejectDialog(true);
       }
     };
-    return (
+    return isLoading ? (
+      <Skeleton width="150px" />
+    ) : (
       <Tag
         onClick={onRejectClick}
         icon={status === "Rejected" && "pi pi-info-circle"}
@@ -287,13 +300,17 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     );
   };
 
-  const serviceTypesBody = (rowData: IService) => (
-    <div>
-      {rowData.service_types.map((i) => (
-        <div>{i.name}</div>
-      ))}
-    </div>
-  );
+  const serviceTypesBody = (rowData: IService) =>
+    isLoading ? (
+      <Skeleton width="150px" />
+    ) : (
+      <div>
+        {rowData.service_types.map((i) => (
+          <div>{i.name}</div>
+        ))}
+      </div>
+    );
+
   const statusItemTemplate = (option: any) => {
     return <Tag value={option.name} severity={getSeverity(option.name)} />;
   };
@@ -320,7 +337,6 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     return (
       <MultiSelect
         filter
-        style={{ marginBottom: "10px" }}
         value={serviceTypesFilter}
         onChange={(e) => {
           setServiceTypesFilter(e.value);
@@ -337,7 +353,6 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     return (
       <Dropdown
         filter
-        style={{ marginBottom: "10px" }}
         value={doctor}
         onChange={(e) => {
           setDoctor(e.value);
@@ -377,13 +392,14 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const phoneRowFilterTemplate = () => {
     return (
-      <InputMask
+      <InputNumber
         style={{ width: "180px" }}
         id="client_phone"
-        mask="+999 99 999-99-99"
         placeholder="+994 99 999-99-99"
         value={clientPhone}
-        onChange={(e) => setClientPhone(e.target.value || "")}
+        onChange={(e) => setClientPhone(e.value)}
+        prefix="+"
+        useGrouping={false}
       />
     );
   };
@@ -396,115 +412,111 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     </div>
   );
 
-  const idBodyTemplate = (rowData: IService, options: any) => {
-    return <div>{total - options.rowIndex - first}</div>;
-  };
-
+  const idBodyTemplate = (rowData: IService, options: any) =>
+    isLoading ? (
+      <Skeleton width="20px" />
+    ) : (
+      <div>{total - options.rowIndex - first}</div>
+    );
   return (
     <>
-      {isLoading ? (
-        <div style={{ height: "75vh", display: "flex", alignItems: "center" }}>
-          <ProgressSpinner />
-        </div>
-      ) : (
-        <>
-          <DataTable
-            value={services}
-            dataKey="id"
-            header={header}
-            tableStyle={{ minWidth: "50rem" }}
-            style={{ marginBottom: "10px" }}
-            filterDisplay={filter ? "row" : undefined}
-          >
-            <Column
-              body={idBodyTemplate}
-              header="#"
-              style={{ width: "2%" }}
-            ></Column>
-            <Column
-              dataType="date"
-              header="Tarix"
-              body={dateBodyTemplate}
-              style={{ width: "10%" }}
-              showFilterMenu={false}
-              filter
-              filterElement={dateRowFilterTemplate}
-            ></Column>
-            <Column
-              field="client_name"
-              header="Müştəri"
-              style={{ width: "10%" }}
-              filter
-              filterElement={clientRowFilterTemplate}
-              showFilterMenu={false}
-            ></Column>
-            {userPermissions.includes("service.variable.select_phone") && (
-              <Column
-                field="client_phone"
-                header="Telefon"
-                style={{ width: "10%" }}
-                filter
-                filterElement={phoneRowFilterTemplate}
-                showFilterMenu={false}
-              ></Column>
-            )}
-            <Column
-              header="Xidmət"
-              style={{ width: "10%" }}
-              showFilterMenu={false}
-              filter={userPermissions.includes(
-                "service.variable.service_type_id"
-              )}
-              filterElement={serviceTypeRowFilterTemplate}
-              body={serviceTypesBody}
-            ></Column>
-            <Column
-              header="Həkim"
-              body={getDoctorFullName}
-              style={{ width: "10%" }}
-              showFilterMenu={false}
-              filter={userPermissions.includes("service.variable.user_id")}
-              filterElement={doctorsRowFilterTemplate}
-            ></Column>
-            <Column
-              header="Məbləğ"
-              body={priceBodyTemplate}
-              style={{ width: "10%" }}
-            ></Column>
-            <Column
-              header="Status"
-              body={statusBody}
-              style={{ width: "10%" }}
-              showFilterMenu={false}
-              filter
-              filterElement={statusRowFilterTemplate}
-            ></Column>
-            {userPermissions.includes("service.update") && (
-              <Column
-                body={actionBodyTemplate}
-                exportable={false}
-                style={{ width: "2%" }}
-              ></Column>
-            )}
-          </DataTable>
-          <Paginator
-            first={first}
-            rows={rows}
-            totalRecords={total}
-            onPageChange={onPageChange}
-          />
-          {userPermissions.includes("service.get_all.total_amount") && (
-            <Message
-              style={{
-                border: "solid #696cff",
-                borderWidth: "0 0 0 6px",
-                marginTop: "20px",
-              }}
-              severity="info"
-              content={content}
-            />
-          )}
-        </>
+      <DataTable
+        value={services}
+        dataKey="id"
+        header={header}
+        tableStyle={{ minWidth: "50rem" }}
+        style={{ marginBottom: "10px" }}
+        filterDisplay={filter ? "row" : undefined}
+      >
+        <Column
+          body={idBodyTemplate}
+          header="#"
+          style={{ width: "2%" }}
+        ></Column>
+        <Column
+          dataType="date"
+          header="Tarix"
+          body={dateBodyTemplate}
+          style={{ width: "10%" }}
+          showFilterMenu={false}
+          filter
+          filterElement={dateRowFilterTemplate}
+        ></Column>
+        <Column
+          field="client_name"
+          header="Müştəri"
+          style={{ width: "10%" }}
+          filter
+          filterElement={clientRowFilterTemplate}
+          showFilterMenu={false}
+          body={clientNameBody}
+        ></Column>
+        {userPermissions.includes("service.variable.select_phone") && (
+          <Column
+            field="client_phone"
+            header="Telefon"
+            style={{ width: "10%" }}
+            filter
+            filterElement={phoneRowFilterTemplate}
+            showFilterMenu={false}
+            body={clientPhoneBody}
+          ></Column>
+        )}
+        <Column
+          header="Xidmət"
+          style={{ width: "10%" }}
+          showFilterMenu={false}
+          filter={userPermissions.includes("service.variable.service_type_id")}
+          filterElement={serviceTypeRowFilterTemplate}
+          body={serviceTypesBody}
+        ></Column>
+        <Column
+          header="Həkim"
+          body={getDoctorFullName}
+          style={{ width: "10%" }}
+          showFilterMenu={false}
+          filter={userPermissions.includes("service.variable.user_id")}
+          filterElement={doctorsRowFilterTemplate}
+        ></Column>
+        <Column
+          header="Məbləğ"
+          body={priceBodyTemplate}
+          style={{ width: "10%" }}
+        ></Column>
+        <Column
+          header="Status"
+          body={statusBody}
+          style={{ width: "10%" }}
+          showFilterMenu={false}
+          filter
+          filterElement={statusRowFilterTemplate}
+        ></Column>
+        {userPermissions.includes("service.update") && (
+          <Column
+            body={actionBodyTemplate}
+            exportable={false}
+            style={{ width: "2%" }}
+          ></Column>
+        )}
+      </DataTable>
+      <div ref={navigationRef}>
+        <Paginator
+          first={first}
+          rows={rows}
+          totalRecords={total}
+          onPageChange={onPageChange}
+        />
+      </div>
+      {userPermissions.includes("service.get_all.total_amount") && (
+        <Message
+          style={{
+            border: "solid #696cff",
+            borderWidth: "0 0 0 6px",
+            marginTop: "20px",
+          }}
+          severity="info"
+          content={content}
+        />
       )}
 
       <Toast ref={toast} />
