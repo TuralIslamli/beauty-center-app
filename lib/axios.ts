@@ -46,7 +46,7 @@ axiosInstance.interceptors.response.use(
         toast.show({
           severity: "error",
           summary: "Error",
-          detail: error.message || error.response!.data.message,
+          detail: error.response!.data.message || error.message,
           life: 3000,
         });
       }

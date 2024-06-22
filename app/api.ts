@@ -67,6 +67,7 @@ export default {
         user_id,
       },
     }),
+    deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
   getTotalAmount: <T>({
     status,
     from_date,

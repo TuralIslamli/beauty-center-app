@@ -22,13 +22,14 @@ import CreateUpdateDialog from "./CreateUpdateDialog";
 import ReportsDialog from "./ReportsDialog";
 import React from "react";
 import { Calendar } from "primereact/calendar";
-import { formatDate } from "@/app/utils";
+import { formatDate, haveFilterPermissions } from "@/app/utils";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 import { MultiSelect } from "primereact/multiselect";
 import { Skeleton } from "primereact/skeleton";
 import { InputNumber } from "primereact/inputnumber";
 import { useDebounce } from "primereact/hooks";
+import DeleteServiceDialog from "./DeleteServiceDialog";
 
 interface IServicesTableProps {
   userPermissions: string[];
@@ -48,6 +49,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const [filter, setFilter] = useState(false);
   const [reportsDialog, setReportsDialog] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
+  const [serviceDeleteDialog, setServiceDeleteDialog] = useState(false);
   const [clientName, debouncedClientName, setClientName] = useDebounce("", 400);
   const [serviceTypesFilter, setServiceTypesFilter] =
     useState<IServiceType[]>();
@@ -163,9 +165,14 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     });
   };
 
+  const confirmDeleteService = (service: IService) => {
+    setService(service);
+    setServiceDeleteDialog(true);
+  };
+
   const actionBodyTemplate = (rowData: IService) =>
     isLoading ? (
-      <Skeleton height="30px" />
+      <Skeleton width="60px" />
     ) : (
       <React.Fragment>
         <Button
@@ -176,13 +183,24 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           style={{ marginRight: "10px" }}
           onClick={() => editService(rowData)}
         />
+
+        {userPermissions?.includes("service.delete") && (
+          <Button
+            icon="pi pi-trash"
+            rounded
+            outlined
+            text
+            severity="danger"
+            onClick={() => confirmDeleteService(rowData)}
+          />
+        )}
       </React.Fragment>
     );
 
-  const header = userPermissions.includes("service.create") && (
+  const header = (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
       <div>
-        {userPermissions.includes("service.all_reports") && (
+        {haveFilterPermissions(userPermissions) && (
           <Button
             type="button"
             icon="pi pi-filter-slash"
@@ -239,10 +257,10 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     );
 
   const clientNameBody = (rowData: IService) =>
-    isLoading ? <Skeleton width="150px" /> : <div>{rowData.client_name}</div>;
+    isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_name}</div>;
 
   const clientPhoneBody = (rowData: IService) =>
-    isLoading ? <Skeleton width="150px" /> : <div>{rowData.client_phone}</div>;
+    isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_phone}</div>;
 
   const priceBodyTemplate = (rowData: IService) => {
     const formatter = new Intl.NumberFormat("az-AZ", {
@@ -289,7 +307,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       }
     };
     return isLoading ? (
-      <Skeleton width="150px" />
+      <Skeleton width="100px" />
     ) : (
       <Tag
         onClick={onRejectClick}
@@ -302,11 +320,11 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const serviceTypesBody = (rowData: IService) =>
     isLoading ? (
-      <Skeleton width="150px" />
+      <Skeleton width="100px" />
     ) : (
       <div>
         {rowData.service_types.map((i) => (
-          <div>{i.name}</div>
+          <div key={i.id}>{i.name}</div>
         ))}
       </div>
     );
@@ -317,90 +335,102 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const statusRowFilterTemplate = () => {
     return (
-      <Dropdown
-        value={filteredStatus}
-        options={serviceStatuses}
-        onChange={(e: DropdownChangeEvent) => {
-          setFilteredStatus(e.value);
-        }}
-        itemTemplate={statusItemTemplate}
-        placeholder="Select one"
-        className="p-column-filter"
-        showClear
-        style={{ minWidth: "10rem" }}
-        optionLabel="name"
-      />
+      userPermissions.includes("service.filter.status") && (
+        <Dropdown
+          value={filteredStatus}
+          options={serviceStatuses}
+          onChange={(e: DropdownChangeEvent) => {
+            setFilteredStatus(e.value);
+          }}
+          itemTemplate={statusItemTemplate}
+          placeholder="Select one"
+          className="p-column-filter"
+          showClear
+          style={{ minWidth: "10rem" }}
+          optionLabel="name"
+        />
+      )
     );
   };
 
   const serviceTypeRowFilterTemplate = () => {
     return (
-      <MultiSelect
-        filter
-        value={serviceTypesFilter}
-        onChange={(e) => {
-          setServiceTypesFilter(e.value);
-        }}
-        options={serviceTypes}
-        placeholder="Xidmət seçin"
-        optionLabel="name"
-        showClear
-      />
+      userPermissions.includes("service.filter.service_type") && (
+        <MultiSelect
+          filter
+          value={serviceTypesFilter}
+          onChange={(e) => {
+            setServiceTypesFilter(e.value);
+          }}
+          options={serviceTypes}
+          placeholder="Xidmət seçin"
+          optionLabel="name"
+          showClear
+        />
+      )
     );
   };
 
   const doctorsRowFilterTemplate = () => {
     return (
-      <Dropdown
-        filter
-        value={doctor}
-        onChange={(e) => {
-          setDoctor(e.value);
-        }}
-        options={doctors}
-        placeholder="Həkim seçin"
-        optionLabel="full_name"
-        showClear
-      />
+      userPermissions.includes("service.filter.doctor") && (
+        <Dropdown
+          filter
+          value={doctor}
+          onChange={(e) => {
+            setDoctor(e.value);
+          }}
+          options={doctors}
+          placeholder="Həkim seçin"
+          optionLabel="full_name"
+          showClear
+        />
+      )
     );
   };
 
   const dateRowFilterTemplate = () => {
     return (
-      <Calendar
-        value={dates}
-        onChange={(e) => setDates(e.value)}
-        selectionMode="range"
-        readOnlyInput
-        hideOnRangeSelection
-        style={{ width: "220px" }}
-        dateFormat="dd/mm/yy"
-      />
+      userPermissions.includes("service.filter.date") && (
+        <Calendar
+          value={dates}
+          onChange={(e) => setDates(e.value)}
+          selectionMode="range"
+          readOnlyInput
+          hideOnRangeSelection
+          style={{ width: "220px" }}
+          dateFormat="dd/mm/yy"
+        />
+      )
     );
   };
 
   const clientRowFilterTemplate = () => {
     return (
-      <InputText
-        placeholder="Ad ilə axtarış"
-        style={{ width: "160px" }}
-        value={clientName}
-        onChange={(e) => setClientName(e.target.value)}
-      />
+      userPermissions.includes("service.filter.client_name") && (
+        <InputText
+          placeholder="Ad ilə axtarış"
+          style={{ width: "160px" }}
+          value={clientName}
+          onChange={(e) => setClientName(e.target.value)}
+        />
+      )
     );
   };
 
   const phoneRowFilterTemplate = () => {
     return (
-      <InputNumber
-        style={{ width: "180px" }}
-        id="client_phone"
-        placeholder="+994 99 999-99-99"
-        value={clientPhone}
-        onChange={(e) => setClientPhone(e.value)}
-        prefix="+"
-        useGrouping={false}
-      />
+      userPermissions.includes("service.filter.client_phone") && (
+        <InputNumber
+          style={{ width: "180px" }}
+          id="client_phone"
+          placeholder="+994 99 999-99-99"
+          value={clientPhone}
+          onChange={(e) => setClientPhone(e.value)}
+          prefix="+"
+          useGrouping={false}
+        />
+      )
     );
   };
 
@@ -495,7 +525,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           <Column
             body={actionBodyTemplate}
             exportable={false}
-            style={{ width: "2%" }}
+            style={{ width: "10%" }}
           ></Column>
         )}
       </DataTable>
@@ -542,6 +572,13 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       >
         <p className="m-0">{rejectComment}</p>
       </Dialog>
+      <DeleteServiceDialog
+        service={service}
+        deleteDialog={serviceDeleteDialog}
+        setDeleteDialog={setServiceDeleteDialog}
+        showSuccess={showSuccess}
+        getServices={getServices}
+      />
     </>
   );
 }
