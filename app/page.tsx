@@ -79,12 +79,12 @@ function Page() {
       <Divider />
       <main className={styles.main}>
         <TabView>
-          {userPermissions?.includes('reservation.get_all') && (
+          {userPermissions?.includes('service.get_all') && (
             <TabPanel header="Xidmətlər">
               <ServicesTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('service.get_all') && (
+          {userPermissions?.includes('reservation.get_all') && (
             <TabPanel header="Rezervlər">
               <BookingTable userPermissions={userPermissions} />
             </TabPanel>
