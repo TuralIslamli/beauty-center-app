@@ -117,16 +117,18 @@ const CreateUpdateDialog = ({
       //   'service_types',
       //   service.service_types?.map((i) => ({ id: i.id }))
       // );
-      const actualStatus = () => {
-        return booking.status !== 2
-          ? serviceStatuses.find((status) => status?.id === booking.status)
-          : {
-              id: 1,
-              name: 'Gəldi',
-            };
-      };
-      setValue('status', actualStatus()?.id);
-      setSelectedStatus(actualStatus);
+      // const actualStatus = () => {
+      //   return booking.status !== 2
+      //     ? serviceStatuses.find((status) => status?.id === booking.status)
+      //     : {
+      //         id: 1,
+      //         name: 'Gəldi',
+      //       };
+      // };
+      setValue('status', booking.status);
+      setSelectedStatus(
+        serviceStatuses.find((status) => status?.id === booking.status)
+      );
       setSelectedDoctor(doctors?.find((doc) => doc.id === booking.doctor?.id));
       // setSelectedServiceTypes(booking.service_types);
     }
@@ -356,26 +358,24 @@ const CreateUpdateDialog = ({
           <div style={{ display: 'flex', marginBottom: '10px' }}>
             {bookingStatuses?.map((status) => {
               return (
-                status?.id !== 2 && (
-                  <div key={status?.id}>
-                    <RadioButton
-                      inputId={status?.name}
-                      name="status"
-                      value={status}
-                      onChange={(e: RadioButtonChangeEvent) => {
-                        setSelectedStatus(e.value);
-                        setValue('status', e.value.id);
-                      }}
-                      checked={selectedStatus?.id === status?.id}
-                    />
-                    <label
-                      htmlFor={status?.name}
-                      style={{ marginRight: '10px', marginLeft: '4px' }}
-                    >
-                      {status?.name}
-                    </label>
-                  </div>
-                )
+                <div key={status?.id}>
+                  <RadioButton
+                    inputId={status?.name}
+                    name="status"
+                    value={status}
+                    onChange={(e: RadioButtonChangeEvent) => {
+                      setSelectedStatus(e.value);
+                      setValue('status', e.value.id);
+                    }}
+                    checked={selectedStatus?.id === status?.id}
+                  />
+                  <label
+                    htmlFor={status?.name}
+                    style={{ marginRight: '10px', marginLeft: '4px' }}
+                  >
+                    {status?.name}
+                  </label>
+                </div>
               );
             })}
           </div>
