@@ -75,17 +75,20 @@ export default {
     service_types,
     doctor_id,
   }: IBookingTableProps): Promise<T> =>
-    axiosApi.get(`reservations?page=${page}&size=${size}&sort=desc`, {
-      params: {
-        status,
-        from_date,
-        to_date,
-        client_name,
-        client_phone,
-        service_types,
-        doctor_id,
-      },
-    }),
+    axiosApi.get(
+      `reservations?page=${page}&size=${size}&sort=asc&sorted_column=date_time`,
+      {
+        params: {
+          status,
+          from_date,
+          to_date,
+          client_name,
+          client_phone,
+          service_types,
+          doctor_id,
+        },
+      }
+    ),
   getServices: <T>({
     page,
     size,
@@ -109,7 +112,8 @@ export default {
       },
     }),
   deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
-  deleteBooking: (id: number | undefined) => axiosApi.delete(`reservations/${id}`),
+  deleteBooking: (id: number | undefined) =>
+    axiosApi.delete(`reservations/${id}`),
   getTotalAmount: <T>({
     status,
     from_date,

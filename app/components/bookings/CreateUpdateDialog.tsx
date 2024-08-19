@@ -21,6 +21,7 @@ import { bookingStatuses, paymentTypes, serviceStatuses } from '../consts';
 import { Calendar } from 'primereact/calendar';
 import { Nullable } from 'primereact/ts-helpers';
 import { formatDate } from '@/app/utils';
+import { Message } from 'primereact/message';
 
 interface IDialogProps {
   dialog: boolean;
@@ -338,7 +339,7 @@ const CreateUpdateDialog = ({
               render={({ field }) => (
                 <Dropdown
                   disabled={!date}
-                  style={{ marginBottom: '10px', marginLeft: '10px' }}
+                  style={{ marginBottom: '10px', marginLeft: '5px', marginRight: '10px' }}
                   value={selectedHour}
                   onChange={(e) => {
                     setSelectedHour(e.value);
@@ -352,6 +353,15 @@ const CreateUpdateDialog = ({
                 />
               )}
             />
+           {selectedHour?.remaining_space && <Message
+              style={{
+                border: 'solid #111827',
+              }}
+              severity="info"
+              content={<div style={{
+                color: 'white'
+              }}>Yer: {selectedHour?.remaining_space}</div>}
+            />}
           </div>
         </>
         {userPermissions.includes('service.variable.status') && booking?.id && (

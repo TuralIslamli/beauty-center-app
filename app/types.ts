@@ -1,4 +1,4 @@
-import { Nullable } from "primereact/ts-helpers";
+import { Nullable } from 'primereact/ts-helpers';
 
 export interface ITotalAmount {
   pos: string;
@@ -120,7 +120,6 @@ export interface IService {
   reject_comment?: string;
 }
 
-
 export interface IBooking {
   id: number;
   status: number;
@@ -175,6 +174,7 @@ export interface IHour {
   id?: number;
   time?: string;
   active?: boolean;
+  remaining_space: string;
 }
 
 export interface IDoctorRS {
