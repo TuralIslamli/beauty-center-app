@@ -270,7 +270,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
       userPermissions.includes('service.filter.status') && (
         <Dropdown
           value={filteredStatus}
-          options={serviceStatuses}
+          options={bookingStatuses}
           onChange={(e: DropdownChangeEvent) => {
             setFilteredStatus(e.value);
           }}
