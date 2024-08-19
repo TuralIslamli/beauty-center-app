@@ -30,23 +30,23 @@ axiosInstance.interceptors.request.use(
 );
 
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => response.data,
+  (response: AxiosResponse) => response?.data,
   async (error: AxiosError<any>) => {
     if (
       error.response &&
-      error.response.data.message === "USER_NOT_AUTHORIZED"
+      error.response?.data.message === "USER_NOT_AUTHORIZED"
     ) {
       localStorage.clear();
       redirect("/login");
     } else if (
-      (error.response && error.response.data.message) ||
+      (error.response && error.response?.data.message) ||
       error.message
     ) {
       if (toast) {
         toast.show({
           severity: "error",
           summary: "Error",
-          detail: error.response!.data.message || error.message,
+          detail: error.response?.data.message || error.message,
           life: 3000,
         });
       }

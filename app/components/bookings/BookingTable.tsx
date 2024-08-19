@@ -8,46 +8,42 @@ import { Tag } from 'primereact/tag';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import {
+  IBooking,
+  IBookingsData,
   IDoctor,
   IDoctorRS,
-  IService,
   IServiceType,
   IServiceTypeRS,
-  IServicesData,
   ITotalAmount,
 } from '../../types';
 import api from '../../api';
-import { serviceStatuses } from '../consts';
+import { bookingStatuses, serviceStatuses } from '../consts';
 import CreateUpdateDialog from './CreateUpdateDialog';
-import ReportsDialog from './ReportsDialog';
 import React from 'react';
 import { Calendar } from 'primereact/calendar';
 import { formatDate, haveFilterPermissions } from '@/app/utils';
 import { InputText } from 'primereact/inputtext';
-import { Message } from 'primereact/message';
-import { MultiSelect } from 'primereact/multiselect';
 import { Skeleton } from 'primereact/skeleton';
 import { InputNumber } from 'primereact/inputnumber';
 import { useDebounce } from 'primereact/hooks';
-import DeleteServiceDialog from './DeleteServiceDialog';
+import DeleteBookingDialoq from './DeleteBookingDialoq';
 
-interface IServicesTableProps {
+interface IBookingTableProps {
   userPermissions: string[];
 }
 
-function ServicesTable({ userPermissions }: IServicesTableProps) {
-  const [services, setServices] = useState<IService[]>([]);
+function BookingTable({ userPermissions }: IBookingTableProps) {
+  const [bookings, setBookings] = useState<IBooking[]>([]);
   const [filteredStatus, setFilteredStatus] = useState<{
     id: number;
     name: string;
   } | null>(null);
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
   const [doctors, setDoctors] = useState<IDoctor[]>();
-  const [service, setService] = useState<IService>();
+  const [booking, setBooking] = useState<IBooking>();
   const [doctor, setDoctor] = useState<IDoctor>();
   const [dialog, setDialog] = useState(false);
   const [filter, setFilter] = useState(false);
-  const [reportsDialog, setReportsDialog] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
   const [serviceDeleteDialog, setServiceDeleteDialog] = useState(false);
   const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
@@ -75,42 +71,26 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     });
   };
 
-  const editService = (newService: IService) => {
-    setService(newService);
+  const editService = (newBooking: IBooking) => {
+    setBooking(newBooking);
     setDialog(true);
   };
 
-  const getServices = async (page = 1, isOnPageChange?: boolean) => {
+  const getBookings = async (page = 1, isOnPageChange?: boolean) => {
     setIsLoading(true);
     try {
-      const { data, meta }: IServicesData = await api.getServices({
+      const { data, meta }: IBookingsData = await api.getBookings({
         page,
         size: rows,
         status: filteredStatus?.id,
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
         client_name: debouncedClientName,
-        client_phone: debouncedClientPhone,
-        service_types: serviceTypesFilter?.map((i) => i.id),
-        user_id: doctor?.id,
+        doctor_id: doctor?.id,
       });
 
-      setServices(data);
+      setBookings(data);
       setTotal(meta?.total);
-
-      if (userPermissions.includes('service.get_all.total_amount')) {
-        const total: ITotalAmount = await api.getTotalAmount({
-          status: filteredStatus?.id,
-          from_date: formatDate(dates[0]),
-          to_date: formatDate(dates[1]),
-          client_name: debouncedClientName,
-          client_phone: debouncedClientPhone,
-          service_types: serviceTypesFilter?.map((i) => i.id),
-          user_id: doctor?.id,
-        });
-
-        setTotalAmount(total);
-      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -122,7 +102,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   useEffect(() => {
     if (dates[1]) {
-      getServices();
+      getBookings();
     }
   }, [
     filteredStatus?.name,
@@ -150,27 +130,27 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   const onPageChange = (event: PaginatorPageChangeEvent) => {
     setFirst(event.first);
-    getServices(event.page + 1, true);
+    getBookings(event.page + 1, true);
   };
 
-  const onDownloadAllReports = () => {
-    api.getAllReportsExcel({
-      status: filteredStatus?.id,
-      from_date: formatDate(dates[0]),
-      to_date: formatDate(dates[1]),
-      client_name: debouncedClientName,
-      client_phone: debouncedClientPhone,
-      service_types: serviceTypesFilter?.map((i) => i.id),
-      user_id: doctor?.id,
-    });
-  };
+  // const onDownloadAllReports = () => {
+  //   api.getAllReportsExcel({
+  //     status: filteredStatus?.id,
+  //     from_date: formatDate(dates[0]),
+  //     to_date: formatDate(dates[1]),
+  //     client_name: debouncedClientName,
+  //     client_phone: debouncedClientPhone,
+  //     service_types: serviceTypesFilter?.map((i) => i.id),
+  //     user_id: doctor?.id,
+  //   });
+  // };
 
-  const confirmDeleteService = (service: IService) => {
-    setService(service);
+  const confirmDeleteService = (booking: IBooking) => {
+    setBooking(booking);
     setServiceDeleteDialog(true);
   };
 
-  const actionBodyTemplate = (rowData: IService) =>
+  const actionBodyTemplate = (rowData: IBooking) =>
     isLoading ? (
       <Skeleton width="60px" />
     ) : (
@@ -184,7 +164,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           onClick={() => editService(rowData)}
         />
 
-        {userPermissions?.includes('service.delete') && (
+        {userPermissions?.includes('reservation.delete') && (
           <Button
             icon="pi pi-trash"
             rounded
@@ -214,120 +194,72 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           icon="pi pi-refresh"
           rounded
           raised
-          onClick={() => getServices()}
+          onClick={() => getBookings()}
         />
       </div>
-      <div>
-        {userPermissions.includes('service.all_reports') &&
-          !!services.length && (
-            <Button
-              label="Export"
-              icon="pi pi-upload"
-              severity="success"
-              onClick={onDownloadAllReports}
-              style={{ marginRight: '10px' }}
-            />
-          )}
-        {userPermissions.includes('service.daily_report') && (
-          <Button
-            label="Gün sonu"
-            icon="pi pi-file-excel"
-            severity="success"
-            onClick={() => setReportsDialog(true)}
-            style={{ marginRight: '10px' }}
-          />
-        )}
-        <Button
-          label="Əlavə et"
-          icon="pi pi-plus"
-          onClick={() => setDialog(true)}
-        />
-      </div>
+      <Button
+        label="Əlavə et"
+        icon="pi pi-plus"
+        onClick={() => setDialog(true)}
+      />
     </div>
   );
 
-  const dateBodyTemplate = (rowData: IService) =>
-    isLoading ? <Skeleton width="100px" /> : rowData.created_at.slice(0, -3);
+  const dateBodyTemplate = (rowData: IBooking) =>
+    isLoading ? (
+      <Skeleton width="100px" />
+    ) : (
+      rowData.reservation_date.slice(0, -3)
+    );
 
-  const getDoctorFullName = (rowData: IService) =>
+  const getDoctorFullName = (rowData: IBooking) =>
     isLoading ? (
       <Skeleton width="150px" />
     ) : (
-      `${rowData.user?.name} ${rowData.user?.surname}`
+      rowData.doctor?.name &&
+      `${rowData.doctor?.name} ${rowData.doctor?.surname}`
     );
 
-  const clientNameBody = (rowData: IService) =>
+  const clientNameBody = (rowData: IBooking) =>
     isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_name}</div>;
 
-  const clientPhoneBody = (rowData: IService) =>
+  const clientPhoneBody = (rowData: IBooking) =>
     isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_phone}</div>;
-
-  const priceBodyTemplate = (rowData: IService) => {
-    const formatter = new Intl.NumberFormat('az-AZ', {
-      style: 'currency',
-      currency: 'AZN',
-    });
-
-    const parts = formatter.formatToParts(+rowData.amount);
-    const currencySymbol =
-      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
-    const formattedPrice = parts
-      .filter((part) => part.type !== 'currency')
-      .map((part) => part.value)
-      .join('');
-
-    return isLoading ? (
-      <Skeleton width="100px" />
-    ) : (
-      `${formattedPrice} ${currencySymbol}`
-    );
-  };
 
   const getSeverity = (status?: string) => {
     switch (status) {
-      case 'Rejected':
+      case 'Ləğv':
         return 'danger';
 
-      case 'Accepted':
+      case 'Gəldi':
         return 'success';
 
-      case 'New':
+      case 'Gözlənilir':
         return 'info';
     }
   };
 
-  const statusBody = (rowData: IService) => {
-    const status = serviceStatuses.find(
+  const statusBody = (rowData: IBooking) => {
+    const status = bookingStatuses.find(
       (status) => status?.id === rowData.status
     )?.name;
-    const onRejectClick = () => {
-      if (status === 'Rejected') {
-        setRejectComment(rowData.reject_comment);
-        setRejectDialog(true);
-      }
-    };
     return isLoading ? (
       <Skeleton width="100px" />
     ) : (
-      <Tag
-        onClick={onRejectClick}
-        icon={status === 'Rejected' && 'pi pi-info-circle'}
-        value={status}
-        severity={getSeverity(status)}
-      />
+      <Tag value={status} severity={getSeverity(status)} />
     );
   };
 
-  const serviceTypesBody = (rowData: IService) =>
-    isLoading ? (
-      <Skeleton width="100px" />
-    ) : (
-      <div>
-        {rowData.service_types.map((i) => (
-          <div key={i.id}>{i.name}</div>
-        ))}
-      </div>
-    );
+  // const serviceTypesBody = (rowData: IBooking) =>
+  //   isLoading ? (
+  //     <Skeleton width="100px" />
+  //   ) : (
+  //     <div>
+  //       {rowData.service_types?.map((i) => (
+  //         <div key={i.id}>{i.name}</div>
+  //       ))}
+  //     </div>
+  //   );
 
   const statusItemTemplate = (option: any) => {
     return <Tag value={option.name} severity={getSeverity(option.name)} />;
@@ -353,41 +285,41 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     );
   };
 
-  const serviceTypeRowFilterTemplate = () => {
-    return (
-      userPermissions.includes('service.filter.service_type') && (
-        <MultiSelect
-          filter
-          value={serviceTypesFilter}
-          onChange={(e) => {
-            setServiceTypesFilter(e.value);
-          }}
-          options={serviceTypes}
-          placeholder="Xidmət seçin"
-          optionLabel="name"
-          showClear
-        />
-      )
-    );
-  };
+  // const serviceTypeRowFilterTemplate = () => {
+  //   return (
+  //     userPermissions.includes('service.filter.service_type') && (
+  //       <MultiSelect
+  //         filter
+  //         value={serviceTypesFilter}
+  //         onChange={(e) => {
+  //           setServiceTypesFilter(e.value);
+  //         }}
+  //         options={serviceTypes}
+  //         placeholder="Xidmət seçin"
+  //         optionLabel="name"
+  //         showClear
+  //       />
+  //     )
+  //   );
+  // };
 
-  const doctorsRowFilterTemplate = () => {
-    return (
-      userPermissions.includes('service.filter.doctor') && (
-        <Dropdown
-          filter
-          value={doctor}
-          onChange={(e) => {
-            setDoctor(e.value);
-          }}
-          options={doctors}
-          placeholder="Həkim seçin"
-          optionLabel="full_name"
-          showClear
-        />
-      )
-    );
-  };
+  // const doctorsRowFilterTemplate = () => {
+  //   return (
+  //     userPermissions.includes('service.filter.doctor') && (
+  //       <Dropdown
+  //         filter
+  //         value={doctor}
+  //         onChange={(e) => {
+  //           setDoctor(e.value);
+  //         }}
+  //         options={doctors}
+  //         placeholder="Həkim seçin"
+  //         optionLabel="full_name"
+  //         showClear
+  //       />
+  //     )
+  //   );
+  // };
 
   const dateRowFilterTemplate = () => {
     return (
@@ -434,15 +366,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     );
   };
 
-  const content = (
-    <div>
-      <div className="ml-2">Nağd: {totalAmount?.cash} AZN</div>
-      <div className="ml-2">Kart: {totalAmount?.pos} AZN</div>
-      <div className="ml-2">Toplam: {totalAmount?.total} AZN</div>
-    </div>
-  );
-
-  const idBodyTemplate = (rowData: IService, options: any) =>
+  const idBodyTemplate = (rowData: IBooking, options: any) =>
     isLoading ? (
       <Skeleton width="20px" />
     ) : (
@@ -451,7 +375,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   return (
     <>
       <DataTable
-        value={services}
+        value={bookings}
         dataKey="id"
         header={header}
         tableStyle={{ minWidth: '50rem' }}
@@ -493,33 +417,28 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           ></Column>
         )}
         <Column
-          header="Xidmət"
-          style={{ width: '10%' }}
-          showFilterMenu={false}
-          filter={userPermissions.includes('service.variable.service_type_id')}
-          filterElement={serviceTypeRowFilterTemplate}
-          body={serviceTypesBody}
-        ></Column>
-        <Column
-          header="Həkim"
-          body={getDoctorFullName}
-          style={{ width: '10%' }}
-          showFilterMenu={false}
-          filter={userPermissions.includes('service.variable.user_id')}
-          filterElement={doctorsRowFilterTemplate}
-        ></Column>
-        <Column
-          header="Məbləğ"
-          body={priceBodyTemplate}
-          style={{ width: '10%' }}
-        ></Column>
-        <Column
           header="Status"
           body={statusBody}
           style={{ width: '10%' }}
           showFilterMenu={false}
           filter
           filterElement={statusRowFilterTemplate}
+        ></Column>
+        {/* <Column
+          header="Xidmət"
+          style={{ width: '10%' }}
+          showFilterMenu={false}
+          // filter={userPermissions.includes('service.variable.service_type_id')}
+          // filterElement={serviceTypeRowFilterTemplate}
+          // body={serviceTypesBody}
+        ></Column> */}
+        <Column
+          header="Həkim"
+          body={getDoctorFullName}
+          style={{ width: '10%' }}
+          showFilterMenu={false}
+          // filter={userPermissions.includes('service.variable.user_id')}
+          // filterElement={doctorsRowFilterTemplate}
         ></Column>
         {userPermissions.includes('service.update') && (
           <Column
@@ -537,7 +456,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           onPageChange={onPageChange}
         />
       </div>
-      {userPermissions.includes('service.get_all.total_amount') && (
+      {/* {userPermissions.includes('service.get_all.total_amount') && (
         <Message
           style={{
             border: 'solid #696cff',
@@ -547,7 +466,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           severity="info"
           content={content}
         />
-      )}
+      )} */}
 
       <Toast ref={toast} />
       <CreateUpdateDialog
@@ -555,11 +474,10 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         dialog={dialog}
         setDialog={setDialog}
         showSuccess={showSuccess}
-        service={service}
-        setService={setService}
-        getServices={getServices}
+        booking={booking}
+        setBooking={setBooking}
+        getBookings={getBookings}
       />
-      <ReportsDialog dialog={reportsDialog} setDialog={setReportsDialog} />
       <Dialog
         header="Reject comment"
         visible={rejectDialog}
@@ -572,15 +490,15 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       >
         <p className="m-0">{rejectComment}</p>
       </Dialog>
-      <DeleteServiceDialog
-        service={service}
+      <DeleteBookingDialoq
+        booking={booking}
         deleteDialog={serviceDeleteDialog}
         setDeleteDialog={setServiceDeleteDialog}
         showSuccess={showSuccess}
-        getServices={getServices}
+        getBookings={getBookings}
       />
     </>
   );
 }
 
-export default ServicesTable;
+export default BookingTable;

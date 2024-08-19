@@ -30,3 +30,19 @@ export const serviceStatuses = [
     name: 'Rejected',
   },
 ];
+
+export const bookingStatuses = [
+  {
+    id: 0,
+    name: 'Ləğv',
+  },
+  {
+    id: 1,
+    name: 'Gəldi',
+  },
+  ,
+  {
+    id: 2,
+    name: 'Gözlənilir',
+  },
+];

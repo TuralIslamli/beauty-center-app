@@ -1,3 +1,5 @@
+import { Nullable } from "primereact/ts-helpers";
+
 export interface ITotalAmount {
   pos: string;
   cash: string;
@@ -59,6 +61,16 @@ export interface IServicesTableProps extends INavigationProps {
   user_id?: number;
 }
 
+export interface IBookingTableProps extends INavigationProps {
+  status?: number;
+  from_date: string;
+  to_date: string;
+  client_name?: string;
+  client_phone?: number | null;
+  service_types?: IServiceType[] | number[];
+  doctor_id?: number;
+}
+
 export interface IServiceTypesData {
   data: IServiceType[];
   meta: { total: number };
@@ -70,9 +82,25 @@ export interface IServiceType {
   price: string;
 }
 
+export interface IBookingTimeData {
+  data: IBookingTime[];
+  meta: { total: number };
+}
+
+export interface IBookingTime {
+  id: number;
+  time: string;
+  reservation_count: string;
+}
+
 export interface IServiceTypeFields {
   name: string;
   price: number;
+}
+
+export interface IBookingTimeFields {
+  time: string;
+  reservation_count: number;
 }
 
 export interface IServiceTypeRS {
@@ -92,11 +120,26 @@ export interface IService {
   reject_comment?: string;
 }
 
+
+export interface IBooking {
+  id: number;
+  status: number;
+  reservation_date: string;
+  client_name: string;
+  client_phone: string;
+  doctor: IUser;
+}
+
 export interface IServiceRS {
   data: IService;
 }
 export interface IServicesData {
   data: IService[];
+  meta: { total: number };
+}
+
+export interface IBookingsData {
+  data: IBooking[];
   meta: { total: number };
 }
 
@@ -112,13 +155,34 @@ export interface IServiceFields {
   id?: number;
 }
 
+export interface IBookingFields {
+  // service_types: { id: number }[];
+  client_name: string;
+  client_phone?: string;
+  doctor_id?: number;
+  reservation_date: Nullable<Date> | string;
+  hour?: string;
+  id?: number;
+  status?: number;
+}
+
 export interface IDoctor {
   id: number;
   full_name?: string;
 }
 
+export interface IHour {
+  id?: number;
+  time?: string;
+  active?: boolean;
+}
+
 export interface IDoctorRS {
   data: IDoctor[];
+}
+
+export interface IHourRS {
+  data: IHour[];
 }
 
 export interface IBonusesProps {

@@ -1,6 +1,10 @@
-import { axiosApi } from "../lib/axios";
+import { axiosApi } from '../lib/axios';
 import {
   IBonusesProps,
+  IBookingFields,
+  IBookingTableProps,
+  IBookingTime,
+  IBookingTimeFields,
   ILoginFields,
   INavigationProps,
   IServiceFields,
@@ -9,17 +13,32 @@ import {
   IServicesTableProps,
   IUpdateUser,
   IUserFields,
-} from "./types";
+} from './types';
 
 export default {
   postLogin: <T>(payload: ILoginFields): Promise<T> =>
-    axiosApi.post("login", payload),
-  getSelfInfo: <T>(): Promise<T> => axiosApi.get("users/self-info"),
+    axiosApi.post('login', payload),
+  getSelfInfo: <T>(): Promise<T> => axiosApi.get('users/self-info'),
   getServiceTypes: <T>({ page, size }: INavigationProps): Promise<T> =>
     axiosApi.get(`service-types?page=${page}&size=${size}`),
+  getBookingTimes: <T>({ page, size }: INavigationProps): Promise<T> =>
+    axiosApi.get(`reservation-times?page=${page}&size=${size}`),
+  createBookingTime: <T>({
+    time,
+    reservation_count,
+  }: IBookingTimeFields): Promise<T> =>
+    axiosApi.post('reservation-times', { time, reservation_count }),
+  updateBookingTime: <T>({
+    id,
+    time,
+    reservation_count,
+  }: IBookingTime): Promise<T> =>
+    axiosApi.put(`reservation-times/${id}`, { time, reservation_count }),
+  deleteBookingTime: (id: number | undefined) =>
+    axiosApi.delete(`reservation-times/${id}`),
   deleteUser: (id: number | undefined) => axiosApi.delete(`users/${id}`),
   createUser: <T>(payload: IUserFields): Promise<T> =>
-    axiosApi.post("users", payload),
+    axiosApi.post('users', payload),
   updateUser: <T>({
     name,
     surname,
@@ -40,11 +59,33 @@ export default {
   updateServiceType: <T>({ id, name, price }: IServiceType): Promise<T> =>
     axiosApi.put(`service-types/${id}`, { name, price }),
   createServiceType: <T>({ name, price }: IServiceTypeFields): Promise<T> =>
-    axiosApi.post("service-types", { name, price }),
+    axiosApi.post('service-types', { name, price }),
   deleteServiceType: (id: number | undefined) =>
     axiosApi.delete(`service-types/${id}`),
   getUsers: <T>({ page, size }: INavigationProps): Promise<T> =>
     axiosApi.get(`users?page=${page}&size=${size}`),
+  getBookings: <T>({
+    page,
+    size,
+    status,
+    from_date,
+    to_date,
+    client_name,
+    client_phone,
+    service_types,
+    doctor_id,
+  }: IBookingTableProps): Promise<T> =>
+    axiosApi.get(`reservations?page=${page}&size=${size}&sort=desc`, {
+      params: {
+        status,
+        from_date,
+        to_date,
+        client_name,
+        client_phone,
+        service_types,
+        doctor_id,
+      },
+    }),
   getServices: <T>({
     page,
     size,
@@ -67,7 +108,8 @@ export default {
         user_id,
       },
     }),
-    deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
+  deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
+  deleteBooking: (id: number | undefined) => axiosApi.delete(`reservations/${id}`),
   getTotalAmount: <T>({
     status,
     from_date,
@@ -88,36 +130,41 @@ export default {
         user_id,
       },
     }),
-  getDoctors: <T>(): Promise<T> => axiosApi.get("users/input-search"),
+  getDoctors: <T>(): Promise<T> => axiosApi.get('users/input-search'),
+  getHours: <T>(date: string): Promise<T> =>
+    axiosApi.get(`reservation-times/input-search?date=${date}`),
   getInputServices: <T>(): Promise<T> =>
-    axiosApi.get("service-types/input-search"),
+    axiosApi.get('service-types/input-search'),
   createService: <T>(payload: IServiceFields): Promise<T> =>
-    axiosApi.post("services", payload),
+    axiosApi.post('services', payload),
+  createBooking: <T>(payload: IBookingFields): Promise<T> =>
+    axiosApi.post('reservations', payload),
   updateService: <T>(payload: IServiceFields): Promise<T> =>
     axiosApi.put(`services/${payload.id}`, payload),
-
+  updateBooking: <T>(payload: IBookingFields): Promise<T> =>
+    axiosApi.put(`reservations/${payload.id}`, payload),
   getDailyReportExcel: async (day: string) => {
     try {
       await axiosApi
         .get(`services/daily-report?excel_export=true&sorted_day=${day}`, {
-          responseType: "blob", // Указываем тип ответа
+          responseType: 'blob', // Указываем тип ответа
         })
         .then((data: any) => {
           {
             const blob = new Blob([data], {
-              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             });
             const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
+            const link = document.createElement('a');
             link.href = url;
-            link.setAttribute("download", `daily_report_${day}.xlsx`);
+            link.setAttribute('download', `daily_report_${day}.xlsx`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
           }
         });
     } catch (error) {
-      console.error("Error downloading the file", error);
+      console.error('Error downloading the file', error);
     }
   },
   getAllReportsExcel: async ({
@@ -132,7 +179,7 @@ export default {
     try {
       await axiosApi
         .get(`services/all-reports?excel_export=true&sort=desc`, {
-          responseType: "blob",
+          responseType: 'blob',
           params: {
             status,
             from_date,
@@ -145,13 +192,13 @@ export default {
         })
         .then((data: any) => {
           const blob = new Blob([data], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           });
           const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
+          const link = document.createElement('a');
           link.href = url;
           link.setAttribute(
-            "download",
+            'download',
             `general_report_${from_date}/${to_date}.xlsx`
           );
           document.body.appendChild(link);
@@ -159,7 +206,7 @@ export default {
           document.body.removeChild(link);
         });
     } catch (error) {
-      console.error("Error downloading the file", error);
+      console.error('Error downloading the file', error);
     }
   },
   getBonuses: <T>({ from_date, to_date, user_id }: IBonusesProps): Promise<T> =>
@@ -174,7 +221,7 @@ export default {
     try {
       await axiosApi
         .get(`services/bonus-reports?excel_export=true`, {
-          responseType: "blob",
+          responseType: 'blob',
           params: {
             from_date,
             to_date,
@@ -183,13 +230,13 @@ export default {
         })
         .then((data: any) => {
           const blob = new Blob([data], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           });
           const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
+          const link = document.createElement('a');
           link.href = url;
           link.setAttribute(
-            "download",
+            'download',
             `bonus_report_${from_date}/${to_date}.xlsx`
           );
           document.body.appendChild(link);
@@ -197,7 +244,7 @@ export default {
           document.body.removeChild(link);
         });
     } catch (error) {
-      console.error("Error downloading the file", error);
+      console.error('Error downloading the file', error);
     }
   },
 };
