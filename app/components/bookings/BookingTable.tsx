@@ -267,7 +267,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
 
   const statusRowFilterTemplate = () => {
     return (
-      userPermissions.includes('service.filter.status') && (
+      userPermissions.includes('reservation.filter.status') && (
         <Dropdown
           value={filteredStatus}
           options={bookingStatuses}
@@ -323,7 +323,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
 
   const dateRowFilterTemplate = () => {
     return (
-      userPermissions.includes('service.filter.date') && (
+      userPermissions.includes('reservation.filter.date') && (
         <Calendar
           value={dates}
           onChange={(e) => setDates(e.value)}
@@ -339,7 +339,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
 
   const clientRowFilterTemplate = () => {
     return (
-      userPermissions.includes('service.filter.client_name') && (
+      userPermissions.includes('reservation.filter.client_name') && (
         <InputText
           placeholder="Ad ilə axtarış"
           style={{ width: '160px' }}
@@ -352,7 +352,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
 
   const phoneRowFilterTemplate = () => {
     return (
-      userPermissions.includes('service.filter.client_phone') && (
+      userPermissions.includes('reservation.filter.client_phone') && (
         <InputNumber
           style={{ width: '180px' }}
           id="client_phone"
@@ -405,17 +405,15 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           showFilterMenu={false}
           body={clientNameBody}
         ></Column>
-        {userPermissions.includes('service.variable.select_phone') && (
-          <Column
-            field="client_phone"
-            header="Telefon"
-            style={{ width: '10%' }}
-            filter
-            filterElement={phoneRowFilterTemplate}
-            showFilterMenu={false}
-            body={clientPhoneBody}
-          ></Column>
-        )}
+        <Column
+          field="client_phone"
+          header="Telefon"
+          style={{ width: '10%' }}
+          filter
+          filterElement={phoneRowFilterTemplate}
+          showFilterMenu={false}
+          body={clientPhoneBody}
+        ></Column>
         <Column
           header="Status"
           body={statusBody}
@@ -440,7 +438,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           // filter={userPermissions.includes('service.variable.user_id')}
           // filterElement={doctorsRowFilterTemplate}
         ></Column>
-        {userPermissions.includes('service.update') && (
+        {userPermissions.includes('reservation.update') && (
           <Column
             body={actionBodyTemplate}
             exportable={false}
@@ -456,17 +454,6 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           onPageChange={onPageChange}
         />
       </div>
-      {/* {userPermissions.includes('service.get_all.total_amount') && (
-        <Message
-          style={{
-            border: 'solid #696cff',
-            borderWidth: '0 0 0 6px',
-            marginTop: '20px',
-          }}
-          severity="info"
-          content={content}
-        />
-      )} */}
 
       <Toast ref={toast} />
       <CreateUpdateDialog

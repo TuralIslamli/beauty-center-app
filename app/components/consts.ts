@@ -2,6 +2,7 @@ export const roles = [
   { id: 2, name: 'Admin' },
   { id: 3, name: 'Cashier' },
   { id: 4, name: 'Doctor' },
+  { id: 5, name: 'Reserver' },
 ];
 
 export const paymentTypes = [

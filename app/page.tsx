@@ -21,8 +21,10 @@ import BookingTable from './components/bookings/BookingTable';
 
 function Page() {
   const [userData, setUserData] = useState<IUser>();
+  const [activeIndex, setActiveIndex] = useState(0);
   const router = useRouter();
   const userPermissions = userData?.role.permissions.map((item) => item?.name);
+
   const onLogOut = () => {
     localStorage.clear();
     router.push('/login');
@@ -39,6 +41,9 @@ function Page() {
     const fetchData = async () => {
       try {
         const { data }: IUserRS = await api.getSelfInfo();
+        if (data?.role?.id === 5) {
+          setActiveIndex(1);
+        }
         setUserData(data);
       } catch (error) {
         console.error(error);
@@ -78,7 +83,7 @@ function Page() {
       </header>
       <Divider />
       <main className={styles.main}>
-        <TabView>
+        <TabView activeIndex={activeIndex}>
           {userPermissions?.includes('service.get_all') && (
             <TabPanel header="Xidmətlər">
               <ServicesTable userPermissions={userPermissions} />
@@ -89,12 +94,12 @@ function Page() {
               <BookingTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('service_type.get_all') && (
+          {userPermissions?.includes('reservation_time.get_all') && (
             <TabPanel header="Rezerv saatları">
               <BookingTimesTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('reservation_time.get_all') && (
+          {userPermissions?.includes('service_type.get_all') && (
             <TabPanel header="Xidmət növləri">
               <ServiceTypesTable userPermissions={userPermissions} />
             </TabPanel>

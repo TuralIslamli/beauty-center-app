@@ -216,76 +216,67 @@ const CreateUpdateDialog = ({
         onSubmit={handleSubmit(onSubmit)}
         style={{ display: 'flex', flexDirection: 'column' }}
       >
-        {userPermissions.includes('service.variable.client_name') && (
-          <>
-            <label style={{ marginBottom: '5px' }} htmlFor="name">
-              Müştəri adı:
-            </label>
-            <Controller
-              name="client_name"
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <InputText
-                  style={{ marginBottom: '10px' }}
-                  id="name"
-                  invalid={!!errors.client_name}
-                  {...field}
-                />
-              )}
-            />
-          </>
-        )}
+        <>
+          <label style={{ marginBottom: '5px' }} htmlFor="name">
+            Müştəri adı:
+          </label>
+          <Controller
+            name="client_name"
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <InputText
+                style={{ marginBottom: '10px' }}
+                id="name"
+                invalid={!!errors.client_name}
+                {...field}
+              />
+            )}
+          />
+        </>
 
-        {userPermissions.includes('service.variable.phone') && (
-          <>
-            <label style={{ marginBottom: '5px' }} htmlFor="name">
-              Telefon:
-            </label>
-            <Controller
-              name="client_phone"
-              control={control}
-              rules={{ minLength: 12, required: true }}
-              render={({ field }) => (
-                <InputMask
-                  style={{ marginBottom: '10px' }}
-                  id="client_phone"
-                  mask="+999 99 999-99-99"
-                  placeholder="+994 99 999-99-99"
-                  invalid={!!errors.client_phone}
-                  {...field}
-                />
-              )}
+        <label style={{ marginBottom: '5px' }} htmlFor="name">
+          Telefon:
+        </label>
+        <Controller
+          name="client_phone"
+          control={control}
+          rules={{ minLength: 12, required: true }}
+          render={({ field }) => (
+            <InputMask
+              style={{ marginBottom: '10px' }}
+              id="client_phone"
+              mask="+999 99 999-99-99"
+              placeholder="+994 99 999-99-99"
+              invalid={!!errors.client_phone}
+              {...field}
             />
-          </>
-        )}
+          )}
+        />
 
-        {userPermissions.includes('service.variable.user_id') && (
-          <>
-            <label style={{ marginBottom: '5px' }} htmlFor="email">
-              Həkim:
-            </label>
-            <Controller
-              name="doctor_id"
-              control={control}
-              render={({ field }) => (
-                <Dropdown
-                  filter
-                  style={{ marginBottom: '10px' }}
-                  value={selectedDoctor}
-                  onChange={(e) => {
-                    setSelectedDoctor(e.value);
-                    setValue('doctor_id', e.value.id);
-                  }}
-                  optionLabel="full_name"
-                  options={doctors}
-                  placeholder="Doktor seçin"
-                  invalid={!!errors.doctor_id}
-                />
-              )}
+        <label style={{ marginBottom: '5px' }} htmlFor="email">
+          Həkim:
+        </label>
+        <Controller
+          name="doctor_id"
+          control={control}
+          render={({ field }) => (
+            <Dropdown
+              filter
+              style={{ marginBottom: '10px' }}
+              value={selectedDoctor}
+              onChange={(e) => {
+                setSelectedDoctor(e.value);
+                setValue('doctor_id', e.value.id);
+              }}
+              optionLabel="full_name"
+              options={doctors}
+              placeholder="Doktor seçin"
+              invalid={!!errors.doctor_id}
             />
-          </>
-        )}
+          )}
+        />
+
         {/* {userPermissions.includes('service.variable.service_type_id') && (
           <>
             <label style={{ marginBottom: '5px' }} htmlFor="email">
@@ -339,7 +330,11 @@ const CreateUpdateDialog = ({
               render={({ field }) => (
                 <Dropdown
                   disabled={!date}
-                  style={{ marginBottom: '10px', marginLeft: '5px', marginRight: '10px' }}
+                  style={{
+                    marginBottom: '10px',
+                    marginLeft: '5px',
+                    marginRight: '10px',
+                  }}
                   value={selectedHour}
                   onChange={(e) => {
                     setSelectedHour(e.value);
@@ -353,18 +348,26 @@ const CreateUpdateDialog = ({
                 />
               )}
             />
-           {selectedHour?.remaining_space && <Message
-              style={{
-                border: 'solid #111827',
-              }}
-              severity="info"
-              content={<div style={{
-                color: 'white'
-              }}>Yer: {selectedHour?.remaining_space}</div>}
-            />}
+            {selectedHour?.remaining_space && (
+              <Message
+                style={{
+                  border: 'solid #111827',
+                }}
+                severity="info"
+                content={
+                  <div
+                    style={{
+                      color: 'white',
+                    }}
+                  >
+                    Yer: {selectedHour?.remaining_space}
+                  </div>
+                }
+              />
+            )}
           </div>
         </>
-        {userPermissions.includes('service.variable.status') && booking?.id && (
+        {booking?.id && (
           <div style={{ display: 'flex', marginBottom: '10px' }}>
             {bookingStatuses?.map((status) => {
               return (

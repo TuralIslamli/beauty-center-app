@@ -124,7 +124,7 @@ function BookingTimes({ userPermissions }: IBookingTimeProps) {
     setDeleteDiaolog(true);
   };
 
-  const header = userPermissions?.includes('service_type.create') && (
+  const header = userPermissions?.includes('reservation_time.create') && (
     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
       <Button
         label="Əlavə et"
@@ -172,14 +172,14 @@ function BookingTimes({ userPermissions }: IBookingTimeProps) {
           editor={(options) => priceEditor(options)}
           style={{ width: '40%' }}
         ></Column>
-        {userPermissions?.includes('service_type.update') && (
+        {userPermissions?.includes('reservation_time.update') && (
           <Column
             rowEditor={allowEdit}
             headerStyle={{ width: '10%' }}
             bodyStyle={{ textAlign: 'center' }}
           ></Column>
         )}
-        {userPermissions?.includes('service_type.delete') && (
+        {userPermissions?.includes('reservation_time.delete') && (
           <Column
             body={actionBodyTemplate}
             exportable={false}

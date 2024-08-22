@@ -20,6 +20,12 @@ export const haveFilterPermissions = (permissions: string[]) => {
     "service.filter.client_phone",
     "service.filter.service_type",
     "service.filter.doctor",
+    "reservation.filter.status",
+    "reservation.filter.date",
+    "reservation.filter.client_name",
+    "reservation.filter.client_phone",
+    "reservation.filter.service_type",
+    "reservation.filter.doctor",
   ];
   for (const filter of filters) {
     if (permissions.includes(filter)) {
