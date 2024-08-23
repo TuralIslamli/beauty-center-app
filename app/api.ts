@@ -52,7 +52,7 @@ export default {
       name,
       surname,
       email,
-      roleId,
+      role_id: roleId,
       password,
       password_repeat,
     }),
