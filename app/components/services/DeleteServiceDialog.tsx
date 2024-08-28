@@ -1,15 +1,15 @@
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import React, { Dispatch, SetStateAction } from "react";
-import api from "@/app/api";
-import { IService } from "@/app/types";
+import { Button } from 'primereact/button';
+import { Dialog } from 'primereact/dialog';
+import React, { Dispatch, SetStateAction } from 'react';
+import api from '@/app/api';
+import { IService } from '@/app/types';
 
 interface IProps {
   service?: IService;
   deleteDialog: boolean;
   setDeleteDialog: (state: boolean) => void;
   showSuccess: (message: string) => void;
-  getServices: () => Promise<void>;
+  getServices: (page: number) => Promise<void>;
 }
 
 function DeleteServiceDialog({
@@ -24,8 +24,8 @@ function DeleteServiceDialog({
       .deleteService(service?.id)
       .then(() => {
         setDeleteDialog(false);
-        getServices();
-        showSuccess("Service has been successfully deleted");
+        getServices(1);
+        showSuccess('Service has been successfully deleted');
       })
       .catch((error) => {
         console.error(error);
@@ -51,8 +51,8 @@ function DeleteServiceDialog({
   return (
     <Dialog
       visible={deleteDialog}
-      style={{ width: "32rem" }}
-      breakpoints={{ "960px": "75vw", "641px": "90vw" }}
+      style={{ width: '32rem' }}
+      breakpoints={{ '960px': '75vw', '641px': '90vw' }}
       header="Confirm"
       modal
       footer={deleteProductDialogFooter}
@@ -61,7 +61,7 @@ function DeleteServiceDialog({
       <div className="confirmation-content">
         <i
           className="pi pi-exclamation-triangle"
-          style={{ fontSize: "2rem", marginRight: "10px" }}
+          style={{ fontSize: '2rem', marginRight: '10px' }}
         />
         {service && (
           <span>

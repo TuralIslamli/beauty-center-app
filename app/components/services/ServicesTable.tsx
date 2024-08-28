@@ -51,6 +51,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const [rejectDialog, setRejectDialog] = useState(false);
   const [serviceDeleteDialog, setServiceDeleteDialog] = useState(false);
   const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
+  const [page, setPage] = useState(1);
   const [serviceTypesFilter, setServiceTypesFilter] =
     useState<IServiceType[]>();
   const [clientPhone, debouncedClientPhone, setClientPhone] = useDebounce<
@@ -80,7 +81,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
     setDialog(true);
   };
 
-  const getServices = async (page = 1, isOnPageChange?: boolean) => {
+  const getServices = async (page: number, isOnPageChange?: boolean) => {
     setIsLoading(true);
     try {
       const { data, meta }: IServicesData = await api.getServices({
@@ -122,7 +123,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
 
   useEffect(() => {
     if (dates[1]) {
-      getServices();
+      getServices(page);
     }
   }, [
     filteredStatus?.name,
@@ -151,6 +152,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const onPageChange = (event: PaginatorPageChangeEvent) => {
     setFirst(event.first);
     getServices(event.page + 1, true);
+    setPage(event.page + 1);
   };
 
   const onDownloadAllReports = () => {
@@ -214,7 +216,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           icon="pi pi-refresh"
           rounded
           raised
-          onClick={() => getServices()}
+          onClick={() => getServices(page)}
         />
       </div>
       <div>

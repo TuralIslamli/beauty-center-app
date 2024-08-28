@@ -28,7 +28,7 @@ interface IDialogProps {
   setDialog: (state: boolean) => void;
   userPermissions: string[];
   showSuccess: (message: string) => void;
-  getServices: () => Promise<void>;
+  getServices: (page: number) => Promise<void>;
   service?: IService;
   setService: Dispatch<SetStateAction<IService | undefined>>;
 }
@@ -120,7 +120,7 @@ const CreateUpdateDialog = ({
               .replace(/[\s-]/g, ''),
           });
       showSuccess(`Service has been successfull created`);
-      getServices();
+      getServices(1);
       setDialog(false);
     } catch (error) {
       console.error(error);

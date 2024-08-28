@@ -28,7 +28,7 @@ interface IDialogProps {
   setDialog: (state: boolean) => void;
   userPermissions: string[];
   showSuccess: (message: string) => void;
-  getBookings: () => Promise<void>;
+  getBookings: (page: number) => Promise<void>;
   booking?: IBooking;
   setBooking: Dispatch<SetStateAction<IBooking | undefined>>;
 }
@@ -94,7 +94,7 @@ const CreateUpdateDialog = ({
             reservation_date: `${formatDate(date)} ${selectedHour?.time}`,
           });
       showSuccess(`Service has been successfull created`);
-      getBookings();
+      getBookings(1);
       setDialog(false);
     } catch (error) {
       console.error(error);

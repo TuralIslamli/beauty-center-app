@@ -54,6 +54,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
   >(null, 400);
   const [rejectComment, setRejectComment] = useState<string>();
   const [first, setFirst] = useState(0);
+  const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<number>(10);
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +77,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     setDialog(true);
   };
 
-  const getBookings = async (page = 1, isOnPageChange?: boolean) => {
+  const getBookings = async (page: number, isOnPageChange?: boolean) => {
     setIsLoading(true);
     try {
       const { data, meta }: IBookingsData = await api.getBookings({
@@ -102,7 +103,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
 
   useEffect(() => {
     if (dates[1]) {
-      getBookings();
+      getBookings(page);
     }
   }, [
     filteredStatus?.name,
@@ -131,6 +132,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
   const onPageChange = (event: PaginatorPageChangeEvent) => {
     setFirst(event.first);
     getBookings(event.page + 1, true);
+    setPage(event.page + 1)
   };
 
   // const onDownloadAllReports = () => {
@@ -194,7 +196,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           icon="pi pi-refresh"
           rounded
           raised
-          onClick={() => getBookings()}
+          onClick={() => getBookings(page)}
         />
       </div>
       <Button
