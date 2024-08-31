@@ -114,6 +114,7 @@ export default {
   deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
   deleteBooking: (id: number | undefined) =>
     axiosApi.delete(`reservations/${id}`),
+  getBookingDoctors: <T>(dateTime: string): Promise<T> => axiosApi.get(`reservations/users/input-search?date_time=${dateTime}`),
   getTotalAmount: <T>({
     status,
     from_date,

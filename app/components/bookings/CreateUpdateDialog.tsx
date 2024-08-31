@@ -137,8 +137,10 @@ const CreateUpdateDialog = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (userPermissions.includes('user.input_search')) {
-        const { data: doctorsData }: IDoctorRS = await api.getDoctors();
+      if (userPermissions.includes('user.input_search') && selectedHour?.time) {
+        const { data: doctorsData }: IDoctorRS = await api.getBookingDoctors(
+          `${formatDate(date)} ${selectedHour?.time}`
+        );
         setDoctors(doctorsData);
       }
       if (userPermissions.includes('service_type.input_search')) {
@@ -148,7 +150,7 @@ const CreateUpdateDialog = ({
       }
     };
     fetchData();
-  }, []);
+  }, [selectedHour?.time]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -262,6 +264,7 @@ const CreateUpdateDialog = ({
           control={control}
           render={({ field }) => (
             <Dropdown
+              disabled={!selectedHour}
               filter
               style={{ marginBottom: '10px' }}
               value={selectedDoctor}

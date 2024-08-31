@@ -194,6 +194,12 @@ export interface IBonusesProps {
 export interface IBonus {
   total_amount: string;
   user: IUser;
+  bonus_per_days: IPerDayBonus[];
+}
+
+export interface IPerDayBonus {
+  date: string;
+  bonus_per_days: string;
 }
 export interface IBonusesRS {
   data: IBonus[];

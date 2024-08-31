@@ -1,32 +1,53 @@
-import React, { useEffect, useState } from "react";
-import api from "../../api";
-import { IBonus, IBonusesRS, IDoctor, IDoctorRS } from "@/app/types";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
-import { Dropdown } from "primereact/dropdown";
-import { formatDate } from "@/app/utils";
+import React, { useEffect, useState } from 'react';
+import api from '../../api';
+import { IBonus, IBonusesRS, IDoctor, IDoctorRS } from '@/app/types';
+import {
+  DataTable,
+  DataTableExpandedRows,
+} from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Button } from 'primereact/button';
+import { Calendar } from 'primereact/calendar';
+import { Dropdown } from 'primereact/dropdown';
+import { formatDate } from '@/app/utils';
 
 function BonusesTable() {
   const [bonuses, setBonuses] = useState<IBonus[]>();
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
   const [doctors, setDoctors] = useState<IDoctor[]>();
   const [doctor, setDoctor] = useState<IDoctor>();
+  const [expandedRows, setExpandedRows] = useState<DataTableExpandedRows>({});
 
   const priceBodyTemplate = (rowData: IBonus) => {
-    const formatter = new Intl.NumberFormat("az-AZ", {
-      style: "currency",
-      currency: "AZN",
+    const formatter = new Intl.NumberFormat('az-AZ', {
+      style: 'currency',
+      currency: 'AZN',
     });
 
     const parts = formatter.formatToParts(+rowData.total_amount);
     const currencySymbol =
-      parts.find((part) => part.type === "currency")?.value ?? "AZN";
+      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
     const formattedPrice = parts
-      .filter((part) => part.type !== "currency")
+      .filter((part) => part.type !== 'currency')
       .map((part) => part.value)
-      .join("");
+      .join('');
+
+    return `${formattedPrice} ${currencySymbol}`;
+  };
+
+  const priceTemplate = (bonus: IBonus) => {
+    const formatter = new Intl.NumberFormat('az-AZ', {
+      style: 'currency',
+      currency: 'AZN',
+    });
+
+    const parts = formatter.formatToParts(+bonus.bonus_per_days);
+    const currencySymbol =
+      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
+    const formattedPrice = parts
+      .filter((part) => part.type !== 'currency')
+      .map((part) => part.value)
+      .join('');
 
     return `${formattedPrice} ${currencySymbol}`;
   };
@@ -70,8 +91,24 @@ function BonusesTable() {
     });
   };
 
+  const rowExpansionTemplate = (data: IBonus) => {
+    return (
+      <div>
+        <DataTable value={data.bonus_per_days}>
+          <Column field="date" header="Tarix" style={{ width: '10%' }}></Column>
+          <Column
+            field="bonus_per_days"
+            header="Məbləğ"
+            body={priceTemplate}
+            style={{ width: '90%' }}
+          ></Column>
+        </DataTable>
+      </div>
+    );
+  };
+
   const header = (
-    <div style={{ display: "flex", justifyContent: "space-between" }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
       <div>
         <Calendar
           value={dates}
@@ -79,13 +116,13 @@ function BonusesTable() {
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
-          style={{ width: "220px", marginRight: "10px" }}
+          style={{ width: '220px', marginRight: '10px' }}
           dateFormat="dd/mm/yy"
         />
 
         <Dropdown
           filter
-          style={{ marginBottom: "10px" }}
+          style={{ marginBottom: '10px' }}
           value={doctor}
           onChange={(e) => {
             setDoctor(e.value);
@@ -101,30 +138,42 @@ function BonusesTable() {
         icon="pi pi-upload"
         severity="success"
         onClick={onDownloadBonuses}
-        style={{ marginRight: "10px" }}
+        style={{ marginRight: '10px' }}
       />
     </div>
   );
+
+  const allowExpansion = (rowData: IBonus) => {
+    return rowData.bonus_per_days!.length > 0;
+  };
+
+  const handleRowToggle = (e: { data: DataTableExpandedRows }) => {
+    setExpandedRows(e.data);
+  };
+
   return (
     <div>
       <DataTable
         value={bonuses}
         editMode="row"
-        dataKey="id"
-        tableStyle={{ minWidth: "50rem" }}
-        style={{ marginBottom: "10px" }}
+        dataKey="date"
+        style={{ marginBottom: '10px' }}
         header={header}
+        expandedRows={expandedRows}
+        onRowToggle={handleRowToggle}
+        rowExpansionTemplate={rowExpansionTemplate}
       >
+        <Column expander={allowExpansion} />
         <Column
           body={getDoctorFullName}
           header="Həkim"
-          style={{ width: "40%" }}
+          style={{ width: '20%' }}
         ></Column>
         <Column
           field="total_amount"
           header="Toplam məbləğ"
           body={priceBodyTemplate}
-          style={{ width: "40%" }}
+          style={{ width: '90%' }}
         ></Column>
       </DataTable>
     </div>
