@@ -46,9 +46,6 @@ const CreateUpdateDialog = ({
     useState<IServiceType[]>();
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
   const [selectedHour, setSelectedHour] = useState<IHour>();
-  const [selectedPayment, setSelectedPayment] = useState(
-    paymentTypes.find((i) => i.id === 0)
-  );
   const [selectedStatus, setSelectedStatus] = useState<{
     id: number;
     name: string;
@@ -143,6 +140,12 @@ const CreateUpdateDialog = ({
         );
         setDoctors(doctorsData);
       }
+    };
+    fetchData();
+  }, [selectedHour?.time]);
+
+  useEffect(() => {
+    const fetchData = async () => {
       if (userPermissions.includes('service_type.input_search')) {
         const { data: servicesData }: IServiceTypeRS =
           await api.getInputServices();
@@ -150,7 +153,7 @@ const CreateUpdateDialog = ({
       }
     };
     fetchData();
-  }, [selectedHour?.time]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -172,7 +175,7 @@ const CreateUpdateDialog = ({
       }
     };
     fetchData();
-  }, [date]);
+  }, [formatDate(date)]);
 
   // const handleMultiSelectChange = (e: any) => {
   //   const selectedTypes = e.value;
@@ -197,7 +200,6 @@ const CreateUpdateDialog = ({
     setBooking(undefined);
     setSelectedServiceTypes(undefined);
     setSelectedDoctor(undefined);
-    setSelectedPayment(paymentTypes.find((i) => i.id === 0));
     setSelectedStatus(undefined);
     setSelectedHour(undefined);
     setDate(undefined);
