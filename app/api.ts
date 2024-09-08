@@ -76,7 +76,7 @@ export default {
     doctor_id,
   }: IBookingTableProps): Promise<T> =>
     axiosApi.get(
-      `reservations?page=${page}&size=${size}&sort=asc&sorted_column=date_time`,
+      `reservations&sort=asc&sorted_column=date_time`,
       {
         params: {
           status,

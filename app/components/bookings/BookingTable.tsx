@@ -56,7 +56,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
   const [first, setFirst] = useState(0);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [rows, setRows] = useState<number>(10);
+  // const [rows, setRows] = useState<number>(1000);
   const [isLoading, setIsLoading] = useState(false);
   const [totalAmount, setTotalAmount] = useState<ITotalAmount>();
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
@@ -77,12 +77,11 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     setDialog(true);
   };
 
-  const getBookings = async (page: number, isOnPageChange?: boolean) => {
+  const getBookings = async (isOnPageChange?: boolean) => {
     setIsLoading(true);
     try {
       const { data, meta }: IBookingsData = await api.getBookings({
-        page,
-        size: rows,
+        // size: rows,
         status: filteredStatus?.id,
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
@@ -103,7 +102,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
 
   useEffect(() => {
     if (dates[1]) {
-      getBookings(page);
+      getBookings();
     }
   }, [
     filteredStatus?.name,
@@ -129,11 +128,11 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     fetchData();
   }, []);
 
-  const onPageChange = (event: PaginatorPageChangeEvent) => {
-    setFirst(event.first);
-    getBookings(event.page + 1, true);
-    setPage(event.page + 1)
-  };
+  // const onPageChange = (event: PaginatorPageChangeEvent) => {
+  //   setFirst(event.first);
+  //   getBookings(event.page + 1, true);
+  //   setPage(event.page + 1);
+  // };
 
   // const onDownloadAllReports = () => {
   //   api.getAllReportsExcel({
@@ -196,7 +195,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           icon="pi pi-refresh"
           rounded
           raised
-          onClick={() => getBookings(page)}
+          onClick={() => getBookings()}
         />
       </div>
       <Button
@@ -383,6 +382,8 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
         tableStyle={{ minWidth: '50rem' }}
         style={{ marginBottom: '10px' }}
         filterDisplay={filter ? 'row' : undefined}
+        paginator
+        rows={10}
       >
         <Column
           body={idBodyTemplate}
@@ -448,14 +449,14 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           ></Column>
         )}
       </DataTable>
-      <div ref={navigationRef}>
+      {/* <div ref={navigationRef}>
         <Paginator
           first={first}
           rows={rows}
           totalRecords={total}
           onPageChange={onPageChange}
         />
-      </div>
+      </div> */}
 
       <Toast ref={toast} />
       <CreateUpdateDialog

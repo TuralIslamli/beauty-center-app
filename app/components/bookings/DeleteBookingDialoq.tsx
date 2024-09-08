@@ -9,7 +9,7 @@ interface IProps {
   deleteDialog: boolean;
   setDeleteDialog: (state: boolean) => void;
   showSuccess: (message: string) => void;
-  getBookings: (page: number) => Promise<void>;
+  getBookings: () => Promise<void>;
 }
 
 function DeleteBookingDialoq({
@@ -24,7 +24,7 @@ function DeleteBookingDialoq({
       .deleteBooking(booking?.id)
       .then(() => {
         setDeleteDialog(false);
-        getBookings(1);
+        getBookings();
         showSuccess("Rezerv silindi");
       })
       .catch((error) => {
