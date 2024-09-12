@@ -53,9 +53,9 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     number | null
   >(null, 400);
   const [rejectComment, setRejectComment] = useState<string>();
-  const [first, setFirst] = useState(0);
+  // const [first, setFirst] = useState(0);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  // const [total, setTotal] = useState(0);
   // const [rows, setRows] = useState<number>(1000);
   const [isLoading, setIsLoading] = useState(false);
   const [totalAmount, setTotalAmount] = useState<ITotalAmount>();
@@ -90,7 +90,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
       });
 
       setBookings(data);
-      setTotal(meta?.total);
+      // setTotal(meta?.total);
     } catch (error) {
       console.error(error);
     } finally {
@@ -371,8 +371,9 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     isLoading ? (
       <Skeleton width="20px" />
     ) : (
-      <div>{total - options.rowIndex - first}</div>
+      <div>{bookings?.length - options?.rowIndex}</div>
     );
+
   return (
     <>
       <DataTable
