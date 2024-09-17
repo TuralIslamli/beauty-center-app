@@ -86,6 +86,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
         client_name: debouncedClientName,
+        client_phone: debouncedClientPhone,
         doctor_id: doctor?.id,
       });
 
