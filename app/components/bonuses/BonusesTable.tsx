@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api';
 import { IBonus, IBonusesRS, IDoctor, IDoctorRS } from '@/app/types';
-import {
-  DataTable,
-  DataTableExpandedRows,
-} from 'primereact/datatable';
+import { DataTable, DataTableExpandedRows } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
@@ -35,6 +32,24 @@ function BonusesTable() {
     return `${formattedPrice} ${currencySymbol}`;
   };
 
+  const bonusBodyTemplate = (rowData: IBonus) => {
+    const formatter = new Intl.NumberFormat('az-AZ', {
+      style: 'currency',
+      currency: 'AZN',
+    });
+
+    const parts = formatter.formatToParts(+rowData.total_amount / 150);
+
+    const currencySymbol =
+      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
+    const formattedPrice = parts
+      .filter((part) => part.type !== 'currency')
+      .map((part) => part.value)
+      .join('');
+
+    return `${formattedPrice} ${currencySymbol}`;
+  };
+
   const priceTemplate = (bonus: IBonus) => {
     const formatter = new Intl.NumberFormat('az-AZ', {
       style: 'currency',
@@ -42,6 +57,23 @@ function BonusesTable() {
     });
 
     const parts = formatter.formatToParts(+bonus.bonus_per_days);
+    const currencySymbol =
+      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
+    const formattedPrice = parts
+      .filter((part) => part.type !== 'currency')
+      .map((part) => part.value)
+      .join('');
+
+    return `${formattedPrice} ${currencySymbol}`;
+  };
+
+  const bonusTemplate = (bonus: IBonus) => {
+    const formatter = new Intl.NumberFormat('az-AZ', {
+      style: 'currency',
+      currency: 'AZN',
+    });
+
+    const parts = formatter.formatToParts(+bonus.bonus_per_days / 150);
     const currencySymbol =
       parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
     const formattedPrice = parts
@@ -95,11 +127,17 @@ function BonusesTable() {
     return (
       <div>
         <DataTable value={data.bonus_per_days}>
-          <Column field="date" header="Tarix" style={{ width: '10%' }}></Column>
+          <Column field="date" header="Tarix" style={{ width: '20%' }}></Column>
           <Column
             field="bonus_per_days"
             header="Məbləğ"
             body={priceTemplate}
+            style={{ width: '20%' }}
+          ></Column>
+          <Column
+            field="bonus_per_days"
+            header="Bonus"
+            body={bonusTemplate}
             style={{ width: '90%' }}
           ></Column>
         </DataTable>
@@ -173,7 +211,13 @@ function BonusesTable() {
           field="total_amount"
           header="Toplam məbləğ"
           body={priceBodyTemplate}
-          style={{ width: '90%' }}
+          style={{ width: '20%' }}
+        ></Column>
+        <Column
+          field="total_amount"
+          header="Bonus"
+          body={bonusBodyTemplate}
+          style={{ width: '60%' }}
         ></Column>
       </DataTable>
     </div>
