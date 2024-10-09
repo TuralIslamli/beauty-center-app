@@ -75,20 +75,17 @@ export default {
     service_types,
     doctor_id,
   }: IBookingTableProps): Promise<T> =>
-    axiosApi.get(
-      `reservations?&sort=asc&sorted_column=date_time`,
-      {
-        params: {
-          status,
-          from_date,
-          to_date,
-          client_name,
-          client_phone,
-          service_types,
-          doctor_id,
-        },
-      }
-    ),
+    axiosApi.get(`reservations?&sort=asc&sorted_column=date_time`, {
+      params: {
+        status,
+        from_date,
+        to_date,
+        client_name,
+        client_phone,
+        service_types,
+        doctor_id,
+      },
+    }),
   getServices: <T>({
     page,
     size,
@@ -114,7 +111,8 @@ export default {
   deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
   deleteBooking: (id: number | undefined) =>
     axiosApi.delete(`reservations/${id}`),
-  getBookingDoctors: <T>(dateTime: string): Promise<T> => axiosApi.get(`reservations/users/input-search?date_time=${dateTime}`),
+  getBookingDoctors: <T>(dateTime: string): Promise<T> =>
+    axiosApi.get(`reservations/users/input-search?date_time=${dateTime}`),
   getTotalAmount: <T>({
     status,
     from_date,
@@ -144,15 +142,17 @@ export default {
     axiosApi.post('services', payload),
   createBooking: <T>(payload: IBookingFields): Promise<T> =>
     axiosApi.post('reservations', payload),
-  updateService: <T>(payload: IServiceFields): Promise<T> =>
-    axiosApi.put(`services/${payload.id}`, payload),
+  updateService: <T>(payload: IServiceFields): Promise<T> => {
+    
+    return axiosApi.put(`services/${payload.id}`, payload);
+  },
   updateBooking: <T>(payload: IBookingFields): Promise<T> =>
     axiosApi.put(`reservations/${payload.id}`, payload),
   getDailyReportExcel: async (day: string) => {
     try {
       await axiosApi
         .get(`services/daily-report?excel_export=true&sorted_day=${day}`, {
-          responseType: 'blob', // Указываем тип ответа
+          responseType: 'blob',
         })
         .then((data: any) => {
           {

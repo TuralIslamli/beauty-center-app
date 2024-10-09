@@ -111,6 +111,8 @@ export interface IService {
   id: number;
   status: number;
   amount: string;
+  cash_amount: string;
+  card_amount: string;
   payment_type: number;
   service_types: IServiceType[];
   client_name: string;
@@ -146,7 +148,8 @@ export interface IServiceFields {
   service_types: { id: number }[];
   client_name: string;
   client_phone?: string;
-  amount?: number;
+  cash_amount?: number;
+  card_amount?: number;
   payment_type?: number;
   user_id?: number;
   status?: number;

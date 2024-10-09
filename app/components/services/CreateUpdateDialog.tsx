@@ -69,12 +69,6 @@ const CreateUpdateDialog = ({
     client_phone: userPermissions.includes('service.variable.phone')
       ? yup.string().required()
       : yup.string(),
-    amount: userPermissions.includes('service.variable.amount')
-      ? yup.number().required()
-      : yup.number(),
-    payment_type: userPermissions.includes('service.variable.payment_type')
-      ? yup.number().required()
-      : yup.number(),
     user_id: userPermissions.includes('service.variable.user_id')
       ? yup.number().required()
       : yup.number(),
@@ -93,16 +87,13 @@ const CreateUpdateDialog = ({
     reset,
   } = useForm<IServiceFields>({
     resolver: yupResolver(schema),
-    defaultValues: {
-      payment_type: userPermissions.includes('service.variable.payment_type')
-        ? 0
-        : undefined,
-    },
   });
 
   const onSubmit: SubmitHandler<IServiceFields> = async (
     payload: IServiceFields
   ) => {
+    console.log(payload, 'payload');
+
     setIsDisabled(true);
     try {
       service?.id
@@ -138,9 +129,10 @@ const CreateUpdateDialog = ({
         'service_types',
         service.service_types?.map((i) => ({ id: i.id }))
       );
-      setValue('amount', +service.amount);
+      setValue('cash_amount', +service.cash_amount);
+      setValue('card_amount', +service.card_amount);
 
-      setValue('payment_type', service.payment_type || 0);
+      // setValue('payment_type', service.payment_type || 0);
       setValue('reject_comment', service.reject_comment);
       const actualStatus = () => {
         return service.status !== 0
@@ -153,9 +145,6 @@ const CreateUpdateDialog = ({
       setValue('status', actualStatus()?.id);
       setSelectedStatus(actualStatus);
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
-      setSelectedPayment(
-        paymentTypes.find((i) => i.id === service.payment_type)
-      );
       setSelectedServiceTypes(service.service_types);
     }
   }, [service, setValue, doctors]);
@@ -183,7 +172,7 @@ const CreateUpdateDialog = ({
       selectedTypes.map((i: IServiceType) => ({ id: i.id }))
     );
     setValue(
-      'amount',
+      'cash_amount',
       selectedTypes.reduce(
         (accumulator: number, currentValue: IServiceType) =>
           accumulator + +currentValue.price,
@@ -309,26 +298,48 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-        <label style={{ marginBottom: '5px' }} htmlFor="email">
-          Məbləğ:
-        </label>
-        <Controller
-          name="amount"
-          control={control}
-          render={({ field }) => (
-            <InputNumber
-              onBlur={field.onBlur}
-              ref={field.ref}
-              value={field?.value || 0}
-              onValueChange={(e) => field.onChange(e)}
-              mode="currency"
-              currency="AZN"
-              locale="de-DE"
-              style={{ marginBottom: '10px' }}
-              invalid={!!errors.amount}
+        <div style={{ display: 'flex', gap: '20px' }}>
+          <div>
+            <label htmlFor="email">Nağd:</label>
+            <Controller
+              name="cash_amount"
+              control={control}
+              render={({ field }) => (
+                <InputNumber
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  value={field?.value || 0}
+                  onValueChange={(e) => field.onChange(e)}
+                  mode="currency"
+                  currency="AZN"
+                  locale="de-DE"
+                  style={{ marginBottom: '10px', marginTop: '5px' }}
+                  invalid={!!errors.cash_amount}
+                />
+              )}
             />
-          )}
-        />
+          </div>
+          <div>
+            <label>Pos terminal:</label>
+            <Controller
+              name="card_amount"
+              control={control}
+              render={({ field }) => (
+                <InputNumber
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  value={field?.value || 0}
+                  onValueChange={(e) => field.onChange(e)}
+                  mode="currency"
+                  currency="AZN"
+                  locale="de-DE"
+                  style={{ marginBottom: '10px', marginTop: '5px' }}
+                  invalid={!!errors.card_amount}
+                />
+              )}
+            />
+          </div>
+        </div>
         {userPermissions.includes('service.variable.reject_comment') &&
           selectedStatus?.id === 2 && (
             <>
@@ -351,33 +362,6 @@ const CreateUpdateDialog = ({
               />
             </>
           )}
-
-        {userPermissions.includes('service.variable.payment_type') && (
-          <div style={{ display: 'flex', marginBottom: '10px' }}>
-            {paymentTypes.map((payment) => {
-              return (
-                <div key={payment.id}>
-                  <RadioButton
-                    inputId={payment?.name}
-                    name="payment"
-                    value={payment}
-                    onChange={(e: RadioButtonChangeEvent) => {
-                      setSelectedPayment(e.value);
-                      setValue('payment_type', e.value.id);
-                    }}
-                    checked={selectedPayment?.id === payment.id}
-                  />
-                  <label
-                    htmlFor={payment?.name}
-                    style={{ marginRight: '10px', marginLeft: '4px' }}
-                  >
-                    {payment?.name}
-                  </label>
-                </div>
-              );
-            })}
-          </div>
-        )}
         {userPermissions.includes('service.variable.status') && service?.id && (
           <div style={{ display: 'flex', marginBottom: '10px' }}>
             {serviceStatuses.map((status) => {
