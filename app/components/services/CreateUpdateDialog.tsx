@@ -45,6 +45,9 @@ const CreateUpdateDialog = ({
   const [selectedServiceTypes, setSelectedServiceTypes] =
     useState<IServiceType[]>();
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
+  const [totalprice, setTotalPrice] = useState(0);
+  const [priceResult, setPriceResult] = useState(0);
+  const [counter, setCounter] = useState(0);
   const [selectedPayment, setSelectedPayment] = useState(
     paymentTypes.find((i) => i.id === 0)
   );
@@ -85,6 +88,7 @@ const CreateUpdateDialog = ({
     formState: { errors },
     setValue,
     reset,
+    getValues,
   } = useForm<IServiceFields>({
     resolver: yupResolver(schema),
   });
@@ -92,7 +96,8 @@ const CreateUpdateDialog = ({
   const onSubmit: SubmitHandler<IServiceFields> = async (
     payload: IServiceFields
   ) => {
-    console.log(payload, 'payload');
+    const card_amount = payload?.card_amount || 0;
+    const cash_amount = payload?.cash_amount || 0;
 
     setIsDisabled(true);
     try {
@@ -100,12 +105,16 @@ const CreateUpdateDialog = ({
         ? await api.updateService({
             ...payload,
             id: service.id,
+            card_amount,
+            cash_amount,
             client_phone: payload.client_phone
               ?.toString()
               .replace(/[\s-]/g, ''),
           })
         : await api.createService({
             ...payload,
+            card_amount,
+            cash_amount,
             client_phone: payload.client_phone
               ?.toString()
               .replace(/[\s-]/g, ''),
@@ -125,14 +134,11 @@ const CreateUpdateDialog = ({
       setValue('client_name', service.client_name);
       setValue('client_phone', service.client_phone);
       setValue('user_id', service.user?.id);
-      setValue(
-        'service_types',
-        service.service_types?.map((i) => ({ id: i.id }))
-      );
+      handleMultiSelectChange({ value: service?.service_types });
       setValue('cash_amount', +service.cash_amount);
       setValue('card_amount', +service.card_amount);
+      setPriceResult(+service.cash_amount + +service.card_amount);
 
-      // setValue('payment_type', service.payment_type || 0);
       setValue('reject_comment', service.reject_comment);
       const actualStatus = () => {
         return service.status !== 0
@@ -169,10 +175,16 @@ const CreateUpdateDialog = ({
     setSelectedServiceTypes(selectedTypes);
     setValue(
       'service_types',
-      selectedTypes.map((i: IServiceType) => ({ id: i.id }))
+      selectedTypes?.map((i: IServiceType) => ({ id: i.id }))
     );
-    setValue(
-      'cash_amount',
+    setTotalPrice(
+      selectedTypes.reduce(
+        (accumulator: number, currentValue: IServiceType) =>
+          accumulator + +currentValue.price,
+        0
+      )
+    );
+    setPriceResult(
       selectedTypes.reduce(
         (accumulator: number, currentValue: IServiceType) =>
           accumulator + +currentValue.price,
@@ -180,6 +192,12 @@ const CreateUpdateDialog = ({
       )
     );
   };
+
+  useEffect(() => {
+    setPriceResult(
+      +(getValues()?.cash_amount || 0) + +(getValues()?.card_amount || 0)
+    );
+  }, [counter]);
 
   const onHide = () => {
     setDialog(false);
@@ -189,6 +207,8 @@ const CreateUpdateDialog = ({
     setSelectedDoctor(undefined);
     setSelectedPayment(paymentTypes.find((i) => i.id === 0));
     setSelectedStatus(undefined);
+    setTotalPrice(0);
+    setPriceResult(0);
   };
 
   return (
@@ -298,48 +318,83 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-        <div style={{ display: 'flex', gap: '20px' }}>
+        <div style={{ display: 'flex', gap: '20px', width: '206px' }}>
           <div>
-            <label htmlFor="email">Nağd:</label>
-            <Controller
-              name="cash_amount"
-              control={control}
-              render={({ field }) => (
-                <InputNumber
-                  onBlur={field.onBlur}
-                  ref={field.ref}
-                  value={field?.value || 0}
-                  onValueChange={(e) => field.onChange(e)}
-                  mode="currency"
-                  currency="AZN"
-                  locale="de-DE"
-                  style={{ marginBottom: '10px', marginTop: '5px' }}
-                  invalid={!!errors.cash_amount}
-                />
-              )}
+            <label htmlFor="email">Toplam: </label>
+            <InputNumber
+              disabled
+              value={totalprice}
+              mode="currency"
+              currency="AZN"
+              locale="de-DE"
+              style={{ marginBottom: '10px', marginTop: '5px' }}
             />
           </div>
-          <div>
-            <label>Pos terminal:</label>
-            <Controller
-              name="card_amount"
-              control={control}
-              render={({ field }) => (
-                <InputNumber
-                  onBlur={field.onBlur}
-                  ref={field.ref}
-                  value={field?.value || 0}
-                  onValueChange={(e) => field.onChange(e)}
-                  mode="currency"
-                  currency="AZN"
-                  locale="de-DE"
-                  style={{ marginBottom: '10px', marginTop: '5px' }}
-                  invalid={!!errors.card_amount}
-                />
-              )}
-            />
-          </div>
+          {userPermissions.includes('service.update') && (
+            <div>
+              <label>Nəticə:</label>
+              <InputNumber
+                disabled
+                value={priceResult}
+                mode="currency"
+                currency="AZN"
+                locale="de-DE"
+                style={{ marginBottom: '10px', marginTop: '5px' }}
+                invalid={!!errors.card_amount}
+              />
+            </div>
+          )}
         </div>
+        {userPermissions.includes('service.update') && (
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <div>
+              <label htmlFor="email">Nağd:</label>
+              <Controller
+                name="cash_amount"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    value={field?.value || 0}
+                    onValueChange={(e) => {
+                      field.onChange(e);
+                      setCounter((prev) => prev + 1);
+                    }}
+                    mode="currency"
+                    currency="AZN"
+                    locale="de-DE"
+                    style={{ marginBottom: '10px', marginTop: '5px' }}
+                    invalid={!!errors.cash_amount}
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <label>pos/kart:</label>
+              <Controller
+                name="card_amount"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    value={field?.value || 0}
+                    onValueChange={(e) => {
+                      field.onChange(e);
+                      setCounter((prev) => prev + 1);
+                    }}
+                    mode="currency"
+                    currency="AZN"
+                    locale="de-DE"
+                    style={{ marginBottom: '10px', marginTop: '5px' }}
+                    invalid={!!errors.card_amount}
+                  />
+                )}
+              />
+            </div>
+          </div>
+        )}
         {userPermissions.includes('service.variable.reject_comment') &&
           selectedStatus?.id === 2 && (
             <>

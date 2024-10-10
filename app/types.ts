@@ -158,7 +158,6 @@ export interface IServiceFields {
 }
 
 export interface IBookingFields {
-  // service_types: { id: number }[];
   client_name: string;
   client_phone?: string;
   doctor_id?: number;

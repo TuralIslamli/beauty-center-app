@@ -439,7 +439,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
   const content = (
     <div>
       <div className="ml-2">Nağd: {totalAmount?.cash} AZN</div>
-      <div className="ml-2">Kart: {totalAmount?.pos} AZN</div>
+      <div className="ml-2">pos/kart: {totalAmount?.pos} AZN</div>
       <div className="ml-2">Toplam: {totalAmount?.total} AZN</div>
     </div>
   );
