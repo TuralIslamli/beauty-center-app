@@ -191,6 +191,14 @@ const CreateUpdateDialog = ({
         0
       )
     );
+    setValue(
+      'cash_amount',
+      selectedTypes.reduce(
+        (accumulator: number, currentValue: IServiceType) =>
+          accumulator + +currentValue.price,
+        0
+      )
+    );
   };
 
   useEffect(() => {
@@ -245,7 +253,6 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-
         {userPermissions.includes('service.variable.phone') && (
           <>
             <label style={{ marginBottom: '5px' }} htmlFor="name">
@@ -268,7 +275,6 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-
         {userPermissions.includes('service.variable.user_id') && (
           <>
             <label style={{ marginBottom: '5px' }} htmlFor="email">
@@ -345,31 +351,35 @@ const CreateUpdateDialog = ({
             </div>
           )}
         </div>
-        {userPermissions.includes('service.update') && (
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <div>
-              <label htmlFor="email">Nağd:</label>
-              <Controller
-                name="cash_amount"
-                control={control}
-                render={({ field }) => (
-                  <InputNumber
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                    value={field?.value || 0}
-                    onValueChange={(e) => {
-                      field.onChange(e);
-                      setCounter((prev) => prev + 1);
-                    }}
-                    mode="currency"
-                    currency="AZN"
-                    locale="de-DE"
-                    style={{ marginBottom: '10px', marginTop: '5px' }}
-                    invalid={!!errors.cash_amount}
-                  />
-                )}
-              />
-            </div>
+        <div style={{ display: 'flex', gap: '20px', width: '206px' }}>
+          <div>
+            <label htmlFor="email">
+              {userPermissions.includes('service.update')
+                ? 'Nağd:'
+                : 'Ödənəcək məbləğ:'}
+            </label>
+            <Controller
+              name="cash_amount"
+              control={control}
+              render={({ field }) => (
+                <InputNumber
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  value={field?.value || 0}
+                  onValueChange={(e) => {
+                    field.onChange(e);
+                    setCounter((prev) => prev + 1);
+                  }}
+                  mode="currency"
+                  currency="AZN"
+                  locale="de-DE"
+                  style={{ marginBottom: '10px', marginTop: '5px' }}
+                  invalid={!!errors.cash_amount}
+                />
+              )}
+            />
+          </div>
+          {userPermissions.includes('service.update') && (
             <div>
               <label>pos/kart:</label>
               <Controller
@@ -393,8 +403,9 @@ const CreateUpdateDialog = ({
                 )}
               />
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
         {userPermissions.includes('service.variable.reject_comment') &&
           selectedStatus?.id === 2 && (
             <>
