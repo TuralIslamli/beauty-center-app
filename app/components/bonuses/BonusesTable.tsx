@@ -38,7 +38,7 @@ function BonusesTable() {
       currency: 'AZN',
     });
 
-    const parts = formatter.formatToParts(+rowData.total_amount / 150);
+    const parts = formatter.formatToParts(+rowData.total_amount / 200);
 
     const currencySymbol =
       parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
@@ -73,7 +73,7 @@ function BonusesTable() {
       currency: 'AZN',
     });
 
-    const parts = formatter.formatToParts(+bonus.bonus_per_days / 150);
+    const parts = formatter.formatToParts(+bonus.bonus_per_days / 200);
     const currencySymbol =
       parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
     const formattedPrice = parts
