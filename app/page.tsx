@@ -18,6 +18,7 @@ import { setToastInstance } from '@/lib/axios';
 import BonusesTable from './components/bonuses/BonusesTable';
 import BookingTimesTable from './components/reservationTimes/BookingTimesTable';
 import BookingTable from './components/bookings/BookingTable';
+import LogsTable from './components/logs/LogsTable';
 
 function Page() {
   const [userData, setUserData] = useState<IUser>();
@@ -84,6 +85,11 @@ function Page() {
       <Divider />
       <main className={styles.main}>
         <TabView activeIndex={activeIndex}>
+          {/* {userPermissions?.includes('service.get_all') && (
+            <TabPanel header="Loglar">
+              <LogsTable userPermissions={userPermissions} />
+            </TabPanel>
+          )} */}
           {userPermissions?.includes('service.get_all') && (
             <TabPanel header="Xidmətlər">
               <ServicesTable userPermissions={userPermissions} />

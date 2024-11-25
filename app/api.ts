@@ -108,6 +108,7 @@ export default {
         user_id,
       },
     }),
+  getLogs: <T>(): Promise<T> => axiosApi.get('logs'),
   deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
   deleteBooking: (id: number | undefined) =>
     axiosApi.delete(`reservations/${id}`),
@@ -143,7 +144,6 @@ export default {
   createBooking: <T>(payload: IBookingFields): Promise<T> =>
     axiosApi.post('reservations', payload),
   updateService: <T>(payload: IServiceFields): Promise<T> => {
-    
     return axiosApi.put(`services/${payload.id}`, payload);
   },
   updateBooking: <T>(payload: IBookingFields): Promise<T> =>
