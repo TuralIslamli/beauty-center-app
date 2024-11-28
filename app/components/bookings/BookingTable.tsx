@@ -287,42 +287,6 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     );
   };
 
-  // const serviceTypeRowFilterTemplate = () => {
-  //   return (
-  //     userPermissions.includes('service.filter.service_type') && (
-  //       <MultiSelect
-  //         filter
-  //         value={serviceTypesFilter}
-  //         onChange={(e) => {
-  //           setServiceTypesFilter(e.value);
-  //         }}
-  //         options={serviceTypes}
-  //         placeholder="Xidmət seçin"
-  //         optionLabel="name"
-  //         showClear
-  //       />
-  //     )
-  //   );
-  // };
-
-  // const doctorsRowFilterTemplate = () => {
-  //   return (
-  //     userPermissions.includes('service.filter.doctor') && (
-  //       <Dropdown
-  //         filter
-  //         value={doctor}
-  //         onChange={(e) => {
-  //           setDoctor(e.value);
-  //         }}
-  //         options={doctors}
-  //         placeholder="Həkim seçin"
-  //         optionLabel="full_name"
-  //         showClear
-  //       />
-  //     )
-  //   );
-  // };
-
   const dateRowFilterTemplate = () => {
     return (
       userPermissions.includes('reservation.filter.date') && (
@@ -427,21 +391,11 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           filter
           filterElement={statusRowFilterTemplate}
         ></Column>
-        {/* <Column
-          header="Xidmət"
-          style={{ width: '10%' }}
-          showFilterMenu={false}
-          // filter={userPermissions.includes('service.variable.service_type_id')}
-          // filterElement={serviceTypeRowFilterTemplate}
-          // body={serviceTypesBody}
-        ></Column> */}
         <Column
           header="Həkim"
           body={getDoctorFullName}
           style={{ width: '10%' }}
           showFilterMenu={false}
-          // filter={userPermissions.includes('service.variable.user_id')}
-          // filterElement={doctorsRowFilterTemplate}
         ></Column>
         {userPermissions.includes('reservation.update') && (
           <Column
@@ -451,14 +405,6 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           ></Column>
         )}
       </DataTable>
-      {/* <div ref={navigationRef}>
-        <Paginator
-          first={first}
-          rows={rows}
-          totalRecords={total}
-          onPageChange={onPageChange}
-        />
-      </div> */}
 
       <Toast ref={toast} />
       <CreateUpdateDialog

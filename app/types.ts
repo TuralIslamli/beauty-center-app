@@ -139,6 +139,26 @@ export interface IServicesData {
   meta: { total: number };
 }
 
+export interface ILogsData {
+  data: ILog[];
+}
+
+export interface ILog {
+  activity_logs: any;
+  price_difference: IPriceDifference;
+  service: IService;
+}
+
+export interface IPriceDifference {
+  is_different: boolean;
+  service_price_sum: number;
+  service_types_price_sum: number;
+  updated_at: string;
+  causer: IUser;
+}
+
+export interface IActivityLog {}
+
 export interface IBookingsData {
   data: IBooking[];
   meta: { total: number };

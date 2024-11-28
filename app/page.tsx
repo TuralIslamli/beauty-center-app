@@ -85,11 +85,6 @@ function Page() {
       <Divider />
       <main className={styles.main}>
         <TabView activeIndex={activeIndex}>
-          {/* {userPermissions?.includes('service.get_all') && (
-            <TabPanel header="Loglar">
-              <LogsTable userPermissions={userPermissions} />
-            </TabPanel>
-          )} */}
           {userPermissions?.includes('service.get_all') && (
             <TabPanel header="Xidmətlər">
               <ServicesTable userPermissions={userPermissions} />
@@ -118,6 +113,11 @@ function Page() {
           {userPermissions?.includes('service.bonus_reports') && (
             <TabPanel header="Bonuslar">
               <BonusesTable />
+            </TabPanel>
+          )}
+          {userPermissions?.includes('action_log.get_all') && (
+            <TabPanel header="Loglar">
+              <LogsTable userPermissions={userPermissions} />
             </TabPanel>
           )}
         </TabView>
