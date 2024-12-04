@@ -6,6 +6,7 @@ import {
   IBookingTime,
   IBookingTimeFields,
   ILoginFields,
+  ILogsProps,
   INavigationProps,
   IServiceFields,
   IServiceType,
@@ -108,7 +109,13 @@ export default {
         user_id,
       },
     }),
-  getLogs: <T>(): Promise<T> => axiosApi.get('logs'),
+  getLogs: <T>({ from_date, to_date, page }: ILogsProps): Promise<T> =>
+    axiosApi.get(`logs?page=${page}&size=${10}`, {
+      params: {
+        from_date,
+        to_date,
+      },
+    }),
   deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
   deleteBooking: (id: number | undefined) =>
     axiosApi.delete(`reservations/${id}`),

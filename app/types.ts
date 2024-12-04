@@ -141,6 +141,7 @@ export interface IServicesData {
 
 export interface ILogsData {
   data: ILog[];
+  meta: { total: number };
 }
 
 export interface ILog {
@@ -213,6 +214,11 @@ export interface IBonusesProps {
   user_id?: number;
 }
 
+export interface ILogsProps {
+  from_date?: string;
+  to_date?: string;
+  page?: number;
+} 
 export interface IBonus {
   total_amount: string;
   user: IUser;

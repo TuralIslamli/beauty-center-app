@@ -8,6 +8,10 @@ import { Skeleton } from 'primereact/skeleton';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { JSONTree } from 'react-json-tree';
+import { Calendar } from 'primereact/calendar';
+import { Dropdown } from 'primereact/dropdown';
+import { formatDate } from '@/app/utils';
+import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
 
 interface ILogsTableProps {
   userPermissions: string[];
@@ -18,12 +22,20 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
   const [selectedLog, setSelectedLog] = useState<ILog>();
   const [isLoading, setIsLoading] = useState(false);
   const [infoDialog, setInfoDialog] = useState(false);
+  const [dates, setDates] = useState<any>([new Date(), new Date()]);
+  const [total, setTotal] = useState(0);
+  const [first, setFirst] = useState(1);
 
-  const getLogs = async () => {
+  const getLogs = async (page = 1) => {
     setIsLoading(true);
     try {
-      const { data }: ILogsData = await api.getLogs();
+      const { data, meta }: ILogsData = await api.getLogs({
+        from_date: formatDate(dates[0]),
+        to_date: formatDate(dates[1]),
+        page,
+      });
       setLogs(data);
+      setTotal(meta?.total);
     } catch (error) {
       console.error(error);
     } finally {
@@ -32,8 +44,15 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
   };
 
   useEffect(() => {
-    getLogs();
-  }, []);
+    if (dates[1]) {
+      getLogs();
+    }
+  }, [dates[1]]);
+
+  const onPageChange = (event: PaginatorPageChangeEvent) => {
+    setFirst(event.first);
+    getLogs(event.page + 1);
+  };
 
   const dateBodyTemplate = (rowData: ILog) =>
     isLoading ? (
@@ -133,8 +152,28 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
       </React.Fragment>
     );
 
+  const header = (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div>
+        <Calendar
+          value={dates}
+          onChange={(e) => setDates(e.value)}
+          selectionMode="range"
+          readOnlyInput
+          hideOnRangeSelection
+          style={{ width: '220px', marginRight: '10px' }}
+          dateFormat="dd/mm/yy"
+        />
+      </div>
+    </div>
+  );
+
   const idBodyTemplate = (rowData: IService, options: any) =>
-    isLoading ? <Skeleton width="20px" /> : <div>{options.rowIndex + 1}</div>;
+    isLoading ? (
+      <Skeleton width="20px" />
+    ) : (
+      <div>{total - options.rowIndex - first}</div>
+    );
   return (
     <>
       <DataTable
@@ -142,6 +181,7 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
         dataKey="id"
         tableStyle={{ minWidth: '50rem' }}
         style={{ marginBottom: '10px' }}
+        header={header}
       >
         <Column
           body={idBodyTemplate}
@@ -186,6 +226,12 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
           style={{ width: '10%' }}
         ></Column>
       </DataTable>
+      <Paginator
+        first={first}
+        rows={10}
+        totalRecords={total}
+        onPageChange={onPageChange}
+      />
       <Dialog
         header="Activity logs"
         visible={infoDialog}
