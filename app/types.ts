@@ -218,7 +218,7 @@ export interface ILogsProps {
   from_date?: string;
   to_date?: string;
   page?: number;
-} 
+}
 export interface IBonus {
   total_amount: string;
   user: IUser;
@@ -231,4 +231,12 @@ export interface IPerDayBonus {
 }
 export interface IBonusesRS {
   data: IBonus[];
+}
+
+export interface IBonusesCoefficientRS {
+  data: ICoefficinet;
+}
+
+export interface ICoefficinet {
+  coefficient: number;
 }

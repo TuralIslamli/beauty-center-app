@@ -229,6 +229,13 @@ export default {
         user_id,
       },
     }),
+
+  patchBonusCoefficient: <T>(coefficient: number): Promise<T> =>
+    axiosApi.patch('settings/bonus-coefficient', {
+      coefficient,
+    }),
+  getBonusesCoefficient: <T>(): Promise<T> =>
+    axiosApi.get(`settings/bonus-coefficient`),
   getBonusesExcel: async ({ from_date, to_date, user_id }: IBonusesProps) => {
     try {
       await axiosApi
