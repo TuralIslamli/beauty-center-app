@@ -26,6 +26,7 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
   const [rows, setRows] = useState<number>(10);
   const [dialog, setDialog] = useState(false);
   const toast = useRef<Toast>(null);
+  const [first, setFirst] = useState(0);
 
   const showSuccess = (message: string) => {
     toast.current?.show({
@@ -37,6 +38,7 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
   };
 
   const onPageChange = (event: PaginatorPageChangeEvent) => {
+    setFirst(event.first);
     fetchData(event.page + 1);
   };
 
@@ -191,7 +193,7 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
           ></Column>
         )}
       </DataTable>
-      <Paginator rows={rows} totalRecords={total} onPageChange={onPageChange} />
+      <Paginator first={first} rows={rows} totalRecords={total} onPageChange={onPageChange} />
       <Toast ref={toast} />
       <AddDialog
         dialog={dialog}

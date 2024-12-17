@@ -65,6 +65,13 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
     isLoading ? (
       <Skeleton width="150px" />
     ) : (
+      `${rowData?.service?.user?.name} ${rowData?.service?.user?.surname}`
+    );
+
+  const getCauserFullName = (rowData: ILog) =>
+    isLoading ? (
+      <Skeleton width="150px" />
+    ) : (
       `${rowData.price_difference.causer?.name} ${rowData.price_difference?.causer?.surname}`
     );
 
@@ -206,8 +213,13 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
           body={serviceTypesBody}
         ></Column>
         <Column
-          header="Səbəbkar"
+          header="Doktor"
           body={getDoctorFullName}
+          style={{ width: '10%' }}
+        ></Column>
+        <Column
+          header="Səbəbkar"
+          body={getCauserFullName}
           style={{ width: '10%' }}
         ></Column>
         <Column

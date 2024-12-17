@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api';
-import { IBonus, IBonusesRS, IDoctor, IDoctorRS } from '@/app/types';
+import {
+  IBonus,
+  IBonusesCoefficientRS,
+  IBonusesRS,
+  IDoctor,
+  IDoctorRS,
+} from '@/app/types';
 import { DataTable, DataTableExpandedRows } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { formatDate } from '@/app/utils';
+import { InputNumber } from 'primereact/inputnumber';
 
 function BonusesTable() {
   const [bonuses, setBonuses] = useState<IBonus[]>();
@@ -14,6 +21,7 @@ function BonusesTable() {
   const [doctors, setDoctors] = useState<IDoctor[]>();
   const [doctor, setDoctor] = useState<IDoctor>();
   const [expandedRows, setExpandedRows] = useState<DataTableExpandedRows>({});
+  const [coefficient, setCoefficient] = useState<number>();
 
   const priceBodyTemplate = (rowData: IBonus) => {
     const formatter = new Intl.NumberFormat('az-AZ', {
@@ -38,7 +46,11 @@ function BonusesTable() {
       currency: 'AZN',
     });
 
-    const parts = formatter.formatToParts(+rowData.total_amount / 200);
+    const tempCoefficient = coefficient || 1;
+
+    const parts = formatter.formatToParts(
+      +rowData.total_amount / tempCoefficient
+    );
 
     const currencySymbol =
       parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
@@ -73,7 +85,11 @@ function BonusesTable() {
       currency: 'AZN',
     });
 
-    const parts = formatter.formatToParts(+bonus.bonus_per_days / 200);
+    const tempCoefficient = coefficient || 1;
+
+    const parts = formatter.formatToParts(
+      +bonus.bonus_per_days / tempCoefficient
+    );
     const currencySymbol =
       parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
     const formattedPrice = parts
@@ -91,7 +107,10 @@ function BonusesTable() {
         to_date: formatDate(dates[1]),
         user_id: doctor?.id,
       });
+      const { data: coefficient }: IBonusesCoefficientRS =
+        await api.getBonusesCoefficient();
       setBonuses(data);
+      setCoefficient(coefficient?.coefficient);
     } catch (error) {
       console.error(error);
     }
@@ -102,6 +121,10 @@ function BonusesTable() {
       fetchData();
     }
   }, [dates[1], doctor]);
+
+  useEffect(() => {
+    if (coefficient) api.patchBonusCoefficient(coefficient);
+  }, [coefficient]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -169,6 +192,11 @@ function BonusesTable() {
           placeholder="Həkim seçin"
           optionLabel="full_name"
           showClear
+        />
+        <InputNumber
+          style={{ marginLeft: '10px', maxWidth: 10 }}
+          value={coefficient}
+          onValueChange={(e) => setCoefficient(e.value || 0)}
         />
       </div>
       <Button

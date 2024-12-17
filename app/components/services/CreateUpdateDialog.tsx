@@ -18,7 +18,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
 import api from '@/app/api';
-import { paymentTypes, serviceStatuses } from '../consts';
+import { serviceStatuses } from '../consts';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { MultiSelect } from 'primereact/multiselect';
@@ -48,9 +48,9 @@ const CreateUpdateDialog = ({
   const [totalprice, setTotalPrice] = useState(0);
   const [priceResult, setPriceResult] = useState(0);
   const [counter, setCounter] = useState(0);
-  const [selectedPayment, setSelectedPayment] = useState(
-    paymentTypes.find((i) => i.id === 0)
-  );
+  // const [selectedPayment, setSelectedPayment] = useState(
+  //   paymentTypes.find((i) => i.id === 0)
+  // );
   const [selectedStatus, setSelectedStatus] = useState<{
     id: number;
     name: string;
@@ -68,7 +68,10 @@ const CreateUpdateDialog = ({
         })
       )
       .required(),
-    client_name: yup.string().required(),
+    client_name: yup
+      .string()
+      .matches(/^[A-Za-z]+$/, 'Yalnız ingilis şrifti')
+      .required('Müştəri adı mütləqdir'),
     client_phone: userPermissions.includes('service.variable.phone')
       ? yup.string().required()
       : yup.string(),
@@ -213,7 +216,7 @@ const CreateUpdateDialog = ({
     setService(undefined);
     setSelectedServiceTypes(undefined);
     setSelectedDoctor(undefined);
-    setSelectedPayment(paymentTypes.find((i) => i.id === 0));
+    // setSelectedPayment(paymentTypes.find((i) => i.id === 0));
     setSelectedStatus(undefined);
     setTotalPrice(0);
     setPriceResult(0);
@@ -244,13 +247,15 @@ const CreateUpdateDialog = ({
               control={control}
               render={({ field }) => (
                 <InputText
-                  style={{ marginBottom: '10px' }}
                   id="name"
                   invalid={!!errors.client_name}
                   {...field}
                 />
               )}
             />
+            <div style={{ marginBottom: '10px' }}>
+              {errors?.client_name?.message}
+            </div>
           </>
         )}
         {userPermissions.includes('service.variable.phone') && (
