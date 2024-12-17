@@ -13,7 +13,7 @@ export const setToastInstance = (toastInstance: any) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: "https://api.nargizestetik.az/api",
+  baseURL: process.env.NEXT_PUBLIC_BACK_API + "/api",
 });
 
 axiosInstance.interceptors.request.use(
