@@ -55,7 +55,7 @@ const CreateUpdateDialog = ({
     id: number;
     name: string;
   }>();
-  const [doctors, setDoctors] = useState<IDoctor[]>();
+  const [doctors, setDoctors] = useState<IDoctor[]>([]);
   const [hours, setHours] = useState<IHour[]>();
   const [isDisabled, setIsDisabled] = useState(false);
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
@@ -112,7 +112,10 @@ const CreateUpdateDialog = ({
             client_phone: payload.client_phone
               ?.toString()
               .replace(/[\s-]/g, ''),
-            reservation_date: `${formatDate(date)} ${selectedHour?.time}`,
+            reservation_date:
+              selectedStatus?.id === 2
+                ? `${formatDate(date)} ${selectedHour?.time}`
+                : booking?.reservation_date,
             status: payload.status,
           })
         : await api.createBooking({
@@ -159,14 +162,6 @@ const CreateUpdateDialog = ({
         'service_types',
         booking.service_types?.map((i) => ({ id: i.id }))
       );
-      const actualStatus = () => {
-        return booking.status !== 2
-          ? serviceStatuses.find((status) => status?.id === booking.status)
-          : {
-              id: 1,
-              name: 'Gəldi',
-            };
-      };
       setValue('status', booking.status);
       setSelectedStatus(
         bookingStatuses.find((status) => status?.id === booking.status)
@@ -176,41 +171,40 @@ const CreateUpdateDialog = ({
   }, [booking, setValue]);
 
   useEffect(() => {
+    if (booking?.id && booking?.doctor?.id) {
+      const fetchDoctor = async () => {
+        const { data: doctor }: IUserRS = await api.getDoctorById(
+          booking!.doctor?.id
+        );
+        setValue('doctor_id', booking.doctor?.id);
+        setSelectedDoctor({
+          id: doctor.id,
+          full_name: `${doctor?.name} ${doctor?.surname}`,
+        });
+        setDoctors((prev) => [
+          ...prev,
+          {
+            id: doctor.id,
+            full_name: `${doctor?.name} ${doctor?.surname}`,
+          },
+        ]);
+      };
+      fetchDoctor();
+    }
+  }, [booking?.id]);
+
+  useEffect(() => {
     const fetchData = async () => {
       if (userPermissions.includes('user.input_search') && selectedHour?.time) {
         const { data: doctorsData }: IDoctorRS = await api.getBookingDoctors(
           `${formatDate(date)} ${selectedHour?.time}`
         );
         setDoctors(doctorsData);
-
-        if (booking?.id && booking?.doctor?.id) {
-          if (
-            booking?.reservation_date !==
-            `${formatTestDate(date)} ${selectedHour?.time}:00`
-          ) {
-            setSelectedDoctor(undefined);
-          } else {
-            const fetchDoctor = async () => {
-              const { data: doctor }: IUserRS = await api.getDoctorById(
-                booking!.doctor?.id
-              );
-              setValue('doctor_id', booking.doctor?.id);
-              setSelectedDoctor({
-                id: doctor.id,
-                full_name: `${doctor?.name} ${doctor?.surname}`,
-              });
-              setDoctors([
-                ...doctorsData,
-                {
-                  id: doctor.id,
-                  full_name: `${doctor?.name} ${doctor?.surname}`,
-                },
-              ]);
-            };
-            fetchDoctor();
-          }
-        }
+      } else {
+        const { data: doctorsData }: IDoctorRS = await api.getDoctors();
+        setDoctors(doctorsData);
       }
+      setSelectedDoctor(undefined);
     };
     fetchData();
   }, [selectedHour?.time]);
@@ -325,7 +319,11 @@ const CreateUpdateDialog = ({
           control={control}
           render={({ field }) => (
             <Dropdown
-              disabled={!selectedHour}
+              disabled={
+                !selectedHour &&
+                (selectedStatus?.id === 2 ||
+                  typeof selectedStatus?.id === 'undefined')
+              }
               filter
               style={{ marginBottom: '10px' }}
               value={selectedDoctor}
@@ -409,7 +407,7 @@ const CreateUpdateDialog = ({
                     options={hours}
                     optionDisabled={(option) => !option.active}
                     placeholder="Saat seçin"
-                    invalid={!getValues().hour}
+                    invalid={!selectedHour}
                   />
                 )}
               />
