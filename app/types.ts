@@ -123,6 +123,7 @@ export interface IService {
 }
 
 export interface IBooking {
+  service_types: IServiceType[];
   id: number;
   status: number;
   reservation_date: string;
@@ -171,7 +172,6 @@ export interface IServiceFields {
   client_phone?: string;
   cash_amount?: number;
   card_amount?: number;
-  payment_type?: number;
   user_id?: number;
   status?: number;
   reject_comment?: string | null;
@@ -182,10 +182,11 @@ export interface IBookingFields {
   client_name: string;
   client_phone?: string;
   doctor_id?: number;
-  reservation_date: Nullable<Date> | string;
-  hour?: string;
+  reservation_date?: Nullable<Date> | string;
+  hour: string;
   id?: number;
   status?: number;
+  service_types?: { id: number }[];
 }
 
 export interface IDoctor {

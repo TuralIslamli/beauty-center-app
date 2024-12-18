@@ -142,6 +142,7 @@ export default {
       },
     }),
   getDoctors: <T>(): Promise<T> => axiosApi.get('users/input-search'),
+  getDoctorById: <T>(id: number): Promise<T> => axiosApi.get(`users/${id}`),
   getHours: <T>(date: string): Promise<T> =>
     axiosApi.get(`reservation-times/input-search?date=${date}`),
   getInputServices: <T>(): Promise<T> =>

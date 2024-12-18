@@ -10,10 +10,8 @@ import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import {
   IBooking,
   IBookingsData,
-  IDoctor,
-  IDoctorRS,
+  IService,
   IServiceType,
-  IServiceTypeRS,
   ITotalAmount,
 } from '../../types';
 import api from '../../api';
@@ -38,10 +36,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     id: number;
     name: string;
   } | null>(null);
-  const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
-  const [doctors, setDoctors] = useState<IDoctor[]>();
   const [booking, setBooking] = useState<IBooking>();
-  const [doctor, setDoctor] = useState<IDoctor>();
   const [dialog, setDialog] = useState(false);
   const [filter, setFilter] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
@@ -53,12 +48,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     number | null
   >(null, 400);
   const [rejectComment, setRejectComment] = useState<string>();
-  // const [first, setFirst] = useState(0);
-  const [page, setPage] = useState(1);
-  // const [total, setTotal] = useState(0);
-  // const [rows, setRows] = useState<number>(1000);
   const [isLoading, setIsLoading] = useState(false);
-  const [totalAmount, setTotalAmount] = useState<ITotalAmount>();
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
   const toast = useRef<Toast>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
@@ -81,17 +71,14 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     setIsLoading(true);
     try {
       const { data, meta }: IBookingsData = await api.getBookings({
-        // size: rows,
         status: filteredStatus?.id,
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
         client_name: debouncedClientName,
         client_phone: debouncedClientPhone,
-        doctor_id: doctor?.id,
       });
 
       setBookings(data);
-      // setTotal(meta?.total);
     } catch (error) {
       console.error(error);
     } finally {
@@ -111,41 +98,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     debouncedClientName,
     debouncedClientPhone,
     serviceTypesFilter?.length,
-    doctor,
   ]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (userPermissions.includes('user.input_search')) {
-        const { data: doctorsData }: IDoctorRS = await api.getDoctors();
-        setDoctors(doctorsData);
-      }
-      if (userPermissions.includes('service_type.input_search')) {
-        const { data: servicesData }: IServiceTypeRS =
-          await api.getInputServices();
-        setServiceTypes(servicesData);
-      }
-    };
-    fetchData();
-  }, []);
-
-  // const onPageChange = (event: PaginatorPageChangeEvent) => {
-  //   setFirst(event.first);
-  //   getBookings(event.page + 1, true);
-  //   setPage(event.page + 1);
-  // };
-
-  // const onDownloadAllReports = () => {
-  //   api.getAllReportsExcel({
-  //     status: filteredStatus?.id,
-  //     from_date: formatDate(dates[0]),
-  //     to_date: formatDate(dates[1]),
-  //     client_name: debouncedClientName,
-  //     client_phone: debouncedClientPhone,
-  //     service_types: serviceTypesFilter?.map((i) => i.id),
-  //     user_id: doctor?.id,
-  //   });
-  // };
 
   const confirmDeleteService = (booking: IBooking) => {
     setBooking(booking);
@@ -234,6 +187,9 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
         return 'danger';
 
       case 'Gəldi':
+        return 'warning';
+
+      case 'Qəbul edildi':
         return 'success';
 
       case 'Gözlənilir':
@@ -251,17 +207,6 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
       <Tag value={status} severity={getSeverity(status)} />
     );
   };
-
-  // const serviceTypesBody = (rowData: IBooking) =>
-  //   isLoading ? (
-  //     <Skeleton width="100px" />
-  //   ) : (
-  //     <div>
-  //       {rowData.service_types?.map((i) => (
-  //         <div key={i.id}>{i.name}</div>
-  //       ))}
-  //     </div>
-  //   );
 
   const statusItemTemplate = (option: any) => {
     return <Tag value={option.name} severity={getSeverity(option.name)} />;
@@ -339,6 +284,17 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
       <div>{bookings?.length - options?.rowIndex}</div>
     );
 
+  const serviceTypesBody = (rowData: IService) =>
+    isLoading ? (
+      <Skeleton width="100px" />
+    ) : (
+      <div>
+        {rowData.service_types.map((i) => (
+          <div key={i.id}>{i.name}</div>
+        ))}
+      </div>
+    );
+
   return (
     <>
       <DataTable
@@ -390,6 +346,13 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           showFilterMenu={false}
           filter
           filterElement={statusRowFilterTemplate}
+        ></Column>
+        <Column
+          header="Xidmət"
+          style={{ width: '10%' }}
+          showFilterMenu={false}
+          filter={userPermissions.includes('service.variable.service_type_id')}
+          body={serviceTypesBody}
         ></Column>
         <Column
           header="Həkim"
