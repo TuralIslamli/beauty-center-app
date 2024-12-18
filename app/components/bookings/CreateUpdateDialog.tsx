@@ -55,6 +55,7 @@ const CreateUpdateDialog = ({
     id: number;
     name: string;
   }>();
+  const [priceResult, setPriceResult] = useState(0);
   const [doctors, setDoctors] = useState<IDoctor[]>([]);
   const [hours, setHours] = useState<IHour[]>();
   const [isDisabled, setIsDisabled] = useState(false);
@@ -132,7 +133,11 @@ const CreateUpdateDialog = ({
           client_name: payload.client_name,
           service_types: payload.service_types || [],
           client_phone: payload.client_phone?.toString().replace(/[\s-]/g, ''),
-          cash_amount: 0,
+          cash_amount: selectedServiceTypes?.reduce(
+            (accumulator: number, currentValue: IServiceType) =>
+              accumulator + +currentValue.price,
+            0
+          ),
           card_amount: 0,
           user_id: payload.doctor_id,
           status: 0,
