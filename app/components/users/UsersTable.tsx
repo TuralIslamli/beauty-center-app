@@ -17,13 +17,14 @@ interface IUserTableProps {
 
 function UsersTable({ userPermissions }: IUserTableProps) {
   const [users, setUsers] = useState<IUser[]>([]);
-
+  const [first, setFirst] = useState(0);
   const [user, setUser] = useState<IUser>({} as IUser);
 
   const [userEditDialog, setUserEditDialog] = useState(false);
   const [userDeleteDialog, setUserDeleteDialog] = useState(false);
   const [total, setTotal] = useState(0);
   const [rows, setRows] = useState<number>(10);
+  const [page, setPage] = useState(1);
   const toast = useRef<Toast>(null);
 
   const showSuccess = (message: string) => {
@@ -44,7 +45,7 @@ function UsersTable({ userPermissions }: IUserTableProps) {
     setUserDeleteDialog(true);
   };
 
-  const fetchData = async (page = 1) => {
+  const fetchData = async (page: number) => {
     try {
       const { data, meta }: IUserData = await api.getUsers({
         page,
@@ -58,11 +59,13 @@ function UsersTable({ userPermissions }: IUserTableProps) {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(page);
   }, []);
 
   const onPageChange = (event: PaginatorPageChangeEvent) => {
     fetchData(event.page + 1);
+    setPage(event.page + 1);
+    setFirst(event.first);
   };
 
   const actionBodyTemplate = (rowData: IUser) => {
@@ -138,7 +141,7 @@ function UsersTable({ userPermissions }: IUserTableProps) {
           style={{ width: "20%" }}
         ></Column>
       </DataTable>
-      <Paginator rows={rows} totalRecords={total} onPageChange={onPageChange} />
+      <Paginator first={first} rows={rows} totalRecords={total} onPageChange={onPageChange} />
       <Toast ref={toast} />
       <DeleteUserDialog
         user={user}

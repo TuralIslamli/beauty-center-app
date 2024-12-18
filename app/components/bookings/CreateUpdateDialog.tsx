@@ -7,6 +7,7 @@ import {
   IHourRS,
   IServiceType,
   IServiceTypeRS,
+  IUserRS,
 } from '@/app/types';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
@@ -17,11 +18,14 @@ import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
 import api from '@/app/api';
-import { bookingStatuses, paymentTypes, serviceStatuses } from '../consts';
+import { bookingStatuses, serviceStatuses } from '../consts';
 import { Calendar } from 'primereact/calendar';
 import { Nullable } from 'primereact/ts-helpers';
-import { formatDate } from '@/app/utils';
+import { formatDate, formatTestDate } from '@/app/utils';
 import { Message } from 'primereact/message';
+import { MultiSelect } from 'primereact/multiselect';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
 interface IDialogProps {
   dialog: boolean;
@@ -45,6 +49,7 @@ const CreateUpdateDialog = ({
   const [selectedServiceTypes, setSelectedServiceTypes] =
     useState<IServiceType[]>();
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
+
   const [selectedHour, setSelectedHour] = useState<IHour>();
   const [selectedStatus, setSelectedStatus] = useState<{
     id: number;
@@ -54,16 +59,43 @@ const CreateUpdateDialog = ({
   const [hours, setHours] = useState<IHour[]>();
   const [isDisabled, setIsDisabled] = useState(false);
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
-
   const [date, setDate] = useState<Nullable<Date>>(null);
+
+  const schema = yup.object().shape({
+    service_types:
+      selectedStatus?.id === 3
+        ? yup
+            .array()
+            .of(
+              yup.object().shape({
+                id: yup.number().required(),
+              })
+            )
+            .min(1)
+            .required()
+        : yup.array(),
+    client_name: yup
+      .string()
+      .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
+      .required('Müştəri adı mütləqdir'),
+    client_phone: userPermissions.includes('service.variable.phone')
+      ? yup.string().required()
+      : yup.string(),
+    doctor_id:
+      selectedStatus?.id === 3 ? yup.number().required() : yup.number(),
+    hour: yup.string().required(),
+  });
 
   const {
     control,
     handleSubmit,
     formState: { errors },
     setValue,
+    getValues,
     reset,
-  } = useForm<IBookingFields>();
+  } = useForm<IBookingFields>({
+    resolver: yupResolver(schema),
+  });
 
   const onSubmit: SubmitHandler<IBookingFields> = async (
     payload: IBookingFields
@@ -72,6 +104,7 @@ const CreateUpdateDialog = ({
     try {
       booking?.id
         ? await api.updateBooking({
+            ...payload,
             client_name: payload.client_name,
             doctor_id: payload.doctor_id,
 
@@ -83,6 +116,7 @@ const CreateUpdateDialog = ({
             status: payload.status,
           })
         : await api.createBooking({
+            ...payload,
             client_name: payload.client_name,
             doctor_id: payload.doctor_id,
             client_phone: payload.client_phone
@@ -90,6 +124,17 @@ const CreateUpdateDialog = ({
               .replace(/[\s-]/g, ''),
             reservation_date: `${formatDate(date)} ${selectedHour?.time}`,
           });
+      if (selectedStatus?.id === 3) {
+        await api.createService({
+          client_name: payload.client_name,
+          service_types: payload.service_types || [],
+          client_phone: payload.client_phone?.toString().replace(/[\s-]/g, ''),
+          cash_amount: 0,
+          card_amount: 0,
+          user_id: payload.doctor_id,
+          status: 0,
+        });
+      }
       showSuccess(`Service has been successfull created`);
       getBookings();
       setDialog(false);
@@ -104,33 +149,31 @@ const CreateUpdateDialog = ({
     if (booking?.id) {
       setValue('client_name', booking.client_name);
       setValue('client_phone', booking.client_phone);
-      setValue('doctor_id', booking.doctor?.id);
       const [day, month, yearAndTime] = booking.reservation_date.split('-');
       const [year, time] = yearAndTime.split(' ');
       const formattedDateString = `${year}-${month}-${day}T${time}`;
       const date = new Date(formattedDateString);
       setValue('reservation_date', date);
       setDate(date);
-      // setValue(
-      //   'service_types',
-      //   service.service_types?.map((i) => ({ id: i.id }))
-      // );
-      // const actualStatus = () => {
-      //   return booking.status !== 2
-      //     ? serviceStatuses.find((status) => status?.id === booking.status)
-      //     : {
-      //         id: 1,
-      //         name: 'Gəldi',
-      //       };
-      // };
+      setValue(
+        'service_types',
+        booking.service_types?.map((i) => ({ id: i.id }))
+      );
+      const actualStatus = () => {
+        return booking.status !== 2
+          ? serviceStatuses.find((status) => status?.id === booking.status)
+          : {
+              id: 1,
+              name: 'Gəldi',
+            };
+      };
       setValue('status', booking.status);
       setSelectedStatus(
-        serviceStatuses.find((status) => status?.id === booking.status)
+        bookingStatuses.find((status) => status?.id === booking.status)
       );
-      setSelectedDoctor(doctors?.find((doc) => doc.id === booking.doctor?.id));
-      // setSelectedServiceTypes(booking.service_types);
+      setSelectedServiceTypes(booking.service_types);
     }
-  }, [booking, setValue, doctors]);
+  }, [booking, setValue]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -139,6 +182,34 @@ const CreateUpdateDialog = ({
           `${formatDate(date)} ${selectedHour?.time}`
         );
         setDoctors(doctorsData);
+
+        if (booking?.id && booking?.doctor?.id) {
+          if (
+            booking?.reservation_date !==
+            `${formatTestDate(date)} ${selectedHour?.time}:00`
+          ) {
+            setSelectedDoctor(undefined);
+          } else {
+            const fetchDoctor = async () => {
+              const { data: doctor }: IUserRS = await api.getDoctorById(
+                booking!.doctor?.id
+              );
+              setValue('doctor_id', booking.doctor?.id);
+              setSelectedDoctor({
+                id: doctor.id,
+                full_name: `${doctor?.name} ${doctor?.surname}`,
+              });
+              setDoctors([
+                ...doctorsData,
+                {
+                  id: doctor.id,
+                  full_name: `${doctor?.name} ${doctor?.surname}`,
+                },
+              ]);
+            };
+            fetchDoctor();
+          }
+        }
       }
     };
     fetchData();
@@ -177,22 +248,14 @@ const CreateUpdateDialog = ({
     fetchData();
   }, [formatDate(date)]);
 
-  // const handleMultiSelectChange = (e: any) => {
-  //   const selectedTypes = e.value;
-  //   setSelectedServiceTypes(selectedTypes);
-  //   setValue(
-  //     'service_types',
-  //     selectedTypes?.map((i: IServiceType) => ({ id: i.id }))
-  //   );
-  //   setValue(
-  //     'amount',
-  //     selectedTypes.reduce(
-  //       (accumulator: number, currentValue: IServiceType) =>
-  //         accumulator + +currentValue.price,
-  //       0
-  //     )
-  //   );
-  // };
+  const handleMultiSelectChange = (e: any) => {
+    const selectedTypes = e.value;
+    setSelectedServiceTypes(selectedTypes);
+    setValue(
+      'service_types',
+      selectedTypes?.map((i: IServiceType) => ({ id: i.id }))
+    );
+  };
 
   const onHide = () => {
     setDialog(false);
@@ -227,16 +290,13 @@ const CreateUpdateDialog = ({
           <Controller
             name="client_name"
             control={control}
-            rules={{ required: true }}
             render={({ field }) => (
-              <InputText
-                style={{ marginBottom: '10px' }}
-                id="name"
-                invalid={!!errors.client_name}
-                {...field}
-              />
+              <InputText id="name" invalid={!!errors.client_name} {...field} />
             )}
           />
+          <div style={{ marginBottom: '10px' }}>
+            {errors?.client_name?.message}
+          </div>
         </>
 
         <label style={{ marginBottom: '5px' }} htmlFor="name">
@@ -245,7 +305,6 @@ const CreateUpdateDialog = ({
         <Controller
           name="client_phone"
           control={control}
-          rules={{ minLength: 12, required: true }}
           render={({ field }) => (
             <InputMask
               style={{ marginBottom: '10px' }}
@@ -282,7 +341,7 @@ const CreateUpdateDialog = ({
           )}
         />
 
-        {/* {userPermissions.includes('service.variable.service_type_id') && (
+        {userPermissions.includes('service.variable.service_type_id') && (
           <>
             <label style={{ marginBottom: '5px' }} htmlFor="email">
               Xidmət:
@@ -304,74 +363,76 @@ const CreateUpdateDialog = ({
               )}
             />
           </>
-        )} */}
-        <>
-          <label style={{ marginBottom: '5px' }} htmlFor="name">
-            Tarix və saat:
-          </label>
-          <div style={{ marginBottom: '5px' }}>
-            <Controller
-              name="reservation_date"
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <Calendar
-                  dateFormat="dd-mm-yy"
-                  invalid={!!errors.reservation_date}
-                  minDate={new Date()}
-                  readOnlyInput
-                  value={date}
-                  onChange={(e) => {
-                    setDate(e.value);
-                    setValue('reservation_date', e.value);
-                  }}
-                />
-              )}
-            />
-            <Controller
-              name="hour"
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <Dropdown
-                  disabled={!date}
-                  style={{
-                    marginBottom: '10px',
-                    marginLeft: '5px',
-                    marginRight: '10px',
-                  }}
-                  value={selectedHour}
-                  onChange={(e) => {
-                    setSelectedHour(e.value);
-                    setValue('hour', e.value.time);
-                  }}
-                  optionLabel="time"
-                  options={hours}
-                  optionDisabled={(option) => !option.active}
-                  placeholder="Saat seçin"
-                  invalid={!!errors.hour}
-                />
-              )}
-            />
-            {selectedHour?.remaining_space && (
-              <Message
-                style={{
-                  border: 'solid #111827',
-                }}
-                severity="info"
-                content={
-                  <div
-                    style={{
-                      color: 'white',
+        )}
+        {(typeof getValues().status === 'undefined' ||
+          getValues().status === 2) && (
+          <>
+            <label style={{ marginBottom: '5px' }} htmlFor="name">
+              Tarix və saat:
+            </label>
+            <div style={{ marginBottom: '5px' }}>
+              <Controller
+                name="reservation_date"
+                control={control}
+                render={({ field }) => (
+                  <Calendar
+                    dateFormat="dd-mm-yy"
+                    invalid={!!errors.reservation_date}
+                    minDate={new Date()}
+                    readOnlyInput
+                    value={date}
+                    onChange={(e) => {
+                      setDate(e.value);
+                      setValue('reservation_date', e.value);
                     }}
-                  >
-                    Yer: {selectedHour?.remaining_space}
-                  </div>
-                }
+                  />
+                )}
               />
-            )}
-          </div>
-        </>
+              <Controller
+                name="hour"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Dropdown
+                    disabled={!date}
+                    style={{
+                      marginBottom: '10px',
+                      marginLeft: '5px',
+                      marginRight: '10px',
+                    }}
+                    value={selectedHour}
+                    onChange={(e) => {
+                      setSelectedHour(e.value);
+                      setValue('hour', e.value.time);
+                    }}
+                    optionLabel="time"
+                    options={hours}
+                    optionDisabled={(option) => !option.active}
+                    placeholder="Saat seçin"
+                    invalid={!getValues().hour}
+                  />
+                )}
+              />
+              {selectedHour?.remaining_space && (
+                <Message
+                  style={{
+                    border: 'solid #111827',
+                  }}
+                  severity="info"
+                  content={
+                    <div
+                      style={{
+                        color: 'white',
+                      }}
+                    >
+                      Yer: {selectedHour?.remaining_space}
+                    </div>
+                  }
+                />
+              )}
+            </div>
+          </>
+        )}
         {booking?.id && (
           <div style={{ display: 'flex', marginBottom: '10px' }}>
             {bookingStatuses?.map((status) => {

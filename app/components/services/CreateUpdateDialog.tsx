@@ -48,9 +48,6 @@ const CreateUpdateDialog = ({
   const [totalprice, setTotalPrice] = useState(0);
   const [priceResult, setPriceResult] = useState(0);
   const [counter, setCounter] = useState(0);
-  // const [selectedPayment, setSelectedPayment] = useState(
-  //   paymentTypes.find((i) => i.id === 0)
-  // );
   const [selectedStatus, setSelectedStatus] = useState<{
     id: number;
     name: string;
@@ -70,7 +67,7 @@ const CreateUpdateDialog = ({
       .required(),
     client_name: yup
       .string()
-      .matches(/^[A-Za-z]+$/, 'Yalnız ingilis şrifti')
+      .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
       .required('Müştəri adı mütləqdir'),
     client_phone: userPermissions.includes('service.variable.phone')
       ? yup.string().required()
@@ -216,7 +213,6 @@ const CreateUpdateDialog = ({
     setService(undefined);
     setSelectedServiceTypes(undefined);
     setSelectedDoctor(undefined);
-    // setSelectedPayment(paymentTypes.find((i) => i.id === 0));
     setSelectedStatus(undefined);
     setTotalPrice(0);
     setPriceResult(0);
