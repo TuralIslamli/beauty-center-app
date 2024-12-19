@@ -169,7 +169,7 @@ export interface IBookingsData {
 export interface IServiceFields {
   service_types: { id: number }[];
   client_name: string;
-  client_phone?: string;
+  client_phone?: string | null;
   cash_amount?: number;
   card_amount?: number;
   user_id?: number;

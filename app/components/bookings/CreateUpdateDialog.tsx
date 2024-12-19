@@ -196,20 +196,24 @@ const CreateUpdateDialog = ({
       };
       fetchDoctor();
     }
-  }, [booking?.id]);
+  }, [booking?.id, selectedHour?.time]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (userPermissions.includes('user.input_search') && selectedHour?.time) {
+      if (
+        userPermissions.includes('user.input_search') &&
+        selectedHour?.time &&
+        !doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0)
+      ) {
         const { data: doctorsData }: IDoctorRS = await api.getBookingDoctors(
           `${formatDate(date)} ${selectedHour?.time}`
         );
         setDoctors(doctorsData);
+        setSelectedDoctor(undefined);
       } else {
         const { data: doctorsData }: IDoctorRS = await api.getDoctors();
         setDoctors(doctorsData);
       }
-      setSelectedDoctor(undefined);
     };
     fetchData();
   }, [selectedHour?.time]);
