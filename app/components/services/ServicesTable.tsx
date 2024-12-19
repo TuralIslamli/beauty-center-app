@@ -10,6 +10,7 @@ import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import {
   IDoctor,
   IDoctorRS,
+  IRole,
   IService,
   IServiceType,
   IServiceTypeRS,
@@ -33,9 +34,10 @@ import DeleteServiceDialog from './DeleteServiceDialog';
 
 interface IServicesTableProps {
   userPermissions: string[];
+  role: IRole;
 }
 
-function ServicesTable({ userPermissions }: IServicesTableProps) {
+function ServicesTable({ userPermissions, role }: IServicesTableProps) {
   const [services, setServices] = useState<IService[]>([]);
   const [filteredStatus, setFilteredStatus] = useState<{
     id: number;
@@ -177,14 +179,27 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
       <Skeleton width="60px" />
     ) : (
       <React.Fragment>
-        <Button
-          icon="pi pi-pencil"
-          rounded
-          text
-          severity="secondary"
-          style={{ marginRight: '10px' }}
-          onClick={() => editService(rowData)}
-        />
+        {rowData?.status === 0 && role.id === 4 && (
+          <Button
+            icon="pi pi-pencil"
+            rounded
+            text
+            severity="secondary"
+            style={{ marginRight: '10px' }}
+            onClick={() => editService(rowData)}
+          />
+        )}
+
+        {role.id !== 4 && (
+          <Button
+            icon="pi pi-pencil"
+            rounded
+            text
+            severity="secondary"
+            style={{ marginRight: '10px' }}
+            onClick={() => editService(rowData)}
+          />
+        )}
 
         {userPermissions?.includes('service.delete') && (
           <Button
@@ -239,11 +254,13 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
             style={{ marginRight: '10px' }}
           />
         )}
-        <Button
-          label="Əlavə et"
-          icon="pi pi-plus"
-          onClick={() => setDialog(true)}
-        />
+        {userPermissions.includes('service.create') && (
+          <Button
+            label="Əlavə et"
+            icon="pi pi-plus"
+            onClick={() => setDialog(true)}
+          />
+        )}
       </div>
     </div>
   );
@@ -523,13 +540,13 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
           filter
           filterElement={statusRowFilterTemplate}
         ></Column>
-        {userPermissions.includes('service.update') && (
+        {
           <Column
             body={actionBodyTemplate}
             exportable={false}
             style={{ width: '10%' }}
           ></Column>
-        )}
+        }
       </DataTable>
       <div ref={navigationRef}>
         <Paginator
@@ -560,6 +577,7 @@ function ServicesTable({ userPermissions }: IServicesTableProps) {
         service={service}
         setService={setService}
         getServices={getServices}
+        role={role}
       />
       <ReportsDialog dialog={reportsDialog} setDialog={setReportsDialog} />
       <Dialog

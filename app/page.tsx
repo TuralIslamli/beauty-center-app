@@ -87,7 +87,10 @@ function Page() {
         <TabView activeIndex={activeIndex}>
           {userPermissions?.includes('service.get_all') && (
             <TabPanel header="Xidmətlər">
-              <ServicesTable userPermissions={userPermissions} />
+              <ServicesTable
+                userPermissions={userPermissions}
+                role={userData?.role}
+              />
             </TabPanel>
           )}
           {userPermissions?.includes('reservation.get_all') && (

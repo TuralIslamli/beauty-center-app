@@ -1,6 +1,7 @@
 import {
   IDoctor,
   IDoctorRS,
+  IRole,
   IService,
   IServiceFields,
   IServiceRS,
@@ -31,6 +32,7 @@ interface IDialogProps {
   getServices: (page: number) => Promise<void>;
   service?: IService;
   setService: Dispatch<SetStateAction<IService | undefined>>;
+  role: IRole;
 }
 
 const CreateUpdateDialog = ({
@@ -41,6 +43,7 @@ const CreateUpdateDialog = ({
   getServices,
   service,
   setService,
+  role,
 }: IDialogProps) => {
   const [selectedServiceTypes, setSelectedServiceTypes] =
     useState<IServiceType[]>();
@@ -71,7 +74,7 @@ const CreateUpdateDialog = ({
       .required('Müştəri adı mütləqdir'),
     client_phone: userPermissions.includes('service.variable.phone')
       ? yup.string().required()
-      : yup.string(),
+      : yup.string().nullable(),
     user_id: userPermissions.includes('service.variable.user_id')
       ? yup.number().required()
       : yup.number(),
@@ -92,7 +95,6 @@ const CreateUpdateDialog = ({
   } = useForm<IServiceFields>({
     resolver: yupResolver(schema),
   });
-
   const onSubmit: SubmitHandler<IServiceFields> = async (
     payload: IServiceFields
   ) => {
@@ -271,6 +273,7 @@ const CreateUpdateDialog = ({
                   placeholder="+994 99 999-99-99"
                   invalid={!!errors.client_phone}
                   {...field}
+                  value={field.value ?? ''}
                 />
               )}
             />
@@ -337,7 +340,7 @@ const CreateUpdateDialog = ({
               style={{ marginBottom: '10px', marginTop: '5px' }}
             />
           </div>
-          {userPermissions.includes('service.update') && (
+          {role?.id !== 4 && (
             <div>
               <label>Nəticə:</label>
               <InputNumber
@@ -355,9 +358,7 @@ const CreateUpdateDialog = ({
         <div style={{ display: 'flex', gap: '20px', width: '206px' }}>
           <div>
             <label htmlFor="email">
-              {userPermissions.includes('service.update')
-                ? 'Nağd:'
-                : 'Ödənəcək məbləğ:'}
+              {role?.id !== 4 ? 'Nağd:' : 'Ödənəcək məbləğ:'}
             </label>
             <Controller
               name="cash_amount"
@@ -380,7 +381,7 @@ const CreateUpdateDialog = ({
               )}
             />
           </div>
-          {userPermissions.includes('service.update') && (
+          {role?.id !== 4 && (
             <div>
               <label>pos/kart:</label>
               <Controller
