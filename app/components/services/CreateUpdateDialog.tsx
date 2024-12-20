@@ -58,6 +58,7 @@ const CreateUpdateDialog = ({
   const [doctors, setDoctors] = useState<IDoctor[]>();
   const [isDisabled, setIsDisabled] = useState(false);
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
+  const isDoctor = role?.id === 4;
 
   const schema = yup.object().shape({
     service_types: yup
@@ -95,6 +96,7 @@ const CreateUpdateDialog = ({
   } = useForm<IServiceFields>({
     resolver: yupResolver(schema),
   });
+
   const onSubmit: SubmitHandler<IServiceFields> = async (
     payload: IServiceFields
   ) => {
@@ -145,18 +147,22 @@ const CreateUpdateDialog = ({
       const actualStatus = () => {
         return service.status !== 0
           ? serviceStatuses.find((status) => status?.id === service.status)
+          : isDoctor
+          ? {
+              id: 0,
+              name: 'New',
+            }
           : {
               id: 1,
               name: 'Accepted',
             };
       };
       setValue('status', actualStatus()?.id);
-      setSelectedStatus(actualStatus);
+      setSelectedStatus(actualStatus());
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
       setSelectedServiceTypes(service.service_types);
     }
   }, [service, setValue, doctors]);
-
   useEffect(() => {
     const fetchData = async () => {
       if (userPermissions.includes('user.input_search')) {
@@ -279,7 +285,7 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-        {userPermissions.includes('service.variable.user_id') && (
+        {userPermissions.includes('service.variable.user_id') && !isDoctor && (
           <>
             <label style={{ marginBottom: '5px' }} htmlFor="email">
               Həkim:
@@ -340,7 +346,7 @@ const CreateUpdateDialog = ({
               style={{ marginBottom: '10px', marginTop: '5px' }}
             />
           </div>
-          {role?.id !== 4 && (
+          {!isDoctor && (
             <div>
               <label>Nəticə:</label>
               <InputNumber
@@ -358,7 +364,7 @@ const CreateUpdateDialog = ({
         <div style={{ display: 'flex', gap: '20px', width: '206px' }}>
           <div>
             <label htmlFor="email">
-              {role?.id !== 4 ? 'Nağd:' : 'Ödənəcək məbləğ:'}
+              {!isDoctor ? 'Nağd:' : 'Ödənəcək məbləğ:'}
             </label>
             <Controller
               name="cash_amount"
@@ -381,7 +387,7 @@ const CreateUpdateDialog = ({
               )}
             />
           </div>
-          {role?.id !== 4 && (
+          {!isDoctor && (
             <div>
               <label>pos/kart:</label>
               <Controller
@@ -430,34 +436,36 @@ const CreateUpdateDialog = ({
               />
             </>
           )}
-        {userPermissions.includes('service.variable.status') && service?.id && (
-          <div style={{ display: 'flex', marginBottom: '10px' }}>
-            {serviceStatuses.map((status) => {
-              return (
-                status?.id !== 0 && (
-                  <div key={status?.id}>
-                    <RadioButton
-                      inputId={status?.name}
-                      name="status"
-                      value={status}
-                      onChange={(e: RadioButtonChangeEvent) => {
-                        setSelectedStatus(e.value);
-                        setValue('status', e.value.id);
-                      }}
-                      checked={selectedStatus?.id === status?.id}
-                    />
-                    <label
-                      htmlFor={status?.name}
-                      style={{ marginRight: '10px', marginLeft: '4px' }}
-                    >
-                      {status?.name}
-                    </label>
-                  </div>
-                )
-              );
-            })}
-          </div>
-        )}
+        {userPermissions.includes('service.variable.status') &&
+          service?.id &&
+          !isDoctor && (
+            <div style={{ display: 'flex', marginBottom: '10px' }}>
+              {serviceStatuses.map((status) => {
+                return (
+                  status?.id !== 0 && (
+                    <div key={status?.id}>
+                      <RadioButton
+                        inputId={status?.name}
+                        name="status"
+                        value={status}
+                        onChange={(e: RadioButtonChangeEvent) => {
+                          setSelectedStatus(e.value);
+                          setValue('status', e.value.id);
+                        }}
+                        checked={selectedStatus?.id === status?.id}
+                      />
+                      <label
+                        htmlFor={status?.name}
+                        style={{ marginRight: '10px', marginLeft: '4px' }}
+                      >
+                        {status?.name}
+                      </label>
+                    </div>
+                  )
+                );
+              })}
+            </div>
+          )}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button label="Save" disabled={isDisabled} type="submit" />
         </div>

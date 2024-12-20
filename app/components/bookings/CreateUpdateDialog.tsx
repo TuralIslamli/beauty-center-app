@@ -186,13 +186,15 @@ const CreateUpdateDialog = ({
           id: doctor.id,
           full_name: `${doctor?.name} ${doctor?.surname}`,
         });
-        setDoctors((prev) => [
-          ...prev,
-          {
-            id: doctor.id,
-            full_name: `${doctor?.name} ${doctor?.surname}`,
-          },
-        ]);
+        if (!doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0)) {
+          setDoctors((prev) => [
+            ...prev,
+            {
+              id: doctor.id,
+              full_name: `${doctor?.name} ${doctor?.surname}`,
+            },
+          ]);
+        }
       };
       fetchDoctor();
     }
