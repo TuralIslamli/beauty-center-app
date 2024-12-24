@@ -201,8 +201,6 @@ const CreateUpdateDialog = ({
           !doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0) &&
           selectedDoctor?.id
         ) {
-          console.log(111);
-
           setDoctors((prev) => [
             ...prev,
             {
