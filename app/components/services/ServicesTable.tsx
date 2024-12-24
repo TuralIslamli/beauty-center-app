@@ -527,11 +527,13 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
           filter={userPermissions.includes('service.variable.user_id')}
           filterElement={doctorsRowFilterTemplate}
         ></Column>
-        <Column
-          header="Məbləğ"
-          body={priceBodyTemplate}
-          style={{ width: '10%' }}
-        ></Column>
+        {!filter && (
+          <Column
+            header="Məbləğ"
+            body={priceBodyTemplate}
+            style={{ width: '10%' }}
+          ></Column>
+        )}
         <Column
           header="Status"
           body={statusBody}
@@ -540,13 +542,13 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
           filter
           filterElement={statusRowFilterTemplate}
         ></Column>
-        {
+        {!filter && (
           <Column
             body={actionBodyTemplate}
             exportable={false}
             style={{ width: '10%' }}
           ></Column>
-        }
+        )}
       </DataTable>
       <div ref={navigationRef}>
         <Paginator

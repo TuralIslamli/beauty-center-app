@@ -18,10 +18,10 @@ import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
 import api from '@/app/api';
-import { bookingStatuses, serviceStatuses } from '../consts';
+import { bookingStatuses } from '../consts';
 import { Calendar } from 'primereact/calendar';
 import { Nullable } from 'primereact/ts-helpers';
-import { formatDate, formatTestDate } from '@/app/utils';
+import { formatDate } from '@/app/utils';
 import { Message } from 'primereact/message';
 import { MultiSelect } from 'primereact/multiselect';
 import * as yup from 'yup';
@@ -55,7 +55,6 @@ const CreateUpdateDialog = ({
     id: number;
     name: string;
   }>();
-  const [priceResult, setPriceResult] = useState(0);
   const [doctors, setDoctors] = useState<IDoctor[]>([]);
   const [hours, setHours] = useState<IHour[]>();
   const [isDisabled, setIsDisabled] = useState(false);
@@ -186,15 +185,6 @@ const CreateUpdateDialog = ({
           id: doctor.id,
           full_name: `${doctor?.name} ${doctor?.surname}`,
         });
-        if (!doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0)) {
-          setDoctors((prev) => [
-            ...prev,
-            {
-              id: doctor.id,
-              full_name: `${doctor?.name} ${doctor?.surname}`,
-            },
-          ]);
-        }
       };
       fetchDoctor();
     }
@@ -202,19 +192,25 @@ const CreateUpdateDialog = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (
-        userPermissions.includes('user.input_search') &&
-        selectedHour?.time &&
-        !doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0)
-      ) {
+      if (userPermissions.includes('user.input_search') && selectedHour?.time) {
         const { data: doctorsData }: IDoctorRS = await api.getBookingDoctors(
           `${formatDate(date)} ${selectedHour?.time}`
         );
         setDoctors(doctorsData);
-        setSelectedDoctor(undefined);
-      } else {
-        const { data: doctorsData }: IDoctorRS = await api.getDoctors();
-        setDoctors(doctorsData);
+        if (
+          !doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0) &&
+          selectedDoctor?.id
+        ) {
+          console.log(111);
+
+          setDoctors((prev) => [
+            ...prev,
+            {
+              id: selectedDoctor.id,
+              full_name: selectedDoctor?.full_name,
+            },
+          ]);
+        }
       }
     };
     fetchData();
@@ -271,6 +267,7 @@ const CreateUpdateDialog = ({
     setSelectedStatus(undefined);
     setSelectedHour(undefined);
     setDate(undefined);
+    setDoctors([]);
   };
 
   return (
