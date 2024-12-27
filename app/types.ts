@@ -127,6 +127,7 @@ export interface IBooking {
   id: number;
   status: number;
   reservation_date: string;
+  real_reservation_date: string;
   client_name: string;
   client_phone: string;
   doctor: IUser;

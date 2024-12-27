@@ -237,10 +237,13 @@ const CreateUpdateDialog = ({
             hoursData?.find(
               (hour) =>
                 hour.time ===
-                booking.reservation_date.split(' ')[1].slice(0, -3)
+                booking?.real_reservation_date?.split(' ')[1].slice(0, -3)
             )
           );
-          setValue('hour', booking.reservation_date.split(' ')[1].slice(0, -3));
+          setValue(
+            'hour',
+            booking?.real_reservation_date?.split(' ')[1].slice(0, -3)
+          );
         }
       }
     };
@@ -368,8 +371,7 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-        {(typeof getValues().status === 'undefined' ||
-          getValues().status === 2) && (
+        {
           <>
             <label style={{ marginBottom: '5px' }} htmlFor="name">
               Tarix və saat:
@@ -436,7 +438,7 @@ const CreateUpdateDialog = ({
               )}
             </div>
           </>
-        )}
+        }
         {booking?.id && (
           <div style={{ display: 'flex', marginBottom: '10px' }}>
             {bookingStatuses?.map((status) => {

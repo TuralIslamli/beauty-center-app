@@ -222,7 +222,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
             setFilteredStatus(e.value);
           }}
           itemTemplate={statusItemTemplate}
-          placeholder="Select one"
+          placeholder="Status"
           className="p-column-filter"
           showClear
           style={{ minWidth: '10rem' }}
