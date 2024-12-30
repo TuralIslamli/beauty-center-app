@@ -160,9 +160,10 @@ const CreateUpdateDialog = ({
       setValue('status', actualStatus()?.id);
       setSelectedStatus(actualStatus());
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
-      setSelectedServiceTypes(service.service_types);
+      // setSelectedServiceTypes(service.service_types);
     }
   }, [service, setValue, doctors]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (userPermissions.includes('user.input_search')) {
@@ -177,6 +178,21 @@ const CreateUpdateDialog = ({
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (serviceTypes?.length && service?.service_types?.length) {
+      const matchedServices = service.service_types.map((selected) =>
+        serviceTypes.find((service) => service.id === selected.id)
+      );
+      setSelectedServiceTypes(
+        matchedServices.filter(Boolean) as IServiceType[]
+      );
+      setValue(
+        'service_types',
+        service.service_types?.map((i) => ({ id: i.id }))
+      );
+    }
+  }, [serviceTypes, service?.service_types]);
 
   const handleMultiSelectChange = (e: any) => {
     const selectedTypes = e.value;
