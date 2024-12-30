@@ -26,6 +26,7 @@ import { Message } from 'primereact/message';
 import { MultiSelect } from 'primereact/multiselect';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { Checkbox } from 'primereact/checkbox';
 
 interface IDialogProps {
   dialog: boolean;
@@ -49,6 +50,7 @@ const CreateUpdateDialog = ({
   const [selectedServiceTypes, setSelectedServiceTypes] =
     useState<IServiceType[]>();
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
+  const [isOutOfTurn, setIsOutOfTurn] = useState<boolean>(false);
 
   const [selectedHour, setSelectedHour] = useState<IHour>();
   const [selectedStatus, setSelectedStatus] = useState<{
@@ -156,21 +158,18 @@ const CreateUpdateDialog = ({
     if (booking?.id) {
       setValue('client_name', booking.client_name);
       setValue('client_phone', booking.client_phone);
+      setValue('is_out_of_turn', booking.is_out_of_turn);
+      setIsOutOfTurn(booking.is_out_of_turn);
       const [day, month, yearAndTime] = booking.reservation_date.split('-');
       const [year, time] = yearAndTime.split(' ');
       const formattedDateString = `${year}-${month}-${day}T${time}`;
       const date = new Date(formattedDateString);
       setValue('reservation_date', date);
       setDate(date);
-      setValue(
-        'service_types',
-        booking.service_types?.map((i) => ({ id: i.id }))
-      );
       setValue('status', booking.status);
       setSelectedStatus(
         bookingStatuses.find((status) => status?.id === booking.status)
       );
-      setSelectedServiceTypes(booking.service_types);
     }
   }, [booking, setValue]);
 
@@ -185,6 +184,15 @@ const CreateUpdateDialog = ({
           id: doctor.id,
           full_name: `${doctor?.name} ${doctor?.surname}`,
         });
+        if (!doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0)) {
+          setDoctors((prev) => [
+            ...prev,
+            {
+              id: doctor.id,
+              full_name: `${doctor?.name} ${doctor?.surname}`,
+            },
+          ]);
+        }
       };
       fetchDoctor();
     }
@@ -192,10 +200,19 @@ const CreateUpdateDialog = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (userPermissions.includes('user.input_search') && selectedHour?.time) {
-        const { data: doctorsData }: IDoctorRS = await api.getBookingDoctors(
-          `${formatDate(date)} ${selectedHour?.time}`
-        );
+      if (
+        userPermissions.includes('user.input_search') &&
+        selectedHour?.time &&
+        !doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0)
+      ) {
+        const { data: doctorsData }: IDoctorRS = isOutOfTurn
+          ? await api.getDoctors()
+          : await api.getBookingDoctors(
+              `${formatDate(date)} ${selectedHour?.time}`
+            );
+        setDoctors(doctorsData);
+      } else {
+        const { data: doctorsData }: IDoctorRS = await api.getDoctors();
         setDoctors(doctorsData);
         if (
           !doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0) &&
@@ -212,7 +229,7 @@ const CreateUpdateDialog = ({
       }
     };
     fetchData();
-  }, [selectedHour?.time]);
+  }, [selectedHour?.time, isOutOfTurn]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -224,6 +241,21 @@ const CreateUpdateDialog = ({
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (serviceTypes?.length && booking?.service_types?.length) {
+      const matchedServices = booking.service_types.map((selected) =>
+        serviceTypes.find((service) => service.id === selected.id)
+      );
+      setSelectedServiceTypes(
+        matchedServices.filter(Boolean) as IServiceType[]
+      );
+      setValue(
+        'service_types',
+        booking.service_types?.map((i) => ({ id: i.id }))
+      );
+    }
+  }, [serviceTypes, booking?.service_types]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -269,6 +301,7 @@ const CreateUpdateDialog = ({
     setSelectedHour(undefined);
     setDate(undefined);
     setDoctors([]);
+    setIsOutOfTurn(false);
   };
 
   return (
@@ -320,8 +353,33 @@ const CreateUpdateDialog = ({
           )}
         />
 
-        <label style={{ marginBottom: '5px' }} htmlFor="email">
+        <label
+          style={{
+            marginBottom: '5px',
+            display: 'flex',
+            justifyContent: 'space-between',
+          }}
+          htmlFor="email"
+        >
           Həkim:
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '5px' }}>
+            <label htmlFor="email">Növbədən kənar:</label>
+            <Controller
+              name="is_out_of_turn"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  checked={isOutOfTurn}
+                  onChange={(event) => {
+                    setIsOutOfTurn((prev) => !prev);
+                    setValue('is_out_of_turn', event?.target?.checked);
+                  }}
+                >
+                  {' '}
+                </Checkbox>
+              )}
+            />
+          </div>
         </label>
         <Controller
           name="doctor_id"
@@ -371,7 +429,8 @@ const CreateUpdateDialog = ({
             />
           </>
         )}
-        {
+        {(typeof getValues().status === 'undefined' ||
+          getValues().status === 2) && (
           <>
             <label style={{ marginBottom: '5px' }} htmlFor="name">
               Tarix və saat:
@@ -438,7 +497,7 @@ const CreateUpdateDialog = ({
               )}
             </div>
           </>
-        }
+        )}
         {booking?.id && (
           <div style={{ display: 'flex', marginBottom: '10px' }}>
             {bookingStatuses?.map((status) => {
