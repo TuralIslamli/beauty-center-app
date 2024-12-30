@@ -130,6 +130,7 @@ export interface IBooking {
   client_name: string;
   client_phone: string;
   doctor: IUser;
+  is_out_of_turn: boolean;
 }
 
 export interface IServiceRS {
@@ -187,6 +188,7 @@ export interface IBookingFields {
   id?: number;
   status?: number;
   service_types?: { id: number }[];
+  is_out_of_turn?: boolean;
 }
 
 export interface IDoctor {
