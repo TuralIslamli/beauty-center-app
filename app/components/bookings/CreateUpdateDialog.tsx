@@ -129,22 +129,7 @@ const CreateUpdateDialog = ({
               .replace(/[\s-]/g, ''),
             reservation_date: `${formatDate(date)} ${selectedHour?.time}`,
           });
-      if (selectedStatus?.id === 3) {
-        await api.createService({
-          client_name: payload.client_name,
-          service_types: payload.service_types || [],
-          client_phone: payload.client_phone?.toString().replace(/[\s-]/g, ''),
-          cash_amount: selectedServiceTypes?.reduce(
-            (accumulator: number, currentValue: IServiceType) =>
-              accumulator + +currentValue.price,
-            0
-          ),
-          card_amount: 0,
-          user_id: payload.doctor_id,
-          status: 0,
-        });
-      }
-      showSuccess(`Service has been successfull created`);
+      showSuccess(`Reserve has been successfull created`);
       getBookings();
       setDialog(false);
     } catch (error) {
