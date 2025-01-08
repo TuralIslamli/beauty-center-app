@@ -577,6 +577,7 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
         setService={setService}
         getServices={getServices}
         role={role}
+        page={page}
       />
       <ReportsDialog dialog={reportsDialog} setDialog={setReportsDialog} />
       <Dialog

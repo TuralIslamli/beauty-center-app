@@ -4,10 +4,8 @@ import {
   IRole,
   IService,
   IServiceFields,
-  IServiceRS,
   IServiceType,
   IServiceTypeRS,
-  IUser,
 } from '@/app/types';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
@@ -33,6 +31,7 @@ interface IDialogProps {
   service?: IService;
   setService: Dispatch<SetStateAction<IService | undefined>>;
   role: IRole;
+  page: number;
 }
 
 const CreateUpdateDialog = ({
@@ -44,6 +43,7 @@ const CreateUpdateDialog = ({
   service,
   setService,
   role,
+  page,
 }: IDialogProps) => {
   const [selectedServiceTypes, setSelectedServiceTypes] =
     useState<IServiceType[]>();
@@ -124,7 +124,7 @@ const CreateUpdateDialog = ({
               .replace(/[\s-]/g, ''),
           });
       showSuccess(`Service has been successfull created`);
-      getServices(1);
+      getServices(page);
       setDialog(false);
     } catch (error) {
       console.error(error);
@@ -160,7 +160,6 @@ const CreateUpdateDialog = ({
       setValue('status', actualStatus()?.id);
       setSelectedStatus(actualStatus());
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
-      // setSelectedServiceTypes(service.service_types);
     }
   }, [service, setValue, doctors]);
   useEffect(() => {
