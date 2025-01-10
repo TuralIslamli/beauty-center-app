@@ -278,7 +278,15 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
   };
 
   const idBodyTemplate = (rowData: IBooking, options: any) =>
-    isLoading ? <Skeleton width="20px" /> : <div>{options?.rowIndex + 1}</div>;
+    isLoading ? (
+      <Skeleton width="20px" />
+    ) : (
+      <div>
+        {!filteredStatus
+          ? bookings?.length - options?.rowIndex
+          : options?.rowIndex + 1}
+      </div>
+    );
 
   const serviceTypesBody = (rowData: IService) =>
     isLoading ? (
