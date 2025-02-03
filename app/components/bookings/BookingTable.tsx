@@ -236,6 +236,11 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
     return (
       userPermissions.includes('reservation.filter.date') && (
         <Calendar
+          minDate={
+            userPermissions?.includes('reservation.get_past_data')
+              ? undefined
+              : new Date()
+          }
           value={dates}
           onChange={(e) => setDates(e.value)}
           selectionMode="range"
