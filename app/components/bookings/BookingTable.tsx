@@ -373,7 +373,6 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           header="Xidmət"
           style={{ width: '10%' }}
           showFilterMenu={false}
-          filter={userPermissions.includes('service.variable.service_type_id')}
           body={serviceTypesBody}
         ></Column>
         <Column
