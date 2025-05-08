@@ -287,7 +287,7 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
       currency: 'AZN',
     });
 
-    const parts = formatter.formatToParts(+rowData.amount);
+    const parts = formatter.formatToParts(+rowData.services_total);
     const currencySymbol =
       parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
     const formattedPrice = parts
@@ -455,8 +455,8 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
 
   const content = (
     <div>
-      <div className="ml-2">Nağd: {totalAmount?.cash} AZN</div>
-      <div className="ml-2">pos/kart: {totalAmount?.pos} AZN</div>
+      <div className="ml-2">Avans: {totalAmount?.advance} AZN</div>
+      <div className="ml-2">Xidmətlər: {totalAmount?.amount} AZN</div>
       <div className="ml-2">Toplam: {totalAmount?.total} AZN</div>
     </div>
   );
@@ -527,7 +527,6 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
           filter={userPermissions.includes('service.variable.user_id')}
           filterElement={doctorsRowFilterTemplate}
         ></Column>
-
         <Column
           header="Məbləğ"
           body={priceBodyTemplate}
@@ -541,11 +540,11 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
           filter
           filterElement={statusRowFilterTemplate}
         ></Column>
-        <Column
-          body={actionBodyTemplate}
-          exportable={false}
-          style={{ width: '10%' }}
-        ></Column>
+          <Column
+            body={actionBodyTemplate}
+            exportable={false}
+            style={{ width: '10%' }}
+          ></Column>
       </DataTable>
       <div ref={navigationRef}>
         <Paginator
