@@ -4,10 +4,8 @@ import {
   IRole,
   IService,
   IServiceFields,
-  IServiceRS,
   IServiceType,
   IServiceTypeRS,
-  IUser,
 } from '@/app/types';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
@@ -51,8 +49,6 @@ const CreateUpdateDialog = ({
     useState<IServiceType[]>();
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
   const [totalprice, setTotalPrice] = useState(0);
-  const [priceResult, setPriceResult] = useState(0);
-  const [counter, setCounter] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState<{
     id: number;
     name: string;
@@ -94,7 +90,6 @@ const CreateUpdateDialog = ({
     formState: { errors },
     setValue,
     reset,
-    getValues,
   } = useForm<IServiceFields>({
     resolver: yupResolver(schema),
   });
@@ -102,8 +97,7 @@ const CreateUpdateDialog = ({
   const onSubmit: SubmitHandler<IServiceFields> = async (
     payload: IServiceFields
   ) => {
-    const card_amount = payload?.card_amount || 0;
-    const cash_amount = payload?.cash_amount || 0;
+    const amount = payload?.amount || 0;
 
     setIsDisabled(true);
     try {
@@ -111,16 +105,14 @@ const CreateUpdateDialog = ({
         ? await api.updateService({
             ...payload,
             id: service.id,
-            card_amount,
-            cash_amount,
+            amount,
             client_phone: payload.client_phone
               ?.toString()
               .replace(/[\s-]/g, ''),
           })
         : await api.createService({
             ...payload,
-            card_amount,
-            cash_amount,
+            amount,
             client_phone: payload.client_phone
               ?.toString()
               .replace(/[\s-]/g, ''),
@@ -141,10 +133,8 @@ const CreateUpdateDialog = ({
       setValue('client_phone', service.client_phone);
       setValue('user_id', service.user?.id);
       handleMultiSelectChange({ value: service?.service_types });
-      setValue('cash_amount', +service.cash_amount);
-      setValue('card_amount', +service.card_amount);
-      setPriceResult(+service.cash_amount + +service.card_amount);
-
+      setValue('amount', +service.amount);
+      setValue('advance_amount', +service.advance_amount);
       setValue('reject_comment', service.reject_comment);
       const actualStatus = () => {
         return service.status !== 0
@@ -164,8 +154,7 @@ const CreateUpdateDialog = ({
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
       // setSelectedServiceTypes(service.service_types);
     }
-  }, [service, setValue, doctors]);
-
+  }, [service, setValue, doctors, totalprice]);
   useEffect(() => {
     const fetchData = async () => {
       if (userPermissions.includes('user.input_search')) {
@@ -210,28 +199,7 @@ const CreateUpdateDialog = ({
         0
       )
     );
-    setPriceResult(
-      selectedTypes.reduce(
-        (accumulator: number, currentValue: IServiceType) =>
-          accumulator + +currentValue.price,
-        0
-      )
-    );
-    setValue(
-      'cash_amount',
-      selectedTypes.reduce(
-        (accumulator: number, currentValue: IServiceType) =>
-          accumulator + +currentValue.price,
-        0
-      )
-    );
   };
-
-  useEffect(() => {
-    setPriceResult(
-      +(getValues()?.cash_amount || 0) + +(getValues()?.card_amount || 0)
-    );
-  }, [counter]);
 
   const onHide = () => {
     setDialog(false);
@@ -241,7 +209,6 @@ const CreateUpdateDialog = ({
     setSelectedDoctor(undefined);
     setSelectedStatus(undefined);
     setTotalPrice(0);
-    setPriceResult(0);
   };
 
   return (
@@ -366,50 +333,37 @@ const CreateUpdateDialog = ({
           </div>
           {!isDoctor && (
             <div>
-              <label>Nəticə:</label>
+              <label>Avans:</label>
               <InputNumber
                 disabled
-                value={priceResult}
+                value={service?.advance_amount || 0}
                 mode="currency"
                 currency="AZN"
                 locale="de-DE"
                 style={{ marginBottom: '10px', marginTop: '5px' }}
-                invalid={!!errors.card_amount}
               />
             </div>
           )}
         </div>
         <div style={{ display: 'flex', gap: '20px', width: '206px' }}>
-          <div>
-            <label htmlFor="email">
-              {!isDoctor ? 'Nağd:' : 'Ödənəcək məbləğ:'}
-            </label>
-            <Controller
-              name="cash_amount"
-              control={control}
-              render={({ field }) => (
-                <InputNumber
-                  onBlur={field.onBlur}
-                  ref={field.ref}
-                  value={field?.value || 0}
-                  onValueChange={(e) => {
-                    field.onChange(e);
-                    setCounter((prev) => prev + 1);
-                  }}
-                  mode="currency"
-                  currency="AZN"
-                  locale="de-DE"
-                  style={{ marginBottom: '10px', marginTop: '5px' }}
-                  invalid={!!errors.cash_amount}
-                />
-              )}
-            />
-          </div>
           {!isDoctor && (
             <div>
-              <label>pos/kart:</label>
+              <label>Alınacaq məbləğ:</label>
+              <InputNumber
+                disabled
+                value={totalprice - (service?.advance_amount || 0)}
+                mode="currency"
+                currency="AZN"
+                locale="de-DE"
+                style={{ marginBottom: '10px', marginTop: '5px' }}
+              />
+            </div>
+          )}
+          {!isDoctor && (
+            <div>
+              <label>Alındı:</label>
               <Controller
-                name="card_amount"
+                name="amount"
                 control={control}
                 render={({ field }) => (
                   <InputNumber
@@ -418,13 +372,12 @@ const CreateUpdateDialog = ({
                     value={field?.value || 0}
                     onValueChange={(e) => {
                       field.onChange(e);
-                      setCounter((prev) => prev + 1);
                     }}
                     mode="currency"
                     currency="AZN"
                     locale="de-DE"
                     style={{ marginBottom: '10px', marginTop: '5px' }}
-                    invalid={!!errors.card_amount}
+                    invalid={!!errors.amount}
                   />
                 )}
               />

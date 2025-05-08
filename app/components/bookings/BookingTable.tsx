@@ -296,6 +296,27 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
       </div>
     );
 
+    const priceBodyTemplate = (rowData: IBooking) => {
+        const formatter = new Intl.NumberFormat('az-AZ', {
+          style: 'currency',
+          currency: 'AZN',
+        });
+    
+        const parts = formatter.formatToParts(+rowData.advance_amount);
+        const currencySymbol =
+          parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
+        const formattedPrice = parts
+          .filter((part) => part.type !== 'currency')
+          .map((part) => part.value)
+          .join('');
+    
+        return isLoading ? (
+          <Skeleton width="100px" />
+        ) : (
+          `${formattedPrice} ${currencySymbol}`
+        );
+      };
+
   return (
     <>
       <DataTable
@@ -360,6 +381,11 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           body={getDoctorFullName}
           style={{ width: '10%' }}
           showFilterMenu={false}
+        ></Column>
+        <Column
+          header="Avans"
+          body={priceBodyTemplate}
+          style={{ width: '10%' }}
         ></Column>
         {userPermissions.includes('reservation.update') && (
           <Column

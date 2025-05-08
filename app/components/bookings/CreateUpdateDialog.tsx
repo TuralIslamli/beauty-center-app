@@ -27,6 +27,7 @@ import { MultiSelect } from 'primereact/multiselect';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Checkbox } from 'primereact/checkbox';
+import { InputNumber } from 'primereact/inputnumber';
 
 interface IDialogProps {
   dialog: boolean;
@@ -152,6 +153,7 @@ const CreateUpdateDialog = ({
       setValue('reservation_date', date);
       setDate(date);
       setValue('status', booking.status);
+      setValue('advance_amount', booking.advance_amount);
       setSelectedStatus(
         bookingStatuses.find((status) => status?.id === booking.status)
       );
@@ -468,6 +470,28 @@ const CreateUpdateDialog = ({
             </div>
           </>
         )}
+        <>
+          <label>Avans:</label>
+          <Controller
+            name="advance_amount"
+            control={control}
+            render={({ field }) => (
+              <InputNumber
+                onBlur={field.onBlur}
+                ref={field.ref}
+                value={field?.value || 0}
+                onValueChange={(e) => {
+                  field.onChange(e);
+                }}
+                mode="currency"
+                currency="AZN"
+                locale="de-DE"
+                style={{ marginBottom: '10px', marginTop: '5px' }}
+                invalid={!!errors.advance_amount}
+              />
+            )}
+          />
+        </>
         {booking?.id && (
           <div style={{ display: 'flex', marginBottom: '10px' }}>
             {bookingStatuses?.map((status) => {

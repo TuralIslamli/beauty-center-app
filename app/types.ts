@@ -1,8 +1,8 @@
 import { Nullable } from 'primereact/ts-helpers';
 
 export interface ITotalAmount {
-  pos: string;
-  cash: string;
+  advance: string;
+  amount: string;
   total: string;
 }
 
@@ -111,8 +111,8 @@ export interface IService {
   id: number;
   status: number;
   amount: string;
-  cash_amount: string;
-  card_amount: string;
+  advance_amount: number;
+  services_total: number;
   payment_type: number;
   service_types: IServiceType[];
   client_name: string;
@@ -131,6 +131,7 @@ export interface IBooking {
   client_phone: string;
   doctor: IUser;
   is_out_of_turn: boolean;
+  advance_amount: number;
 }
 
 export interface IServiceRS {
@@ -171,8 +172,8 @@ export interface IServiceFields {
   service_types: { id: number }[];
   client_name: string;
   client_phone?: string | null;
-  cash_amount?: number;
-  card_amount?: number;
+  amount?: number;
+  advance_amount?: number;
   user_id?: number;
   status?: number;
   reject_comment?: string | null;
@@ -189,6 +190,7 @@ export interface IBookingFields {
   status?: number;
   service_types?: { id: number }[];
   is_out_of_turn?: boolean;
+  advance_amount?: number;
 }
 
 export interface IDoctor {
