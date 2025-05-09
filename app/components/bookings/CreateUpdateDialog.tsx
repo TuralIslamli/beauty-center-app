@@ -50,6 +50,7 @@ const CreateUpdateDialog = ({
 }: IDialogProps) => {
   const [selectedServiceTypes, setSelectedServiceTypes] =
     useState<IServiceType[]>();
+  const [amountClicked, setAmountClockedTrue] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
   const [isOutOfTurn, setIsOutOfTurn] = useState<boolean>(false);
 
@@ -495,6 +496,9 @@ const CreateUpdateDialog = ({
                 onBlur={field.onBlur}
                 ref={field.ref}
                 value={field?.value || 0}
+                onClick={() => {
+                  setAmountClockedTrue(true);
+                }}
                 onValueChange={(e) => {
                   field.onChange(e);
                 }}
@@ -502,7 +506,7 @@ const CreateUpdateDialog = ({
                 currency="AZN"
                 locale="de-DE"
                 style={{ marginBottom: '10px', marginTop: '5px' }}
-                invalid={!!errors.advance_amount}
+                invalid={!amountClicked}
               />
             )}
           />
@@ -534,7 +538,11 @@ const CreateUpdateDialog = ({
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button label="Save" disabled={isDisabled} type="submit" />
+          <Button
+            label="Save"
+            disabled={isDisabled || !amountClicked}
+            type="submit"
+          />
         </div>
       </form>
     </Dialog>

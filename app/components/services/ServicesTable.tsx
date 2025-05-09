@@ -286,8 +286,13 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
       style: 'currency',
       currency: 'AZN',
     });
+    const isAccepted = rowData?.status;
 
-    const parts = formatter.formatToParts(+rowData.services_total);
+    const parts = formatter.formatToParts(
+      isAccepted
+        ? +rowData.advance_amount + +rowData.amount
+        : +rowData.services_total
+    );
     const currencySymbol =
       parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
     const formattedPrice = parts
@@ -540,11 +545,11 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
           filter
           filterElement={statusRowFilterTemplate}
         ></Column>
-          <Column
-            body={actionBodyTemplate}
-            exportable={false}
-            style={{ width: '10%' }}
-          ></Column>
+        <Column
+          body={actionBodyTemplate}
+          exportable={false}
+          style={{ width: '10%' }}
+        ></Column>
       </DataTable>
       <div ref={navigationRef}>
         <Paginator
