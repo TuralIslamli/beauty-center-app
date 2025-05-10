@@ -153,7 +153,8 @@ const CreateUpdateDialog = ({
       setSelectedStatus(actualStatus());
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
     }
-  }, [service, setValue, doctors, totalprice]);
+  }, [service, setValue, doctors]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (userPermissions.includes('user.input_search')) {
@@ -186,6 +187,8 @@ const CreateUpdateDialog = ({
 
   const handleMultiSelectChange = (e: any) => {
     const selectedTypes = e.value;
+    console.log(selectedTypes, 'selectedTypes');
+    
     setSelectedServiceTypes(selectedTypes);
     setValue(
       'service_types',
