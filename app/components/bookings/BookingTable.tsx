@@ -390,7 +390,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           showFilterMenu={false}
         ></Column>
         <Column
-          header="Avans"
+          header="Depozit"
           body={priceBodyTemplate}
           style={{ width: '10%' }}
         ></Column>

@@ -332,7 +332,7 @@ const CreateUpdateDialog = ({
           </div>
           {!isDoctor && (
             <div>
-              <label>Avans:</label>
+              <label>Depozit:</label>
               <InputNumber
                 disabled
                 value={service?.advance_amount || 0}

@@ -50,7 +50,7 @@ const CreateUpdateDialog = ({
 }: IDialogProps) => {
   const [selectedServiceTypes, setSelectedServiceTypes] =
     useState<IServiceType[]>();
-  const [amountClicked, setAmountClockedTrue] = useState(false);
+  const [isAmountClicked, setIsAmountClocked] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
   const [isOutOfTurn, setIsOutOfTurn] = useState<boolean>(false);
 
@@ -105,13 +105,16 @@ const CreateUpdateDialog = ({
     payload: IBookingFields
   ) => {
     setIsDisabled(true);
+    const advance_amount = payload?.advance_amount
+      ? payload?.advance_amount
+      : 0;
     try {
       booking?.id
         ? await api.updateBooking({
             ...payload,
             client_name: payload.client_name,
             doctor_id: payload.doctor_id,
-
+            advance_amount,
             id: booking.id,
             client_phone: payload.client_phone
               ?.toString()
@@ -124,6 +127,7 @@ const CreateUpdateDialog = ({
           })
         : await api.createBooking({
             ...payload,
+            advance_amount,
             client_name: payload.client_name,
             doctor_id: payload.doctor_id,
             client_phone: payload.client_phone
@@ -290,6 +294,7 @@ const CreateUpdateDialog = ({
     setDate(undefined);
     setDoctors([]);
     setIsOutOfTurn(false);
+    setIsAmountClocked(false);
   };
 
   return (
@@ -487,7 +492,7 @@ const CreateUpdateDialog = ({
           </>
         )}
         <>
-          <label>Avans:</label>
+          <label>Depozit:</label>
           <Controller
             name="advance_amount"
             control={control}
@@ -497,7 +502,7 @@ const CreateUpdateDialog = ({
                 ref={field.ref}
                 value={field?.value || 0}
                 onClick={() => {
-                  setAmountClockedTrue(true);
+                  setIsAmountClocked(true);
                 }}
                 onValueChange={(e) => {
                   field.onChange(e);
@@ -506,7 +511,7 @@ const CreateUpdateDialog = ({
                 currency="AZN"
                 locale="de-DE"
                 style={{ marginBottom: '10px', marginTop: '5px' }}
-                invalid={!amountClicked}
+                invalid={!isAmountClicked}
               />
             )}
           />
@@ -540,7 +545,7 @@ const CreateUpdateDialog = ({
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             label="Save"
-            disabled={isDisabled || !amountClicked}
+            disabled={isDisabled || !isAmountClicked}
             type="submit"
           />
         </div>
