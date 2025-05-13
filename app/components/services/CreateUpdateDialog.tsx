@@ -152,7 +152,6 @@ const CreateUpdateDialog = ({
       setValue('status', actualStatus()?.id);
       setSelectedStatus(actualStatus());
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
-      // setSelectedServiceTypes(service.service_types);
     }
   }, [service, setValue, doctors, totalprice]);
   useEffect(() => {
@@ -187,6 +186,8 @@ const CreateUpdateDialog = ({
 
   const handleMultiSelectChange = (e: any) => {
     const selectedTypes = e.value;
+    console.log(selectedTypes, 'selectedTypes');
+    
     setSelectedServiceTypes(selectedTypes);
     setValue(
       'service_types',
@@ -333,7 +334,7 @@ const CreateUpdateDialog = ({
           </div>
           {!isDoctor && (
             <div>
-              <label>Avans:</label>
+              <label>Depozit:</label>
               <InputNumber
                 disabled
                 value={service?.advance_amount || 0}

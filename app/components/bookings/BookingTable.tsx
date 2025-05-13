@@ -222,7 +222,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
             setFilteredStatus(e.value);
           }}
           itemTemplate={statusItemTemplate}
-          placeholder="Select one"
+          placeholder="Status"
           className="p-column-filter"
           showClear
           style={{ minWidth: '10rem' }}
@@ -283,7 +283,15 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
   };
 
   const idBodyTemplate = (rowData: IBooking, options: any) =>
-    isLoading ? <Skeleton width="20px" /> : <div>{options?.rowIndex + 1}</div>;
+    isLoading ? (
+      <Skeleton width="20px" />
+    ) : (
+      <div>
+        {!filteredStatus
+          ? bookings?.length - options?.rowIndex
+          : options?.rowIndex + 1}
+      </div>
+    );
 
   const serviceTypesBody = (rowData: IService) =>
     isLoading ? (
@@ -382,7 +390,7 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
           showFilterMenu={false}
         ></Column>
         <Column
-          header="Avans"
+          header="Depozit"
           body={priceBodyTemplate}
           style={{ width: '10%' }}
         ></Column>

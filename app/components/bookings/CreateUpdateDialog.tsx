@@ -18,10 +18,10 @@ import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
 import api from '@/app/api';
-import { bookingStatuses, serviceStatuses } from '../consts';
+import { bookingStatuses } from '../consts';
 import { Calendar } from 'primereact/calendar';
 import { Nullable } from 'primereact/ts-helpers';
-import { formatDate, formatTestDate } from '@/app/utils';
+import { formatDate } from '@/app/utils';
 import { Message } from 'primereact/message';
 import { MultiSelect } from 'primereact/multiselect';
 import * as yup from 'yup';
@@ -50,6 +50,7 @@ const CreateUpdateDialog = ({
 }: IDialogProps) => {
   const [selectedServiceTypes, setSelectedServiceTypes] =
     useState<IServiceType[]>();
+  const [isAmountClicked, setIsAmountClocked] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<IDoctor>();
   const [isOutOfTurn, setIsOutOfTurn] = useState<boolean>(false);
 
@@ -104,13 +105,16 @@ const CreateUpdateDialog = ({
     payload: IBookingFields
   ) => {
     setIsDisabled(true);
+    const advance_amount = payload?.advance_amount
+      ? payload?.advance_amount
+      : 0;
     try {
       booking?.id
         ? await api.updateBooking({
             ...payload,
             client_name: payload.client_name,
             doctor_id: payload.doctor_id,
-
+            advance_amount,
             id: booking.id,
             client_phone: payload.client_phone
               ?.toString()
@@ -123,6 +127,7 @@ const CreateUpdateDialog = ({
           })
         : await api.createBooking({
             ...payload,
+            advance_amount,
             client_name: payload.client_name,
             doctor_id: payload.doctor_id,
             client_phone: payload.client_phone
@@ -201,6 +206,18 @@ const CreateUpdateDialog = ({
       } else {
         const { data: doctorsData }: IDoctorRS = await api.getDoctors();
         setDoctors(doctorsData);
+        if (
+          !doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0) &&
+          selectedDoctor?.id
+        ) {
+          setDoctors((prev) => [
+            ...prev,
+            {
+              id: selectedDoctor.id,
+              full_name: selectedDoctor?.full_name,
+            },
+          ]);
+        }
       }
     };
     fetchData();
@@ -244,10 +261,13 @@ const CreateUpdateDialog = ({
             hoursData?.find(
               (hour) =>
                 hour.time ===
-                booking.reservation_date.split(' ')[1].slice(0, -3)
+                booking?.real_reservation_date?.split(' ')[1].slice(0, -3)
             )
           );
-          setValue('hour', booking.reservation_date.split(' ')[1].slice(0, -3));
+          setValue(
+            'hour',
+            booking?.real_reservation_date?.split(' ')[1].slice(0, -3)
+          );
         }
       }
     };
@@ -274,6 +294,7 @@ const CreateUpdateDialog = ({
     setDate(undefined);
     setDoctors([]);
     setIsOutOfTurn(false);
+    setIsAmountClocked(false);
   };
 
   return (
@@ -471,7 +492,7 @@ const CreateUpdateDialog = ({
           </>
         )}
         <>
-          <label>Avans:</label>
+          <label>Depozit:</label>
           <Controller
             name="advance_amount"
             control={control}
@@ -480,6 +501,9 @@ const CreateUpdateDialog = ({
                 onBlur={field.onBlur}
                 ref={field.ref}
                 value={field?.value || 0}
+                onClick={() => {
+                  setIsAmountClocked(true);
+                }}
                 onValueChange={(e) => {
                   field.onChange(e);
                 }}
@@ -487,7 +511,7 @@ const CreateUpdateDialog = ({
                 currency="AZN"
                 locale="de-DE"
                 style={{ marginBottom: '10px', marginTop: '5px' }}
-                invalid={!!errors.advance_amount}
+                invalid={!isAmountClicked}
               />
             )}
           />
@@ -519,7 +543,11 @@ const CreateUpdateDialog = ({
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button label="Save" disabled={isDisabled} type="submit" />
+          <Button
+            label="Save"
+            disabled={isDisabled || !isAmountClicked}
+            type="submit"
+          />
         </div>
       </form>
     </Dialog>
