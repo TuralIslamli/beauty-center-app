@@ -4,6 +4,7 @@ export interface ITotalAmount {
   advance: string;
   amount: string;
   total: string;
+  isAdvanceTransferred: boolean;
 }
 
 export interface IUser {

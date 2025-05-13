@@ -68,6 +68,7 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
   const toast = useRef<Toast>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
+  const [advanceTransferModal, setAdvanceTransferModal] = useState(false);
 
   const showSuccess = (message: string) => {
     toast.current?.show({
@@ -472,6 +473,30 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
     ) : (
       <div>{total - options.rowIndex - first}</div>
     );
+
+  const onAdvanceTransfer = () => {
+    api
+      .advanceTransfer()
+      .then(async () => {
+        setAdvanceTransferModal(false);
+        const total: ITotalAmount = await api.getTotalAmount({
+          status: filteredStatus?.id,
+          from_date: formatDate(dates[0]),
+          to_date: formatDate(dates[1]),
+          client_name: debouncedClientName,
+          client_phone: debouncedClientPhone,
+          service_types: serviceTypesFilter?.map((i) => i.id),
+          user_id: doctor?.id,
+        });
+
+        setTotalAmount(total);
+        showSuccess('Növbə bağlandı');
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
   return (
     <>
       <DataTable
@@ -560,15 +585,25 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
         />
       </div>
       {userPermissions.includes('service.get_all.total_amount') && (
-        <Message
-          style={{
-            border: 'solid #696cff',
-            borderWidth: '0 0 0 6px',
-            marginTop: '20px',
-          }}
-          severity="info"
-          content={content}
-        />
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Message
+            style={{
+              border: 'solid #696cff',
+              borderWidth: '0 0 0 6px',
+              marginTop: '20px',
+              marginRight: '20px',
+            }}
+            severity="info"
+            content={content}
+          />
+          {totalAmount?.isAdvanceTransferred ? (
+            <Message text="Növbə bağlanıb" />
+          ) : (
+            <Button onClick={() => setAdvanceTransferModal(true)}>
+              Növbəni bağla
+            </Button>
+          )}
+        </div>
       )}
 
       <Toast ref={toast} />
@@ -595,6 +630,38 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
         }}
       >
         <p className="m-0">{rejectComment}</p>
+      </Dialog>
+      <Dialog
+        visible={advanceTransferModal}
+        style={{ width: '32rem' }}
+        breakpoints={{ '960px': '75vw', '641px': '90vw' }}
+        header="Növbəni bağla"
+        modal
+        footer={
+          <React.Fragment>
+            <Button
+              label="Xeyr"
+              icon="pi pi-times"
+              outlined
+              onClick={() => setAdvanceTransferModal(false)}
+            />
+            <Button
+              label="Bəli"
+              icon="pi pi-check"
+              severity="danger"
+              onClick={onAdvanceTransfer}
+            />
+          </React.Fragment>
+        }
+        onHide={() => setAdvanceTransferModal(false)}
+      >
+        <div className="confirmation-content">
+          <i
+            className="pi pi-exclamation-triangle"
+            style={{ fontSize: '2rem', marginRight: '10px' }}
+          />
+          <span>Növbənin baölanılmasına əminsiz?</span>
+        </div>
       </Dialog>
       <DeleteServiceDialog
         service={service}
