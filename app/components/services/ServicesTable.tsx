@@ -8,6 +8,8 @@ import { Tag } from 'primereact/tag';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import {
+  IAdvanceInfo,
+  IAdvanceInfoRs,
   IDoctor,
   IDoctorRS,
   IRole,
@@ -69,6 +71,10 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
   const toast = useRef<Toast>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const [advanceTransferModal, setAdvanceTransferModal] = useState(false);
+  const [advanceInfo, setAdvanceInfo] = useState<IAdvanceInfo>();
+  const areDatesEqual =
+    dates.length === 2 &&
+    new Date(dates[0]).getTime() === new Date(dates[1]).getTime();
 
   const showSuccess = (message: string) => {
     toast.current?.show({
@@ -103,6 +109,14 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
       setTotal(meta?.total);
 
       if (userPermissions.includes('service.get_all.total_amount')) {
+        const { data: advanceInfo }: IAdvanceInfoRs = await api.getAdvanceInfo(
+          formatDate(dates[0])
+        );
+
+        setAdvanceInfo(advanceInfo);
+      }
+
+      if (areDatesEqual && userPermissions.includes('service.advance.info')) {
         const total: ITotalAmount = await api.getTotalAmount({
           status: filteredStatus?.id,
           from_date: formatDate(dates[0]),
@@ -467,6 +481,16 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
     </div>
   );
 
+  const advanceContent = (
+    <div>
+      <div className="ml-2">Növbə bağlanıb</div>
+      <div className="ml-2">
+        {advanceInfo?.user?.name} {advanceInfo?.user?.surname}
+      </div>
+      <div className="ml-2">{advanceInfo?.transferred_at}</div>
+    </div>
+  );
+
   const idBodyTemplate = (rowData: IService, options: any) =>
     isLoading ? (
       <Skeleton width="20px" />
@@ -479,17 +503,11 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
       .advanceTransfer()
       .then(async () => {
         setAdvanceTransferModal(false);
-        const total: ITotalAmount = await api.getTotalAmount({
-          status: filteredStatus?.id,
-          from_date: formatDate(dates[0]),
-          to_date: formatDate(dates[1]),
-          client_name: debouncedClientName,
-          client_phone: debouncedClientPhone,
-          service_types: serviceTypesFilter?.map((i) => i.id),
-          user_id: doctor?.id,
-        });
+        const { data: advanceInfo }: IAdvanceInfoRs = await api.getAdvanceInfo(
+          formatDate(dates[0])
+        );
 
-        setTotalAmount(total);
+        setAdvanceInfo(advanceInfo);
         showSuccess('Növbə bağlandı');
       })
       .catch((error) => {
@@ -596,13 +614,23 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
             severity="info"
             content={content}
           />
-          {totalAmount?.isAdvanceTransferred ? (
-            <Message text="Növbə bağlanıb" />
-          ) : (
-            <Button onClick={() => setAdvanceTransferModal(true)}>
-              Növbəni bağla
-            </Button>
-          )}
+          {areDatesEqual &&
+            !isLoading &&
+            (advanceInfo?.id &&
+            userPermissions.includes('service.advance.info') ? (
+              <Message
+                content={advanceContent}
+                style={{
+                  marginTop: '20px',
+                }}
+              />
+            ) : (
+              userPermissions.includes('reservation.next_day_transfer') && (
+                <Button onClick={() => setAdvanceTransferModal(true)}>
+                  Növbəni bağla
+                </Button>
+              )
+            ))}
         </div>
       )}
 

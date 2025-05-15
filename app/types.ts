@@ -4,7 +4,6 @@ export interface ITotalAmount {
   advance: string;
   amount: string;
   total: string;
-  isAdvanceTransferred: boolean;
 }
 
 export interface IUser {
@@ -15,6 +14,15 @@ export interface IUser {
   role: IRole;
 }
 
+export interface IAdvanceInfo {
+  id: number;
+  user: IUser;
+  transferred_at: string;
+}
+
+export interface IAdvanceInfoRs{
+  data: IAdvanceInfo
+}
 export interface IRole {
   id: number;
   name: string;

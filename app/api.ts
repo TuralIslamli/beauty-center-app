@@ -123,6 +123,8 @@ export default {
     axiosApi.delete(`reservations/${id}`),
   getBookingDoctors: <T>(dateTime: string): Promise<T> =>
     axiosApi.get(`reservations/users/input-search?date_time=${dateTime}`),
+  getAdvanceInfo: <T>(date: string): Promise<T> =>
+    axiosApi.get(`services/advance/info?date=${date}`),
   getTotalAmount: <T>({
     status,
     from_date,

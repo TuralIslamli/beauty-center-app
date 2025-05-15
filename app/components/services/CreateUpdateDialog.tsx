@@ -186,7 +186,6 @@ const CreateUpdateDialog = ({
 
   const handleMultiSelectChange = (e: any) => {
     const selectedTypes = e.value;
-    console.log(selectedTypes, 'selectedTypes');
     
     setSelectedServiceTypes(selectedTypes);
     setValue(
