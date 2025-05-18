@@ -119,6 +119,8 @@ export default {
   deleteService: (id: number | undefined) => axiosApi.delete(`services/${id}`),
   advanceTransfer: () =>
     axiosApi.post(`reservations/advance/next-day-transfer`),
+  advanceCancel: (date: string) =>
+    axiosApi.post(`reservations/advance/next-day-transfer/cancel`, { date }),
   deleteBooking: (id: number | undefined) =>
     axiosApi.delete(`reservations/${id}`),
   getBookingDoctors: <T>(dateTime: string): Promise<T> =>

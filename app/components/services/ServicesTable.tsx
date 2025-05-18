@@ -481,16 +481,6 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
     </div>
   );
 
-  const advanceContent = (
-    <div>
-      <div className="ml-2">Növbə bağlanıb</div>
-      <div className="ml-2">
-        {advanceInfo?.user?.name} {advanceInfo?.user?.surname}
-      </div>
-      <div className="ml-2">{advanceInfo?.transferred_at}</div>
-    </div>
-  );
-
   const idBodyTemplate = (rowData: IService, options: any) =>
     isLoading ? (
       <Skeleton width="20px" />
@@ -514,6 +504,40 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
         console.error(error);
       });
   };
+
+  const onAdvanceCancel = () => {
+    api
+      .advanceCancel(formatDate(dates[0]))
+      .then(async () => {
+        setAdvanceTransferModal(false);
+        const { data: advanceInfo }: IAdvanceInfoRs = await api.getAdvanceInfo(
+          formatDate(dates[0])
+        );
+
+        setAdvanceInfo(advanceInfo);
+        showSuccess('Növbə yenidən açıldı');
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  const advanceContent = (
+    <div style={{ display: 'flex', gap: '12px' }}>
+      <div>
+        <div className="ml-2">Növbə bağlanıb</div>
+        <div className="ml-2">
+          {advanceInfo?.user?.name} {advanceInfo?.user?.surname}
+        </div>
+        <div className="ml-2">{advanceInfo?.transferred_at}</div>
+      </div>
+      {userPermissions.includes('reservation.next_day_transfer.cancel') && <Button
+        icon="pi pi-undo"
+        tooltip="Növbəni yenidən aç"
+        onClick={onAdvanceCancel}
+      />}
+    </div>
+  );
 
   return (
     <>
