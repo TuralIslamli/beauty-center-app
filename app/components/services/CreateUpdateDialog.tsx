@@ -153,7 +153,7 @@ const CreateUpdateDialog = ({
       setSelectedStatus(actualStatus());
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
     }
-  }, [service, setValue, doctors, totalprice]);
+  }, [service, setValue, doctors]);
   useEffect(() => {
     const fetchData = async () => {
       if (userPermissions.includes('user.input_search')) {
@@ -186,7 +186,7 @@ const CreateUpdateDialog = ({
 
   const handleMultiSelectChange = (e: any) => {
     const selectedTypes = e.value;
-    
+
     setSelectedServiceTypes(selectedTypes);
     setValue(
       'service_types',
@@ -359,30 +359,28 @@ const CreateUpdateDialog = ({
               />
             </div>
           )}
-          {!isDoctor && (
-            <div>
-              <label>Alındı:</label>
-              <Controller
-                name="amount"
-                control={control}
-                render={({ field }) => (
-                  <InputNumber
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                    value={field?.value || 0}
-                    onValueChange={(e) => {
-                      field.onChange(e);
-                    }}
-                    mode="currency"
-                    currency="AZN"
-                    locale="de-DE"
-                    style={{ marginBottom: '10px', marginTop: '5px' }}
-                    invalid={!!errors.amount}
-                  />
-                )}
-              />
-            </div>
-          )}
+          <div>
+            <label>{isDoctor ? 'Alınacaq' : 'Alındı'}:</label>
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <InputNumber
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  value={field?.value || 0}
+                  onValueChange={(e) => {
+                    field.onChange(e);
+                  }}
+                  mode="currency"
+                  currency="AZN"
+                  locale="de-DE"
+                  style={{ marginBottom: '10px', marginTop: '5px' }}
+                  invalid={!!errors.amount}
+                />
+              )}
+            />
+          </div>
         </div>
 
         {userPermissions.includes('service.variable.reject_comment') &&
