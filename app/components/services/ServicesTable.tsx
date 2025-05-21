@@ -76,6 +76,15 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
     dates.length === 2 &&
     new Date(dates[0]).getTime() === new Date(dates[1]).getTime();
 
+  function isSameDay(date1: Date, date2: Date) {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  }
+  const isToday = isSameDay(new Date(dates[0]), new Date());
+
   const showSuccess = (message: string) => {
     toast.current?.show({
       severity: 'success',
@@ -531,11 +540,14 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
         </div>
         <div className="ml-2">{advanceInfo?.transferred_at}</div>
       </div>
-      {userPermissions.includes('reservation.next_day_transfer.cancel') && <Button
-        icon="pi pi-undo"
-        tooltip="Növbəni yenidən aç"
-        onClick={onAdvanceCancel}
-      />}
+      {userPermissions.includes('reservation.next_day_transfer.cancel') && (
+        <Button
+          icon="pi pi-undo"
+          tooltip="Növbəni yenidən aç"
+          onClick={onAdvanceCancel}
+          disabled={!isToday}
+        />
+      )}
     </div>
   );
 
@@ -650,7 +662,10 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
               />
             ) : (
               userPermissions.includes('reservation.next_day_transfer') && (
-                <Button onClick={() => setAdvanceTransferModal(true)}>
+                <Button
+                  onClick={() => setAdvanceTransferModal(true)}
+                  disabled={!isToday}
+                >
                   Növbəni bağla
                 </Button>
               )
