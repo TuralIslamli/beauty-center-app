@@ -109,6 +109,18 @@ export default {
         user_id,
       },
     }),
+  getAdvances: <T>({
+    page,
+    size,
+    from_date,
+    to_date,
+  }: IServicesTableProps): Promise<T> =>
+    axiosApi.get(`advance-transfer?page=${page}&size=${size}&sort=desc`, {
+      params: {
+        from_date,
+        to_date,
+      },
+    }),
   getLogs: <T>({ from_date, to_date, page }: ILogsProps): Promise<T> =>
     axiosApi.get(`logs?page=${page}&size=${10}`, {
       params: {

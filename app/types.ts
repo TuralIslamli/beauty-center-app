@@ -46,6 +46,11 @@ export interface IUserData {
   meta: { total: number };
 }
 
+export interface IAdvanceListData {
+  data: IAdvanceInfo[];
+  meta: { total: number };
+}
+
 export interface IUserRS {
   data: IUser;
 }
