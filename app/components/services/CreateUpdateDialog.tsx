@@ -331,19 +331,17 @@ const CreateUpdateDialog = ({
               style={{ marginBottom: '10px', marginTop: '5px' }}
             />
           </div>
-          {!isDoctor && (
-            <div>
-              <label>Depozit:</label>
-              <InputNumber
-                disabled
-                value={service?.advance_amount || 0}
-                mode="currency"
-                currency="AZN"
-                locale="de-DE"
-                style={{ marginBottom: '10px', marginTop: '5px' }}
-              />
-            </div>
-          )}
+          <div>
+            <label>Depozit:</label>
+            <InputNumber
+              disabled
+              value={service?.advance_amount || 0}
+              mode="currency"
+              currency="AZN"
+              locale="de-DE"
+              style={{ marginBottom: '10px', marginTop: '5px' }}
+            />
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '20px', width: '206px' }}>
           {!isDoctor && (

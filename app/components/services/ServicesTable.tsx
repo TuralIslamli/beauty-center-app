@@ -125,7 +125,7 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
         setAdvanceInfo(advanceInfo);
       }
 
-      if (areDatesEqual && userPermissions.includes('service.advance.info')) {
+      if (userPermissions.includes('service.advance.info')) {
         const total: ITotalAmount = await api.getTotalAmount({
           status: filteredStatus?.id,
           from_date: formatDate(dates[0]),
