@@ -310,12 +310,9 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
       style: 'currency',
       currency: 'AZN',
     });
-    const isAccepted = rowData?.status;
 
     const parts = formatter.formatToParts(
-      isAccepted
-        ? +rowData.advance_amount + +rowData.amount
-        : +rowData.services_total
+      +rowData?.amount || +rowData?.services_total
     );
     const currencySymbol =
       parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
