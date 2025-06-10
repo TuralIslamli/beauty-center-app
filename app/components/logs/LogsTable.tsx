@@ -129,6 +129,29 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
     );
   };
 
+    const resultAmountBodyTemplate = (rowData: ILog) => {
+    const formatter = new Intl.NumberFormat('az-AZ', {
+      style: 'currency',
+      currency: 'AZN',
+    });
+
+    const parts = formatter.formatToParts(
+      +rowData?.service?.advance_amount
+    );
+    const currencySymbol =
+      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
+    const formattedPrice = parts
+      .filter((part) => part.type !== 'currency')
+      .map((part) => part.value)
+      .join('');
+
+    return isLoading ? (
+      <Skeleton width="100px" />
+    ) : (
+      `${formattedPrice} ${currencySymbol}`
+    );
+  };
+
   const serviceTypesBody = (rowData: ILog) =>
     isLoading ? (
       <Skeleton width="100px" />
@@ -230,6 +253,11 @@ function LogsTable({ userPermissions }: ILogsTableProps) {
         <Column
           header="Alınan məbləğ"
           body={resultPriceBodyTemplate}
+          style={{ width: '10%' }}
+        ></Column>
+        <Column
+          header="Depozit"
+          body={resultAmountBodyTemplate}
           style={{ width: '10%' }}
         ></Column>
         <Column
