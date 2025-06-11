@@ -192,13 +192,13 @@ const CreateUpdateDialog = ({
       'service_types',
       selectedTypes?.map((i: IServiceType) => ({ id: i.id }))
     );
-    setTotalPrice(
-      selectedTypes.reduce(
-        (accumulator: number, currentValue: IServiceType) =>
-          accumulator + +currentValue.price,
-        0
-      )
+    const newTotalPrice = selectedTypes.reduce(
+      (accumulator: number, currentValue: IServiceType) =>
+        accumulator + +currentValue.price,
+      0
     );
+    setTotalPrice(newTotalPrice);
+    setValue('amount', newTotalPrice - (service?.advance_amount || 0));
   };
 
   const onHide = () => {
