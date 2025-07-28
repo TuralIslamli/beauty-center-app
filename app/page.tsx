@@ -20,6 +20,7 @@ import BookingTimesTable from './components/reservationTimes/BookingTimesTable';
 import BookingTable from './components/bookings/BookingTable';
 import LogsTable from './components/logs/LogsTable';
 import AdvanceTransfersTable from './components/advanceTransfers/AdvanceTransfersTable';
+import ReportsTable from './components/reports/ReportsTable';
 
 function Page() {
   const [userData, setUserData] = useState<IUser>();
@@ -97,6 +98,14 @@ function Page() {
           {userPermissions?.includes('reservation.get_all') && (
             <TabPanel header="Rezervlər">
               <BookingTable userPermissions={userPermissions} />
+            </TabPanel>
+          )}
+          {userPermissions?.includes('report.get_all') && (
+            <TabPanel header="Kassa">
+              <ReportsTable
+                userPermissions={userPermissions}
+                role={userData?.role}
+              />
             </TabPanel>
           )}
           {userPermissions?.includes('reservation_time.get_all') && (

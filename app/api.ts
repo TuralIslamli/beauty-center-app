@@ -8,6 +8,7 @@ import {
   ILoginFields,
   ILogsProps,
   INavigationProps,
+  IReportsTableProps,
   IServiceFields,
   IServiceType,
   IServiceTypeFields,
@@ -107,6 +108,18 @@ export default {
         client_phone,
         service_types,
         user_id,
+      },
+    }),
+  getReports: <T>({
+    page,
+    size,
+    from_date,
+    to_date,
+  }: IReportsTableProps): Promise<T> =>
+    axiosApi.get(`reports?page=${page}&size=${size}&sort=desc`, {
+      params: {
+        from_date,
+        to_date,
       },
     }),
   getAdvances: <T>({

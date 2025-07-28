@@ -75,6 +75,11 @@ export interface IServicesTableProps extends INavigationProps {
   user_id?: number;
 }
 
+export interface IReportsTableProps extends INavigationProps {
+  from_date: string;
+  to_date: string;
+}
+
 export interface IBookingTableProps extends INavigationProps {
   status?: number;
   from_date: string;
@@ -136,6 +141,16 @@ export interface IService {
   reject_comment?: string;
 }
 
+export interface IReport {
+  id: number;
+  amount: string;
+  service_type: string;
+  client_name: string;
+  client_phone: string;
+  user: IUser;
+  date_time: string;
+}
+
 export interface IBooking {
   service_types: IServiceType[];
   id: number;
@@ -154,6 +169,11 @@ export interface IServiceRS {
 }
 export interface IServicesData {
   data: IService[];
+  meta: { total: number };
+}
+
+export interface IReportsData {
+  data: IReport[];
   meta: { total: number };
 }
 
