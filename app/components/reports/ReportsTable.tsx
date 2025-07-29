@@ -3,7 +3,6 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
 import { IReport, IReportsData, IRole, ITotalAmount } from '../../types';
 import api from '../../api';
 import React from 'react';
@@ -20,29 +19,20 @@ interface IServicesTableProps {
 function ReportsTable({ userPermissions, role }: IServicesTableProps) {
   const [reports, setReports] = useState<IReport[]>([]);
   const [filter, setFilter] = useState(false);
-  const [page, setPage] = useState(1);
-  const [first, setFirst] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [rows, setRows] = useState<number>(10);
   const [isLoading, setIsLoading] = useState(false);
   const [totalAmount, setTotalAmount] = useState<ITotalAmount>();
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
   const toast = useRef<Toast>(null);
-  const navigationRef = useRef<HTMLDivElement>(null);
 
-  const getReports = async (page: number, isOnPageChange?: boolean) => {
+  const getReports = async (isOnPageChange?: boolean) => {
     setIsLoading(true);
     try {
-      const { data, meta }: IReportsData = await api.getReports({
-        page,
-        size: rows,
+      const { data }: IReportsData = await api.getReports({
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
       });
 
       setReports(data);
-      setTotal(meta?.total);
-
       if (userPermissions.includes('service.advance.info')) {
         const total: ITotalAmount = await api.getTotalAmount({
           from_date: formatDate(dates[0]),
@@ -55,22 +45,14 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
       console.error(error);
     } finally {
       setIsLoading(false);
-      isOnPageChange &&
-        navigationRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
   useEffect(() => {
     if (dates[1]) {
-      getReports(page);
+      getReports();
     }
   }, [dates[1]]);
-
-  const onPageChange = (event: PaginatorPageChangeEvent) => {
-    setFirst(event.first);
-    getReports(event.page + 1, true);
-    setPage(event.page + 1);
-  };
 
   const header = (
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -89,7 +71,7 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
           icon="pi pi-refresh"
           rounded
           raised
-          onClick={() => getReports(page)}
+          onClick={() => getReports()}
         />
       </div>
     </div>
@@ -157,11 +139,7 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
   );
 
   const idBodyTemplate = (rowData: IReport, options: any) =>
-    isLoading ? (
-      <Skeleton width="20px" />
-    ) : (
-      <div>{total - options.rowIndex - first}</div>
-    );
+    isLoading ? <Skeleton width="20px" /> : <div>{options?.rowIndex + 1}</div>;
 
   return (
     <>
@@ -172,6 +150,8 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
         tableStyle={{ minWidth: '50rem' }}
         style={{ marginBottom: '10px' }}
         filterDisplay={filter ? 'row' : undefined}
+        paginator
+        rows={10}
       >
         <Column
           body={idBodyTemplate}
@@ -207,7 +187,6 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
           header="Mənbə"
           style={{ width: '10%' }}
           showFilterMenu={false}
-          filter={userPermissions.includes('service.variable.service_type_id')}
         ></Column>
         <Column
           header="Qəbul edən"
@@ -221,14 +200,6 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
           style={{ width: '10%' }}
         ></Column>
       </DataTable>
-      <div ref={navigationRef}>
-        <Paginator
-          first={first}
-          rows={rows}
-          totalRecords={total}
-          onPageChange={onPageChange}
-        />
-      </div>
       {userPermissions.includes('service.get_all.total_amount') && (
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Message
