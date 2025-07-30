@@ -141,6 +141,13 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
   const idBodyTemplate = (rowData: IReport, options: any) =>
     isLoading ? <Skeleton width="20px" /> : <div>{options?.rowIndex + 1}</div>;
 
+  const serviceTypeBody = (rowData: IReport) =>
+    isLoading ? (
+      <Skeleton width="100px" />
+    ) : (
+      <div>{rowData.service_type === 'service' ? 'xidmət' : 'depozit'}</div>
+    );
+
   return (
     <>
       <DataTable
@@ -187,6 +194,7 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
           header="Mənbə"
           style={{ width: '10%' }}
           showFilterMenu={false}
+          body={serviceTypeBody}
         ></Column>
         <Column
           header="Qəbul edən"
