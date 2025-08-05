@@ -20,8 +20,8 @@ export interface IAdvanceInfo {
   transferred_at: string;
 }
 
-export interface IAdvanceInfoRs{
-  data: IAdvanceInfo
+export interface IAdvanceInfoRs {
+  data: IAdvanceInfo;
 }
 export interface IRole {
   id: number;
@@ -139,6 +139,7 @@ export interface IService {
   created_at: string;
   user: IUser;
   reject_comment?: string;
+  comment?: string;
 }
 
 export interface IReport {
@@ -149,6 +150,14 @@ export interface IReport {
   client_phone: string;
   user: IUser;
   date_time: string;
+  amount_change_history: IAmountChangeHistory[];
+}
+
+export interface IAmountChangeHistory {
+  id: number;
+  amount: string;
+  created_at: string;
+  causer: IUser;
 }
 
 export interface IBooking {
@@ -212,7 +221,12 @@ export interface IServiceFields {
   user_id?: number;
   status?: number;
   reject_comment?: string | null;
+  comment?: string | null;
   id?: number;
+}
+
+export interface ITimeZone{
+  date_time: string
 }
 
 export interface IBookingFields {

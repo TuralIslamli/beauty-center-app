@@ -136,6 +136,7 @@ const CreateUpdateDialog = ({
       setValue('amount', +service.amount);
       setValue('advance_amount', +service.advance_amount);
       setValue('reject_comment', service.reject_comment);
+      setValue('comment', service.comment);
       const actualStatus = () => {
         return service.status !== 0
           ? serviceStatuses.find((status) => status?.id === service.status)
@@ -381,6 +382,26 @@ const CreateUpdateDialog = ({
           </div>
         </div>
 
+        {userPermissions.includes('service.variable.reject_comment') && (
+          <>
+            <label style={{ marginBottom: '5px' }} htmlFor="name">
+              Comment:
+            </label>
+            <Controller
+              name="comment"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <InputText
+                  style={{ marginBottom: '10px' }}
+                  id="name"
+                  {...field}
+                  value={field.value ?? ''}
+                />
+              )}
+            />
+          </>
+        )}
         {userPermissions.includes('service.variable.reject_comment') &&
           selectedStatus?.id === 2 && (
             <>

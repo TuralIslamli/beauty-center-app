@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { DataTable } from 'primereact/datatable';
+import {
+  DataTable,
+  DataTableExpandedRows,
+  DataTableValueArray,
+} from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { IReport, IReportsData, IRole, ITotalAmount } from '../../types';
+import { IAmountChangeHistory, IReport, IReportsData, IRole, ITotalAmount } from '../../types';
 import api from '../../api';
 import React from 'react';
 import { Calendar } from 'primereact/calendar';
@@ -22,6 +26,10 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [totalAmount, setTotalAmount] = useState<ITotalAmount>();
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
+  const [expandedRows, setExpandedRows] = useState<
+    DataTableExpandedRows | DataTableValueArray | undefined
+  >(undefined);
+
   const toast = useRef<Toast>(null);
 
   const getReports = async (isOnPageChange?: boolean) => {
@@ -148,18 +156,59 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
       <div>{rowData.service_type === 'service' ? 'xidmət' : 'depozit'}</div>
     );
 
+  const allowExpansion = (rowData: IReport) => {
+    return rowData.amount_change_history!.length > 1;
+  };
+
+  const dateRowTemplate = (rowData: IAmountChangeHistory) =>
+    isLoading ? <Skeleton width="100px" /> : rowData.created_at.slice(0, -3);
+
+    const getDoctorRowFullName = (rowData: IAmountChangeHistory) =>
+    isLoading ? (
+      <Skeleton width="150px" />
+    ) : (
+      `${rowData.causer?.name} ${rowData.causer?.surname}`
+    );
+
+  const rowExpansionTemplate = (data: IReport) => {
+    return (
+      <div className="p-3">
+        <DataTable value={data.amount_change_history}>
+          <Column field="date" header="Tarix" body={dateRowTemplate}></Column>
+          <Column
+            field="amount"
+            header="Məbləğ"
+            body={priceBodyTemplate}
+          >
+          </Column>
+          <Column
+            field="status"
+            header="Qəbul edən"
+            body={getDoctorRowFullName}
+          ></Column>
+        </DataTable>
+      </div>
+    );
+  };
+
   return (
     <>
       <DataTable
         value={reports}
-        dataKey="id"
+        dataKey="date_time"
         header={header}
         tableStyle={{ minWidth: '50rem' }}
         style={{ marginBottom: '10px' }}
         filterDisplay={filter ? 'row' : undefined}
         paginator
         rows={10}
+        expandedRows={expandedRows}
+        onRowToggle={(e) => {
+          setExpandedRows(e.data);
+        }}
+        rowExpansionTemplate={rowExpansionTemplate}
       >
+        <Column expander={allowExpansion} style={{ width: '2%' }} />
         <Column
           body={idBodyTemplate}
           header="#"

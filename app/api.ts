@@ -116,7 +116,7 @@ export default {
     from_date,
     to_date,
   }: IReportsTableProps): Promise<T> =>
-    axiosApi.get(`reports?page=${page}&size=${size}&sort=desc`, {
+    axiosApi.get(`reports?sort=desc`, {
       params: {
         from_date,
         to_date,
@@ -268,6 +268,8 @@ export default {
     }),
   getBonusesCoefficient: <T>(): Promise<T> =>
     axiosApi.get(`settings/bonus-coefficient`),
+  getTimeZone: <T>(): Promise<T> =>
+    axiosApi.get(`settings/timezone-date`),
   getBonusesExcel: async ({ from_date, to_date, user_id }: IBonusesProps) => {
     try {
       await axiosApi

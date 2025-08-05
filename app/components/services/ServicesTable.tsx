@@ -17,6 +17,7 @@ import {
   IServiceType,
   IServiceTypeRS,
   IServicesData,
+  ITimeZone,
   ITotalAmount,
 } from '../../types';
 import api from '../../api';
@@ -72,6 +73,7 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
   const navigationRef = useRef<HTMLDivElement>(null);
   const [advanceTransferModal, setAdvanceTransferModal] = useState(false);
   const [advanceInfo, setAdvanceInfo] = useState<IAdvanceInfo>();
+  const [notToday, setNotToday] = useState(false);
   const areDatesEqual =
     dates.length === 2 &&
     new Date(dates[0]).getTime() === new Date(dates[1]).getTime();
@@ -98,7 +100,16 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
     setService(newService);
     setDialog(true);
   };
+  const isTodayTest = (dateString: string): boolean => {
+    const inputDate = new Date(dateString);
+    const today = new Date();
 
+    return (
+      inputDate.getFullYear() === today.getFullYear() &&
+      inputDate.getMonth() === today.getMonth() &&
+      inputDate.getDate() === today.getDate()
+    );
+  };
   const getServices = async (page: number, isOnPageChange?: boolean) => {
     setIsLoading(true);
     try {
@@ -138,6 +149,9 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
 
         setTotalAmount(total);
       }
+      const timeZone: ITimeZone = await api.getTimeZone();
+      setNotToday(!isTodayTest(timeZone.date_time));
+      console.log('timeZone', notToday);
     } catch (error) {
       console.error(error);
     } finally {
@@ -549,6 +563,10 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
       )}
     </div>
   );
+
+  if (notToday) {
+    return <div>Ağıllısanda😂</div>;
+  }
 
   return (
     <>

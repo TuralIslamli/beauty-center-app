@@ -222,7 +222,7 @@ function BonusesTable() {
       <DataTable
         value={bonuses}
         editMode="row"
-        dataKey="date"
+        dataKey="user.id"
         style={{ marginBottom: '10px' }}
         header={header}
         expandedRows={expandedRows}
