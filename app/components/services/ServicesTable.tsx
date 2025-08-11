@@ -151,7 +151,6 @@ function ServicesTable({ userPermissions, role }: IServicesTableProps) {
       }
       const timeZone: ITimeZone = await api.getTimeZone();
       setNotToday(!isTodayTest(timeZone.date_time));
-      console.log('timeZone', notToday);
     } catch (error) {
       console.error(error);
     } finally {

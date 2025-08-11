@@ -7,7 +7,13 @@ import {
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { IAmountChangeHistory, IReport, IReportsData, IRole, ITotalAmount } from '../../types';
+import {
+  IAmountChangeHistory,
+  IReport,
+  IReportsData,
+  IRole,
+  ITotalAmount,
+} from '../../types';
 import api from '../../api';
 import React from 'react';
 import { Calendar } from 'primereact/calendar';
@@ -163,7 +169,7 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
   const dateRowTemplate = (rowData: IAmountChangeHistory) =>
     isLoading ? <Skeleton width="100px" /> : rowData.created_at.slice(0, -3);
 
-    const getDoctorRowFullName = (rowData: IAmountChangeHistory) =>
+  const getDoctorRowFullName = (rowData: IAmountChangeHistory) =>
     isLoading ? (
       <Skeleton width="150px" />
     ) : (
@@ -195,7 +201,7 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
     <>
       <DataTable
         value={reports}
-        dataKey="date_time"
+        dataKey="id"
         header={header}
         tableStyle={{ minWidth: '50rem' }}
         style={{ marginBottom: '10px' }}
