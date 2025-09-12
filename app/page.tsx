@@ -21,6 +21,7 @@ import BookingTable from './components/bookings/BookingTable';
 import LogsTable from './components/logs/LogsTable';
 import AdvanceTransfersTable from './components/advanceTransfers/AdvanceTransfersTable';
 import ReportsTable from './components/reports/ReportsTable';
+import ExpensesTable from './components/Expenses/ExpensesTable';
 
 function Page() {
   const [userData, setUserData] = useState<IUser>();
@@ -111,6 +112,11 @@ function Page() {
           {userPermissions?.includes('reservation_time.get_all') && (
             <TabPanel header="Rezerv saatları">
               <BookingTimesTable userPermissions={userPermissions} />
+            </TabPanel>
+          )}
+          {userPermissions?.includes('expense.get_all') && (
+            <TabPanel header="Xərclər">
+              <ExpensesTable userPermissions={userPermissions} />
             </TabPanel>
           )}
           {userPermissions?.includes('advance_transfer.get_all') && (

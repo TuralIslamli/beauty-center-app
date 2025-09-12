@@ -101,6 +101,20 @@ export interface IServiceType {
   price: string;
 }
 
+export interface IExpensesData {
+  data: IExpense[];
+  meta: { total: number };
+}
+
+export interface IExpense {
+  id: number;
+  name: string;
+  amount: number;
+  expense_date?: string;
+  created_at?: string;
+  description: string;
+}
+
 export interface IBookingTimeData {
   data: IBookingTime[];
   meta: { total: number };
@@ -115,6 +129,12 @@ export interface IBookingTime {
 export interface IServiceTypeFields {
   name: string;
   price: number;
+}
+
+export interface IExpenseFields {
+  name: string;
+  description: string;
+  amount: number;
 }
 
 export interface IBookingTimeFields {
@@ -225,8 +245,8 @@ export interface IServiceFields {
   id?: number;
 }
 
-export interface ITimeZone{
-  date_time: string
+export interface ITimeZone {
+  date_time: string;
 }
 
 export interface IBookingFields {

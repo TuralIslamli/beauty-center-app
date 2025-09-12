@@ -5,6 +5,8 @@ import {
   IBookingTableProps,
   IBookingTime,
   IBookingTimeFields,
+  IExpense,
+  IExpenseFields,
   ILoginFields,
   ILogsProps,
   INavigationProps,
@@ -36,8 +38,15 @@ export default {
     reservation_count,
   }: IBookingTime): Promise<T> =>
     axiosApi.put(`reservation-times/${id}`, { time, reservation_count }),
+  updateExpense: <T>({ id, name, description, amount }: IExpense): Promise<T> =>
+    axiosApi.put(`expenses/${id}`, {
+      name,
+      description,
+      amount,
+    }),
   deleteBookingTime: (id: number | undefined) =>
     axiosApi.delete(`reservation-times/${id}`),
+  deleteExpense: (id: number | undefined) => axiosApi.delete(`expenses/${id}`),
   deleteUser: (id: number | undefined) => axiosApi.delete(`users/${id}`),
   createUser: <T>(payload: IUserFields): Promise<T> =>
     axiosApi.post('users', payload),
@@ -62,6 +71,16 @@ export default {
     axiosApi.put(`service-types/${id}`, { name, price }),
   createServiceType: <T>({ name, price }: IServiceTypeFields): Promise<T> =>
     axiosApi.post('service-types', { name, price }),
+  createExpense: <T>({
+    name,
+    description,
+    amount,
+  }: IExpenseFields): Promise<T> =>
+    axiosApi.post('expenses', {
+      name,
+      description,
+      amount,
+    }),
   deleteServiceType: (id: number | undefined) =>
     axiosApi.delete(`service-types/${id}`),
   getUsers: <T>({ page, size }: INavigationProps): Promise<T> =>
@@ -108,6 +127,28 @@ export default {
         client_phone,
         service_types,
         user_id,
+      },
+    }),
+  getExpenses: <T>({
+    page,
+    size,
+    from_date,
+    to_date,
+  }: IServicesTableProps): Promise<T> =>
+    axiosApi.get(`expenses?page=${page}&size=${size}&sort=desc`, {
+      params: {
+        from_date,
+        to_date,
+      },
+    }),
+  getExpensesTotal: <T>({
+    from_date,
+    to_date,
+  }: IServicesTableProps): Promise<T> =>
+    axiosApi.get(`expenses/total-amount`, {
+      params: {
+        from_date,
+        to_date,
       },
     }),
   getReports: <T>({
@@ -268,8 +309,7 @@ export default {
     }),
   getBonusesCoefficient: <T>(): Promise<T> =>
     axiosApi.get(`settings/bonus-coefficient`),
-  getTimeZone: <T>(): Promise<T> =>
-    axiosApi.get(`settings/timezone-date`),
+  getTimeZone: <T>(): Promise<T> => axiosApi.get(`settings/timezone-date`),
   getBonusesExcel: async ({ from_date, to_date, user_id }: IBonusesProps) => {
     try {
       await axiosApi
