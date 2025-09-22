@@ -67,13 +67,17 @@ function AddDialog({
     }
   }, [expense, setValue]);
 
+  const onHide = () => {
+    setDialog(false);
+    reset();
+  };
   return (
     <Dialog
       visible={dialog}
       style={{ width: '25rem' }}
       header="Xərc"
       modal
-      onHide={() => setDialog(false)}
+      onHide={onHide}
     >
       <form
         onSubmit={handleSubmit(onSubmit)}

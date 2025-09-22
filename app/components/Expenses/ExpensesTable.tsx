@@ -1,23 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../../api';
-import {
-  IBookingTime,
-  IBookingTimeData,
-  IExpense,
-  IExpensesData,
-} from '@/app/types';
+import { IExpense, IExpensesData } from '@/app/types';
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
-import { DataTable, DataTableRowEditCompleteEvent } from 'primereact/datatable';
-import { Column, ColumnEditorOptions } from 'primereact/column';
-import {
-  InputNumber,
-  InputNumberValueChangeEvent,
-} from 'primereact/inputnumber';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import AddDialog from './AddDialog';
 import DeleteDialog from './DeleteDialog';
-import { InputMask, InputMaskChangeEvent } from 'primereact/inputmask';
 import { formatDate } from '@/app/utils';
 import { Skeleton } from 'primereact/skeleton';
 import { Calendar } from 'primereact/calendar';
@@ -39,6 +30,7 @@ function ExpensesTable({ userPermissions }: IBookingTimeProps) {
   const [dates, setDates] = useState<any>([new Date(), new Date()]);
   const [filter, setFilter] = useState(false);
   const [totalAmount, setTotalAmount] = useState<string>('0');
+  const [first, setFirst] = useState(0);
 
   const showSuccess = (message: string) => {
     toast.current?.show({
@@ -51,6 +43,7 @@ function ExpensesTable({ userPermissions }: IBookingTimeProps) {
 
   const onPageChange = (event: PaginatorPageChangeEvent) => {
     fetchData(event.page + 1);
+    setFirst(event.first);
   };
 
   const fetchData = async (page = 1) => {
@@ -77,8 +70,10 @@ function ExpensesTable({ userPermissions }: IBookingTimeProps) {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (dates[1]) {
+      fetchData();
+    }
+  }, [dates[1]]);
 
   const confirmDeleteServiceType = (expense: IExpense) => {
     setExpense(expense);
@@ -244,7 +239,12 @@ function ExpensesTable({ userPermissions }: IBookingTimeProps) {
           ></Column>
         )}
       </DataTable>
-      <Paginator rows={rows} totalRecords={total} onPageChange={onPageChange} />
+      <Paginator
+        first={first}
+        rows={rows}
+        totalRecords={total}
+        onPageChange={onPageChange}
+      />
       <Toast ref={toast} />
       <AddDialog
         expense={expense}
