@@ -193,6 +193,9 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
 
       case 'Gözlənilir':
         return 'info';
+
+      case 'Online':
+        return 'info';
     }
   };
 
@@ -303,26 +306,26 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
       </div>
     );
 
-    const priceBodyTemplate = (rowData: IBooking) => {
-        const formatter = new Intl.NumberFormat('az-AZ', {
-          style: 'currency',
-          currency: 'AZN',
-        });
-    
-        const parts = formatter.formatToParts(+rowData.advance_amount);
-        const currencySymbol =
-          parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
-        const formattedPrice = parts
-          .filter((part) => part.type !== 'currency')
-          .map((part) => part.value)
-          .join('');
-    
-        return isLoading ? (
-          <Skeleton width="100px" />
-        ) : (
-          `${formattedPrice} ${currencySymbol}`
-        );
-      };
+  const priceBodyTemplate = (rowData: IBooking) => {
+    const formatter = new Intl.NumberFormat('az-AZ', {
+      style: 'currency',
+      currency: 'AZN',
+    });
+
+    const parts = formatter.formatToParts(+rowData.advance_amount);
+    const currencySymbol =
+      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
+    const formattedPrice = parts
+      .filter((part) => part.type !== 'currency')
+      .map((part) => part.value)
+      .join('');
+
+    return isLoading ? (
+      <Skeleton width="100px" />
+    ) : (
+      `${formattedPrice} ${currencySymbol}`
+    );
+  };
 
   return (
     <>

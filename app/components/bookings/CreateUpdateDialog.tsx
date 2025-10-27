@@ -409,6 +409,7 @@ const CreateUpdateDialog = ({
               control={control}
               render={({ field }) => (
                 <MultiSelect
+                  filter
                   style={{ marginBottom: '10px' }}
                   value={selectedServiceTypes}
                   onChange={handleMultiSelectChange}

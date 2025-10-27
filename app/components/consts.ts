@@ -49,4 +49,8 @@ export const bookingStatuses = [
     id: 3,
     name: 'Qəbul edildi',
   },
+  {
+    id: 4,
+    name: 'Online',
+  },
 ];
