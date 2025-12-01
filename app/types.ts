@@ -12,6 +12,7 @@ export interface IUser {
   surname: string;
   email: string;
   role: IRole;
+  customer_visible?: boolean;
 }
 
 export interface IAdvanceInfo {
@@ -35,6 +36,7 @@ export interface IUserFields {
   roleId: number;
   password?: string;
   password_repeat?: string;
+  customer_visible?: boolean;
 }
 
 export interface IUpdateUser extends IUserFields {
@@ -99,6 +101,7 @@ export interface IServiceType {
   id: number;
   name: string;
   price: string;
+  customer_visible: boolean;
 }
 
 export interface IExpensesData {

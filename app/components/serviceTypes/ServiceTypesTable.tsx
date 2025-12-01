@@ -1,18 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
-import api from "../../api";
-import { IServiceType, IServiceTypesData } from "@/app/types";
-import { Paginator, PaginatorPageChangeEvent } from "primereact/paginator";
-import { DataTable, DataTableRowEditCompleteEvent } from "primereact/datatable";
-import { Column, ColumnEditorOptions } from "primereact/column";
+import React, { useEffect, useRef, useState } from 'react';
+import api from '../../api';
+import { IServiceType, IServiceTypesData } from '@/app/types';
+import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
+import { DataTable, DataTableRowEditCompleteEvent } from 'primereact/datatable';
+import { Column, ColumnEditorOptions } from 'primereact/column';
 import {
   InputNumber,
   InputNumberValueChangeEvent,
-} from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
-import { Button } from "primereact/button";
-import { Toast } from "primereact/toast";
-import AddDialog from "./AddDialog";
-import DeleteServiceTypeDialog from "./DeleteDialog";
+} from 'primereact/inputnumber';
+import { InputText } from 'primereact/inputtext';
+import { Button } from 'primereact/button';
+import { Toast } from 'primereact/toast';
+import AddDialog from './AddDialog';
+import DeleteServiceTypeDialog from './DeleteDialog';
+import { Checkbox } from 'primereact/checkbox';
 
 interface IServiceTypeProps {
   userPermissions?: string[];
@@ -30,8 +31,8 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
 
   const showSuccess = (message: string) => {
     toast.current?.show({
-      severity: "success",
-      summary: "Success",
+      severity: 'success',
+      summary: 'Success',
       detail: message,
       life: 3000,
     });
@@ -43,15 +44,19 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
   };
 
   const onRowEditComplete = ({ newData }: DataTableRowEditCompleteEvent) => {
-    let { id, name, price } = newData;
+    let { id, name, price, customer_visible } = newData;
+    console.log(newData, 'newData');
+    
+    console.log(customer_visible, 'customer_visible');
     price = price || 0;
     try {
-      api.updateServiceType({ id, name, price });
+      api.updateServiceType({ id, name, price, customer_visible });
       const updatedServiceType = {
         ...newData,
         name,
         price,
         id,
+        customer_visible,
       };
 
       const updatedServices = servicesTypes.map((service) =>
@@ -59,7 +64,7 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
       );
       setServicesTypes(updatedServices);
 
-      showSuccess("Service type has been successfully updated");
+      showSuccess('Service type has been successfully updated');
     } catch (error) {
       console.error(error);
     }
@@ -79,6 +84,17 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
     );
   };
 
+  const visibilityEditor = (options: ColumnEditorOptions) => {
+    console.log(options, 'options');
+
+    return (
+      <Checkbox
+        checked={!!options.value}
+        onChange={(e) => options.editorCallback!(e.checked)}
+      />
+    );
+  };
+
   const textEditor = (options: ColumnEditorOptions) => {
     return (
       <InputText
@@ -92,24 +108,28 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
   };
 
   const priceBodyTemplate = (rowData: IServiceType) => {
-    const formatter = new Intl.NumberFormat("az-AZ", {
-      style: "currency",
-      currency: "AZN",
+    const formatter = new Intl.NumberFormat('az-AZ', {
+      style: 'currency',
+      currency: 'AZN',
     });
 
     const parts = formatter.formatToParts(+rowData.price);
     const currencySymbol =
-      parts.find((part) => part.type === "currency")?.value ?? "AZN";
+      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
     const formattedPrice = parts
-      .filter((part) => part.type !== "currency")
+      .filter((part) => part.type !== 'currency')
       .map((part) => part.value)
-      .join("");
+      .join('');
 
     return `${formattedPrice} ${currencySymbol}`;
   };
 
+  const visibilityHandler = (rowData: IServiceType) => {
+    return <Checkbox checked={!!rowData.customer_visible} disabled></Checkbox>;
+  };
+
   const allowEdit = (rowData: IServiceType) => {
-    return rowData?.name !== "Blue Band";
+    return rowData?.name !== 'Blue Band';
   };
 
   const fetchData = async (page = 1) => {
@@ -134,9 +154,13 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
     setDeleteDiaolog(true);
   };
 
-  const header = userPermissions?.includes("service_type.create") && (
-    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-      <Button label="Əlavə et" icon="pi pi-plus" onClick={() => setDialog(true)} />
+  const header = userPermissions?.includes('service_type.create') && (
+    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <Button
+        label="Əlavə et"
+        icon="pi pi-plus"
+        onClick={() => setDialog(true)}
+      />
     </div>
   );
 
@@ -161,39 +185,51 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
         editMode="row"
         dataKey="id"
         onRowEditComplete={onRowEditComplete}
-        tableStyle={{ minWidth: "50rem" }}
+        tableStyle={{ minWidth: '50rem' }}
         header={header}
-        style={{ marginBottom: "10px" }}
+        style={{ marginBottom: '10px' }}
       >
         <Column
           field="name"
           header="Ad"
           editor={(options) => textEditor(options)}
-          style={{ width: "40%" }}
+          style={{ width: '40%' }}
         ></Column>
         <Column
           field="price"
           header="Qiymət"
           body={priceBodyTemplate}
           editor={(options) => priceEditor(options)}
-          style={{ width: "40%" }}
+          style={{ width: '40%' }}
         ></Column>
-        {userPermissions?.includes("service_type.update") && (
+        <Column
+          field="customer_visible"
+          header="Göstərilmə"
+          body={visibilityHandler}
+          editor={(options) => visibilityEditor(options)}
+          style={{ width: '40%' }}
+        ></Column>
+        {userPermissions?.includes('service_type.update') && (
           <Column
             rowEditor={allowEdit}
-            headerStyle={{ width: "10%" }}
-            bodyStyle={{ textAlign: "center" }}
+            headerStyle={{ width: '10%' }}
+            bodyStyle={{ textAlign: 'center' }}
           ></Column>
         )}
-        {userPermissions?.includes("service_type.delete") && (
+        {userPermissions?.includes('service_type.delete') && (
           <Column
             body={actionBodyTemplate}
             exportable={false}
-            style={{ width: "1%" }}
+            style={{ width: '1%' }}
           ></Column>
         )}
       </DataTable>
-      <Paginator first={first} rows={rows} totalRecords={total} onPageChange={onPageChange} />
+      <Paginator
+        first={first}
+        rows={rows}
+        totalRecords={total}
+        onPageChange={onPageChange}
+      />
       <Toast ref={toast} />
       <AddDialog
         dialog={dialog}

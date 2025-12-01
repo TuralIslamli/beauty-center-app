@@ -9,6 +9,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Message } from "primereact/message";
 import { Password } from "primereact/password";
 import { Dropdown } from "primereact/dropdown";
+import { Checkbox } from "primereact/checkbox";
 import { roles } from "../consts";
 import api from "@/app/api";
 
@@ -36,6 +37,7 @@ function EditUserDialog({
     password_repeat: yup
       .string()
       .oneOf([yup.ref("password")], "Passwords must match"),
+    customer_visible: yup.boolean(),
   });
 
   const {
@@ -53,6 +55,7 @@ function EditUserDialog({
       roleId: undefined,
       password: user?.id ? undefined : "",
       password_repeat: user?.id ? undefined : "",
+      customer_visible: false,
     },
   });
 
@@ -94,6 +97,7 @@ function EditUserDialog({
       setValue("surname", user.surname);
       setValue("email", user.email);
       setValue("roleId", user.role?.id);
+      setValue("customer_visible", user.customer_visible ?? false);
       const userRole = roles.find((role) => role.id === user.role?.id);
       setSelectedRole(userRole);
     }
@@ -180,6 +184,22 @@ function EditUserDialog({
               />
             )}
           />
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
+            <Controller
+              name="customer_visible"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  inputId="customer_visible"
+                  checked={!!field.value}
+                  onChange={(e) => field.onChange(e.checked)}
+                />
+              )}
+            />
+            <label style={{ marginLeft: "8px" }} htmlFor="customer_visible">
+              Göstərilmə
+            </label>
+          </div>
           <label style={{ marginBottom: "5px" }} htmlFor="password">
             Şifrə:
           </label>

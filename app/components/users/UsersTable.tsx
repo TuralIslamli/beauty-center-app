@@ -10,6 +10,7 @@ import { Toast } from "primereact/toast";
 import { Paginator, PaginatorPageChangeEvent } from "primereact/paginator";
 import { roles } from "../consts";
 import { getRoleName } from "@/app/utils";
+import { Checkbox } from "primereact/checkbox";
 
 interface IUserTableProps {
   userPermissions?: string[];
@@ -112,6 +113,10 @@ function UsersTable({ userPermissions }: IUserTableProps) {
     return <div>{getRoleName(rowData.role.id)}</div>;
   };
 
+  const visibilityHandler = (rowData: IUser) => {
+    return <Checkbox checked={!!rowData.customer_visible} disabled />;
+  };
+
   return (
     <>
       <DataTable
@@ -133,12 +138,18 @@ function UsersTable({ userPermissions }: IUserTableProps) {
           field="role"
           body={roleBody}
           header="Rol"
-          style={{ width: "20%" }}
+          style={{ width: "15%" }}
+        ></Column>
+        <Column
+          field="customer_visible"
+          header="Göstərilmə"
+          body={visibilityHandler}
+          style={{ width: "10%" }}
         ></Column>
         <Column
           body={actionBodyTemplate}
           exportable={false}
-          style={{ width: "20%" }}
+          style={{ width: "15%" }}
         ></Column>
       </DataTable>
       <Paginator first={first} rows={rows} totalRecords={total} onPageChange={onPageChange} />
