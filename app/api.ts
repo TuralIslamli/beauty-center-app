@@ -59,6 +59,7 @@ export default {
     password_repeat,
     id,
     customer_visible,
+    day_off,
   }: IUpdateUser): Promise<T> =>
     axiosApi.put(`users/${id}`, {
       name,
@@ -68,6 +69,7 @@ export default {
       password,
       password_repeat,
       customer_visible,
+      day_off,
     }),
   updateServiceType: <T>({ id, name, price, customer_visible }: IServiceType): Promise<T> =>
     axiosApi.put(`service-types/${id}`, { name, price, customer_visible }),

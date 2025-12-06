@@ -13,6 +13,7 @@ export interface IUser {
   email: string;
   role: IRole;
   customer_visible?: boolean;
+  day_off?: number;
 }
 
 export interface IAdvanceInfo {
@@ -37,6 +38,7 @@ export interface IUserFields {
   password?: string;
   password_repeat?: string;
   customer_visible?: boolean;
+  day_off?: number;
 }
 
 export interface IUpdateUser extends IUserFields {

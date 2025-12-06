@@ -54,3 +54,13 @@ export const bookingStatuses = [
     name: 'Online',
   },
 ];
+
+export const daysOfWeek = [
+  { id: 1, name: 'Bazar ertəsi' },
+  { id: 2, name: 'İkinci gün' },
+  { id: 3, name: 'Çərşənbə' },
+  { id: 4, name: 'Cümə axşamı' },
+  { id: 5, name: 'Cümə' },
+  { id: 6, name: 'Şənbə' },
+  { id: 7, name: 'Bazar' },
+];

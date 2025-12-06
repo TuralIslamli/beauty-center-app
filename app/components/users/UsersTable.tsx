@@ -8,7 +8,7 @@ import EditUserDialog from "./EditUserDialog";
 import api from "../../api";
 import { Toast } from "primereact/toast";
 import { Paginator, PaginatorPageChangeEvent } from "primereact/paginator";
-import { roles } from "../consts";
+import { daysOfWeek } from "../consts";
 import { getRoleName } from "@/app/utils";
 import { Checkbox } from "primereact/checkbox";
 
@@ -117,6 +117,11 @@ function UsersTable({ userPermissions }: IUserTableProps) {
     return <Checkbox checked={!!rowData.customer_visible} disabled />;
   };
 
+  const dayOffHandler = (rowData: IUser) => {
+    const day = daysOfWeek.find((d) => d.id === rowData.day_off);
+    return <div>{day?.name || "-"}</div>;
+  };
+
   return (
     <>
       <DataTable
@@ -147,9 +152,15 @@ function UsersTable({ userPermissions }: IUserTableProps) {
           style={{ width: "10%" }}
         ></Column>
         <Column
+          field="day_off"
+          header="İstirahət günü"
+          body={dayOffHandler}
+          style={{ width: "10%" }}
+        ></Column>
+        <Column
           body={actionBodyTemplate}
           exportable={false}
-          style={{ width: "15%" }}
+          style={{ width: "10%" }}
         ></Column>
       </DataTable>
       <Paginator first={first} rows={rows} totalRecords={total} onPageChange={onPageChange} />

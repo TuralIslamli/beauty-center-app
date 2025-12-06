@@ -10,7 +10,7 @@ import { Message } from "primereact/message";
 import { Password } from "primereact/password";
 import { Dropdown } from "primereact/dropdown";
 import { Checkbox } from "primereact/checkbox";
-import { roles } from "../consts";
+import { roles, daysOfWeek } from "../consts";
 import api from "@/app/api";
 
 interface IEditUserProps {
@@ -38,6 +38,7 @@ function EditUserDialog({
       .string()
       .oneOf([yup.ref("password")], "Passwords must match"),
     customer_visible: yup.boolean(),
+    day_off: yup.number(),
   });
 
   const {
@@ -56,6 +57,7 @@ function EditUserDialog({
       password: user?.id ? undefined : "",
       password_repeat: user?.id ? undefined : "",
       customer_visible: false,
+      day_off: undefined,
     },
   });
 
@@ -67,10 +69,19 @@ function EditUserDialog({
     | undefined
   >(undefined);
 
+  const [selectedDayOff, setSelectedDayOff] = useState<
+    | {
+        id: number;
+        name: string;
+      }
+    | undefined
+  >(undefined);
+
   const onHide = () => {
     setUserEditDialog(false);
     reset();
     setSelectedRole(undefined);
+    setSelectedDayOff(undefined);
   };
 
   const onSubmit: SubmitHandler<IUserFields> = async (payload: IUserFields) => {
@@ -98,8 +109,11 @@ function EditUserDialog({
       setValue("email", user.email);
       setValue("roleId", user.role?.id);
       setValue("customer_visible", user.customer_visible ?? false);
+      setValue("day_off", user.day_off);
       const userRole = roles.find((role) => role.id === user.role?.id);
       setSelectedRole(userRole);
+      const userDayOff = daysOfWeek.find((day) => day.id === user.day_off);
+      setSelectedDayOff(userDayOff);
     }
   }, [user, setValue]);
 
@@ -200,6 +214,28 @@ function EditUserDialog({
               Göstərilmə
             </label>
           </div>
+          <label style={{ marginBottom: "5px" }} htmlFor="day_off">
+            İstirahət günü:
+          </label>
+          <Controller
+            name="day_off"
+            control={control}
+            render={({ field }) => (
+              <Dropdown
+                style={{ marginBottom: "10px" }}
+                value={selectedDayOff}
+                onChange={(e) => {
+                  setSelectedDayOff(e.value);
+                  setValue("day_off", e.value?.id);
+                }}
+                options={daysOfWeek}
+                optionLabel="name"
+                placeholder="İstirahət günü seçin"
+                className="w-full md:w-14rem"
+                showClear
+              />
+            )}
+          />
           <label style={{ marginBottom: "5px" }} htmlFor="password">
             Şifrə:
           </label>
