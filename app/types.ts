@@ -69,6 +69,10 @@ export interface INavigationProps {
   page?: number;
 }
 
+export interface IServiceTypesTableProps extends INavigationProps {
+  name?: string;
+}
+
 export interface IServicesTableProps extends INavigationProps {
   status?: number;
   from_date: string;

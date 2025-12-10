@@ -15,6 +15,7 @@ import {
   IServiceType,
   IServiceTypeFields,
   IServicesTableProps,
+  IServiceTypesTableProps,
   IUpdateUser,
   IUserFields,
 } from './types';
@@ -23,8 +24,10 @@ export default {
   postLogin: <T>(payload: ILoginFields): Promise<T> =>
     axiosApi.post('login', payload),
   getSelfInfo: <T>(): Promise<T> => axiosApi.get('users/self-info'),
-  getServiceTypes: <T>({ page, size }: INavigationProps): Promise<T> =>
-    axiosApi.get(`service-types?page=${page}&size=${size}`),
+  getServiceTypes: <T>({ page, size, name }: IServiceTypesTableProps): Promise<T> =>
+    axiosApi.get(`service-types?page=${page}&size=${size}`, {
+      params: { name },
+    }),
   getBookingTimes: <T>({ page, size }: INavigationProps): Promise<T> =>
     axiosApi.get(`reservation-times?page=${page}&size=${size}`),
   createBookingTime: <T>({

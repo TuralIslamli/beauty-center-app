@@ -14,6 +14,7 @@ import { Toast } from 'primereact/toast';
 import AddDialog from './AddDialog';
 import DeleteServiceTypeDialog from './DeleteDialog';
 import { Checkbox } from 'primereact/checkbox';
+import { useDebounce } from 'primereact/hooks';
 
 interface IServiceTypeProps {
   userPermissions?: string[];
@@ -28,6 +29,8 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
   const [dialog, setDialog] = useState(false);
   const toast = useRef<Toast>(null);
   const [first, setFirst] = useState(0);
+  const [filter, setFilter] = useState(false);
+  const [name, debouncedName, setName] = useDebounce('', 400);
 
   const showSuccess = (message: string) => {
     toast.current?.show({
@@ -137,6 +140,7 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
       const { data, meta }: IServiceTypesData = await api.getServiceTypes({
         page,
         size: rows,
+        name: debouncedName || undefined,
       });
       setServicesTypes(data);
       setTotal(meta?.total);
@@ -147,20 +151,39 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [debouncedName]);
 
   const confirmDeleteServiceType = (servicesType: IServiceType) => {
     setServicesType(servicesType);
     setDeleteDiaolog(true);
   };
 
-  const header = userPermissions?.includes('service_type.create') && (
-    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <Button
-        label="Əlavə et"
-        icon="pi pi-plus"
-        onClick={() => setDialog(true)}
+  const nameRowFilterTemplate = () => {
+    return (
+      <InputText
+        placeholder="Ad ilə axtarış"
+        style={{ width: '160px' }}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
       />
+    );
+  };
+
+  const header = (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <Button
+        type="button"
+        icon="pi pi-filter-slash"
+        label="Filter"
+        onClick={() => setFilter((prev) => !prev)}
+      />
+      {userPermissions?.includes('service_type.create') && (
+        <Button
+          label="Əlavə et"
+          icon="pi pi-plus"
+          onClick={() => setDialog(true)}
+        />
+      )}
     </div>
   );
 
@@ -188,12 +211,16 @@ function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
         tableStyle={{ minWidth: '50rem' }}
         header={header}
         style={{ marginBottom: '10px' }}
+        filterDisplay={filter ? 'row' : undefined}
       >
         <Column
           field="name"
           header="Ad"
           editor={(options) => textEditor(options)}
           style={{ width: '40%' }}
+          filter
+          filterElement={nameRowFilterTemplate}
+          showFilterMenu={false}
         ></Column>
         <Column
           field="price"
