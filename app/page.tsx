@@ -25,13 +25,24 @@ import ExpensesTable from './components/Expenses/ExpensesTable';
 
 function Page() {
   const [userData, setUserData] = useState<IUser>();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const savedIndex = localStorage.getItem('activeTabIndex');
+      return savedIndex ? parseInt(savedIndex, 10) : 0;
+    }
+    return 0;
+  });
   const router = useRouter();
   const userPermissions = userData?.role.permissions.map((item) => item?.name);
 
   const onLogOut = () => {
     localStorage.clear();
     router.push('/login');
+  };
+
+  const onTabChange = (index: number) => {
+    setActiveIndex(index);
+    localStorage.setItem('activeTabIndex', index.toString());
   };
 
   useEffect(() => {
@@ -46,7 +57,11 @@ function Page() {
       try {
         const { data }: IUserRS = await api.getSelfInfo();
         if (data?.role?.id === 5) {
-          setActiveIndex(1);
+          const savedIndex = localStorage.getItem('activeTabIndex');
+          if (!savedIndex) {
+            setActiveIndex(1);
+            localStorage.setItem('activeTabIndex', '1');
+          }
         }
         setUserData(data);
       } catch (error) {
@@ -87,7 +102,7 @@ function Page() {
       </header>
       <Divider />
       <main className={styles.main}>
-        <TabView activeIndex={activeIndex}>
+        <TabView activeIndex={activeIndex} onTabChange={(e) => onTabChange(e.index)}>
           {userPermissions?.includes('service.get_all') && (
             <TabPanel header="Xidmətlər">
               <ServicesTable
