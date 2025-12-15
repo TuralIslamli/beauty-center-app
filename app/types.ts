@@ -86,6 +86,9 @@ export interface IServicesTableProps extends INavigationProps {
 export interface IReportsTableProps extends INavigationProps {
   from_date: string;
   to_date: string;
+  client_name?: string;
+  client_phone?: number | null;
+  user_id?: number;
 }
 
 export interface IBookingTableProps extends INavigationProps {

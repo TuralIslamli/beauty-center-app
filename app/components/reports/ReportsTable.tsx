@@ -9,6 +9,8 @@ import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import {
   IAmountChangeHistory,
+  IDoctor,
+  IDoctorRS,
   IReport,
   IReportsData,
   IRole,
@@ -20,6 +22,10 @@ import { Calendar } from 'primereact/calendar';
 import { formatDate, haveFilterPermissions } from '@/app/utils';
 import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
+import { InputText } from 'primereact/inputtext';
+import { InputNumber } from 'primereact/inputnumber';
+import { Dropdown } from 'primereact/dropdown';
+import { useDebounce } from 'primereact/hooks';
 
 interface IServicesTableProps {
   userPermissions: string[];
@@ -35,6 +41,12 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
   const [expandedRows, setExpandedRows] = useState<
     DataTableExpandedRows | DataTableValueArray | undefined
   >(undefined);
+  const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
+  const [clientPhone, debouncedClientPhone, setClientPhone] = useDebounce<
+    number | null
+  >(null, 400);
+  const [doctors, setDoctors] = useState<IDoctor[]>();
+  const [doctor, setDoctor] = useState<IDoctor>();
 
   const toast = useRef<Toast>(null);
 
@@ -44,6 +56,9 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
       const { data }: IReportsData = await api.getReports({
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
+        client_name: debouncedClientName,
+        client_phone: debouncedClientPhone,
+        user_id: doctor?.id,
       });
 
       setReports(data);
@@ -51,6 +66,9 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
         const total: ITotalAmount = await api.getTotalAmount({
           from_date: formatDate(dates[0]),
           to_date: formatDate(dates[1]),
+          client_name: debouncedClientName,
+          client_phone: debouncedClientPhone,
+          user_id: doctor?.id,
         });
 
         setTotalAmount(total);
@@ -66,7 +84,17 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
     if (dates[1]) {
       getReports();
     }
-  }, [dates[1]]);
+  }, [dates[1], debouncedClientName, debouncedClientPhone, doctor]);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      if (userPermissions.includes('user.input_search')) {
+        const { data: doctorsData }: IDoctorRS = await api.getDoctors();
+        setDoctors(doctorsData);
+      }
+    };
+    fetchDoctors();
+  }, []);
 
   const header = (
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -139,6 +167,53 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
           hideOnRangeSelection
           style={{ width: '220px' }}
           dateFormat="dd/mm/yy"
+        />
+      )
+    );
+  };
+
+  const clientRowFilterTemplate = () => {
+    return (
+      userPermissions.includes('service.filter.client_name') && (
+        <InputText
+          placeholder="Ad ilə axtarış"
+          style={{ width: '160px' }}
+          value={clientName}
+          onChange={(e) => setClientName(e.target.value)}
+        />
+      )
+    );
+  };
+
+  const phoneRowFilterTemplate = () => {
+    return (
+      userPermissions.includes('service.filter.client_phone') && (
+        <InputNumber
+          style={{ width: '180px' }}
+          id="client_phone"
+          placeholder="+994 99 999-99-99"
+          value={clientPhone}
+          onChange={(e) => setClientPhone(e.value)}
+          prefix="+"
+          useGrouping={false}
+        />
+      )
+    );
+  };
+
+  const doctorsRowFilterTemplate = () => {
+    return (
+      userPermissions.includes('service.filter.doctor') && (
+        <Dropdown
+          filter
+          value={doctor}
+          onChange={(e) => {
+            setDoctor(e.value);
+          }}
+          options={doctors}
+          placeholder="Həkim seçin"
+          optionLabel="full_name"
+          showClear
         />
       )
     );
@@ -233,6 +308,8 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
           field="client_name"
           header="Müştəri"
           style={{ width: '10%' }}
+          filter
+          filterElement={clientRowFilterTemplate}
           showFilterMenu={false}
           body={clientNameBody}
         ></Column>
@@ -241,6 +318,8 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
             field="client_phone"
             header="Telefon"
             style={{ width: '10%' }}
+            filter
+            filterElement={phoneRowFilterTemplate}
             showFilterMenu={false}
             body={clientPhoneBody}
           ></Column>
@@ -255,6 +334,8 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
           header="Qəbul edən"
           body={getDoctorFullName}
           style={{ width: '10%' }}
+          filter={userPermissions.includes('service.variable.user_id')}
+          filterElement={doctorsRowFilterTemplate}
           showFilterMenu={false}
         ></Column>
         <Column

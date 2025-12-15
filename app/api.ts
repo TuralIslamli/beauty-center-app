@@ -163,11 +163,17 @@ export default {
     size,
     from_date,
     to_date,
+    client_name,
+    client_phone,
+    user_id,
   }: IReportsTableProps): Promise<T> =>
     axiosApi.get(`reports?sort=desc`, {
       params: {
         from_date,
         to_date,
+        client_name,
+        client_phone,
+        user_id,
       },
     }),
   getAdvances: <T>({
