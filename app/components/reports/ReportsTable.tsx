@@ -132,8 +132,13 @@ function ReportsTable({ userPermissions, role }: IServicesTableProps) {
   const clientNameBody = (rowData: IReport) =>
     isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_name}</div>;
 
+  const formatPhone = (phone?: string | null) => {
+    if (!phone) return '';
+    return phone.startsWith('+') ? phone : `+${phone}`;
+  };
+
   const clientPhoneBody = (rowData: IReport) =>
-    isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_phone}</div>;
+    isLoading ? <Skeleton width="100px" /> : <div>{formatPhone(rowData.client_phone)}</div>;
 
   const priceBodyTemplate = (rowData: IReport) => {
     const formatter = new Intl.NumberFormat('az-AZ', {

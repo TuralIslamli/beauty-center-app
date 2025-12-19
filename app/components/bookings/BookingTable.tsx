@@ -177,8 +177,13 @@ function BookingTable({ userPermissions }: IBookingTableProps) {
   const clientNameBody = (rowData: IBooking) =>
     isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_name}</div>;
 
+  const formatPhone = (phone?: string | null) => {
+    if (!phone) return '';
+    return phone.startsWith('+') ? phone : `+${phone}`;
+  };
+
   const clientPhoneBody = (rowData: IBooking) =>
-    isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_phone}</div>;
+    isLoading ? <Skeleton width="100px" /> : <div>{formatPhone(rowData.client_phone)}</div>;
 
   const getSeverity = (status?: string) => {
     switch (status) {

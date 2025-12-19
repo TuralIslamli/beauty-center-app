@@ -141,6 +141,7 @@ export interface IBookingTime {
 export interface IServiceTypeFields {
   name: string;
   price: number;
+  customer_visible: boolean;
 }
 
 export interface IExpenseFields {

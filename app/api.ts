@@ -76,8 +76,8 @@ export default {
     }),
   updateServiceType: <T>({ id, name, price, customer_visible }: IServiceType): Promise<T> =>
     axiosApi.put(`service-types/${id}`, { name, price, customer_visible }),
-  createServiceType: <T>({ name, price }: IServiceTypeFields): Promise<T> =>
-    axiosApi.post('service-types', { name, price }),
+  createServiceType: <T>({ name, price, customer_visible }: IServiceTypeFields): Promise<T> =>
+    axiosApi.post('service-types', { name, price, customer_visible }),
   createExpense: <T>({
     name,
     description,

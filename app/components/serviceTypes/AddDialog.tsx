@@ -1,4 +1,5 @@
 import { Button } from "primereact/button";
+import { Checkbox } from "primereact/checkbox";
 import { Dialog } from "primereact/dialog";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
@@ -30,6 +31,7 @@ function AddDialog({
   const onSubmit: SubmitHandler<IServiceTypeFields> = async ({
     name,
     price,
+    customer_visible,
   }: IServiceTypeFields) => {
     price = price || 0;
 
@@ -37,6 +39,7 @@ function AddDialog({
       const { data }: IServiceTypeRS = await api.createServiceType({
         name,
         price,
+        customer_visible,
       });
       setServicesTypes((prev: any) => {
         return [...prev, data];
@@ -97,6 +100,24 @@ function AddDialog({
             />
           )}
         />
+
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
+          <Controller
+            name="customer_visible"
+            control={control}
+            defaultValue={true}
+            render={({ field }) => (
+              <Checkbox
+                inputId="customer_visible"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.checked)}
+              />
+            )}
+          />
+          <label htmlFor="customer_visible" style={{ marginLeft: "8px", cursor: "pointer" }}>
+            Müştəri üçün görünən
+          </label>
+        </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <Button label="Save" type="submit" />
