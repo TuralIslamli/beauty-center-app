@@ -225,19 +225,20 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ userPermissions }) => {
 
   return (
     <>
-      <DataTable
-        value={reports}
-        dataKey="id"
-        header={headerContent}
-        tableStyle={{ minWidth: '50rem' }}
-        className="table-container"
-        filterDisplay={filter ? 'row' : undefined}
-        paginator
-        rows={10}
-        expandedRows={expandedRows}
-        onRowToggle={(e) => setExpandedRows(e.data)}
-        rowExpansionTemplate={rowExpansionTemplate}
-      >
+      <div className="table-responsive">
+        <DataTable
+          value={reports}
+          dataKey="id"
+          header={headerContent}
+          tableStyle={{ minWidth: '50rem' }}
+          className="table-container"
+          filterDisplay={filter ? 'row' : undefined}
+          paginator
+          rows={10}
+          expandedRows={expandedRows}
+          onRowToggle={(e) => setExpandedRows(e.data)}
+          rowExpansionTemplate={rowExpansionTemplate}
+        >
         <Column expander={allowExpansion} style={{ width: '2%' }} />
         <Column body={idBodyTemplate} header="#" style={{ width: '2%' }} />
         <Column
@@ -284,7 +285,8 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ userPermissions }) => {
           showFilterMenu={false}
         />
         <Column header="Məbləğ" body={priceBodyTemplate} style={{ width: '10%' }} />
-      </DataTable>
+        </DataTable>
+      </div>
 
       {hasPermission('service.get_all.total_amount') && (
         <div className="total-info">

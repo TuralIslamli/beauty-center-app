@@ -132,14 +132,15 @@ const UsersTable: React.FC<UsersTableProps> = ({ userPermissions = [] }) => {
 
   return (
     <>
-      <DataTable
-        value={users}
-        editMode="row"
-        dataKey="id"
-        header={headerContent}
-        tableStyle={{ minWidth: '50rem' }}
-        className="table-container"
-      >
+      <div className="table-responsive">
+        <DataTable
+          value={users}
+          editMode="row"
+          dataKey="id"
+          header={headerContent}
+          tableStyle={{ minWidth: '50rem' }}
+          className="table-container"
+        >
         <Column field="name" header="Ad" style={{ width: '20%' }} />
         <Column field="surname" header="Soyad" style={{ width: '20%' }} />
         <Column field="email" header="Mail" style={{ width: '20%' }} />
@@ -157,7 +158,8 @@ const UsersTable: React.FC<UsersTableProps> = ({ userPermissions = [] }) => {
           style={{ width: '10%' }}
         />
         <Column body={actionBodyTemplate} exportable={false} style={{ width: '10%' }} />
-      </DataTable>
+        </DataTable>
+      </div>
 
       <Paginator
         first={first}

@@ -199,7 +199,7 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
     hasPermission('reservation.filter.status') ? (
       <Dropdown
         value={filteredStatus}
-        options={bookingStatuses}
+        options={[...bookingStatuses]}
         onChange={(e: DropdownChangeEvent) => setFilteredStatus(e.value)}
         itemTemplate={(option) => <Tag value={option.name} severity={getSeverity(option.name)} />}
         placeholder="Status"
@@ -267,16 +267,17 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
 
   return (
     <>
-      <DataTable
-        value={bookings}
-        dataKey="id"
-        header={headerContent}
-        tableStyle={{ minWidth: '50rem' }}
-        className="table-container"
-        filterDisplay={filter ? 'row' : undefined}
-        paginator
-        rows={10}
-      >
+      <div className="table-responsive">
+        <DataTable
+          value={bookings}
+          dataKey="id"
+          header={headerContent}
+          tableStyle={{ minWidth: '50rem' }}
+          className="table-container"
+          filterDisplay={filter ? 'row' : undefined}
+          paginator
+          rows={10}
+        >
         <Column body={idBodyTemplate} header="#" style={{ width: '2%' }} />
         <Column
           dataType="date"
@@ -329,7 +330,8 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
         {hasPermission('reservation.update') && (
           <Column body={actionBodyTemplate} exportable={false} style={{ width: '10%' }} />
         )}
-      </DataTable>
+        </DataTable>
+      </div>
 
       <Toast ref={toast} />
 

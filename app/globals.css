@@ -332,26 +332,4 @@
   margin-right: 0;
 }
 
-/* ============================================
-   Responsive Styles
-============================================ */
-@media (max-width: 768px) {
-  .app-main {
-    margin: 1rem;
-  }
-  
-  .table-header {
-    flex-direction: column;
-    gap: 0.625rem;
-  }
-  
-  .form-row {
-    flex-direction: column;
-    gap: 0;
-  }
-  
-  .login-form {
-    min-width: 280px;
-    padding: 0 1rem;
-  }
-}
+/* Note: Mobile/responsive styles are in styles/mobile.css */

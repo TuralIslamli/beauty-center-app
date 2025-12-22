@@ -165,14 +165,15 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
 
   return (
     <div>
-      <DataTable
-        value={expenses}
-        dataKey="id"
-        tableStyle={{ minWidth: '50rem' }}
-        header={headerContent}
-        className="table-container"
-        filterDisplay={filter ? 'row' : undefined}
-      >
+      <div className="table-responsive">
+        <DataTable
+          value={expenses}
+          dataKey="id"
+          tableStyle={{ minWidth: '50rem' }}
+          header={headerContent}
+          className="table-container"
+          filterDisplay={filter ? 'row' : undefined}
+        >
         <Column
           dataType="date"
           header="Tarix"
@@ -188,7 +189,8 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
         {hasPermission('expense.delete') && (
           <Column body={actionBodyTemplate} exportable={false} style={{ width: '10%' }} />
         )}
-      </DataTable>
+        </DataTable>
+      </div>
 
       <Paginator
         first={first}

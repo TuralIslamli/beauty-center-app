@@ -152,13 +152,14 @@ const LogsTable: React.FC<LogsTableProps> = ({ userPermissions }) => {
 
   return (
     <>
-      <DataTable
-        value={logs}
-        dataKey="id"
-        tableStyle={{ minWidth: '50rem' }}
-        className="table-container"
-        header={headerContent}
-      >
+      <div className="table-responsive">
+        <DataTable
+          value={logs}
+          dataKey="id"
+          tableStyle={{ minWidth: '50rem' }}
+          className="table-container"
+          header={headerContent}
+        >
         <Column body={idBodyTemplate} header="#" style={{ width: '2%' }} />
         <Column dataType="date" header="Tarix" body={dateBodyTemplate} style={{ width: '10%' }} />
         <Column field="client_name" header="Müştəri" body={clientNameBodyTemplate} style={{ width: '10%' }} />
@@ -169,7 +170,8 @@ const LogsTable: React.FC<LogsTableProps> = ({ userPermissions }) => {
         <Column header="Alınan məbləğ" body={resultPriceBodyTemplate} style={{ width: '10%' }} />
         <Column header="Depozit" body={advanceAmountBodyTemplate} style={{ width: '10%' }} />
         <Column body={actionBodyTemplate} exportable={false} style={{ width: '10%' }} />
-      </DataTable>
+        </DataTable>
+      </div>
 
       <Paginator
         first={first}

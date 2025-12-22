@@ -150,21 +150,23 @@ const BonusesTable: React.FC = () => {
 
   return (
     <div>
-      <DataTable
-        value={bonuses}
-        editMode="row"
-        dataKey="user.id"
-        className="table-container"
-        header={headerContent}
-        expandedRows={expandedRows}
-        onRowToggle={(e) => setExpandedRows(e.data as DataTableExpandedRows)}
-        rowExpansionTemplate={rowExpansionTemplate}
-      >
-        <Column expander={allowExpansion} />
-        <Column body={doctorBodyTemplate} header="Həkim" style={{ width: '20%' }} />
-        <Column field="total_amount" header="Toplam məbləğ" body={totalAmountBodyTemplate} style={{ width: '20%' }} />
-        <Column field="total_amount" header="Bonus" body={bonusBodyTemplate} style={{ width: '60%' }} />
-      </DataTable>
+      <div className="table-responsive">
+        <DataTable
+          value={bonuses}
+          editMode="row"
+          dataKey="user.id"
+          className="table-container"
+          header={headerContent}
+          expandedRows={expandedRows}
+          onRowToggle={(e) => setExpandedRows(e.data as DataTableExpandedRows)}
+          rowExpansionTemplate={rowExpansionTemplate}
+        >
+          <Column expander={allowExpansion} />
+          <Column body={doctorBodyTemplate} header="Həkim" style={{ width: '20%' }} />
+          <Column field="total_amount" header="Toplam məbləğ" body={totalAmountBodyTemplate} style={{ width: '20%' }} />
+          <Column field="total_amount" header="Bonus" body={bonusBodyTemplate} style={{ width: '60%' }} />
+        </DataTable>
+      </div>
     </div>
   );
 };

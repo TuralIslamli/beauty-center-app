@@ -169,16 +169,17 @@ const ServiceTypesTable: React.FC<ServiceTypesTableProps> = ({ userPermissions =
 
   return (
     <div>
-      <DataTable
-        value={serviceTypes}
-        editMode="row"
-        dataKey="id"
-        onRowEditComplete={handleRowEditComplete}
-        tableStyle={{ minWidth: '50rem' }}
-        header={headerContent}
-        className="table-container"
-        filterDisplay={filter ? 'row' : undefined}
-      >
+      <div className="table-responsive">
+        <DataTable
+          value={serviceTypes}
+          editMode="row"
+          dataKey="id"
+          onRowEditComplete={handleRowEditComplete}
+          tableStyle={{ minWidth: '50rem' }}
+          header={headerContent}
+          className="table-container"
+          filterDisplay={filter ? 'row' : undefined}
+        >
         <Column
           field="name"
           header="Ad"
@@ -216,7 +217,8 @@ const ServiceTypesTable: React.FC<ServiceTypesTableProps> = ({ userPermissions =
             style={{ width: '1%' }}
           />
         )}
-      </DataTable>
+        </DataTable>
+      </div>
 
       <Paginator
         first={first}

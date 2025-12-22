@@ -93,15 +93,16 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({ userPermi
 
   return (
     <>
-      <DataTable
-        value={advanceList}
-        editMode="row"
-        dataKey="id"
-        tableStyle={{ minWidth: '50rem' }}
-        className="table-container"
-        header={headerContent}
-        filterDisplay={filter ? 'row' : undefined}
-      >
+      <div className="table-responsive">
+        <DataTable
+          value={advanceList}
+          editMode="row"
+          dataKey="id"
+          tableStyle={{ minWidth: '50rem' }}
+          className="table-container"
+          header={headerContent}
+          filterDisplay={filter ? 'row' : undefined}
+        >
         <Column
           field="transferred_at"
           header="Tarix və saat"
@@ -121,7 +122,8 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({ userPermi
           header="Rol"
           style={{ width: '20%' }}
         />
-      </DataTable>
+        </DataTable>
+      </div>
 
       <Paginator
         first={first}

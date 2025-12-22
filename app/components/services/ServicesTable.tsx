@@ -321,56 +321,56 @@ const ServicesTable: React.FC<ServicesTableProps> = ({ userPermissions, role }) 
   // Filter Templates
   const statusFilterTemplate = useCallback(() => (
     hasPermission('service.filter.status') ? (
-      <Dropdown
-        value={filteredStatus}
-        options={serviceStatuses}
+        <Dropdown
+          value={filteredStatus}
+          options={serviceStatuses}
         onChange={(e: DropdownChangeEvent) => setFilteredStatus(e.value)}
         itemTemplate={(option) => <Tag value={option.name} severity={getSeverity(option.name)} />}
         placeholder="Status"
-        className="p-column-filter"
-        showClear
-        style={{ minWidth: '10rem' }}
-        optionLabel="name"
-      />
+          className="p-column-filter"
+          showClear
+          style={{ minWidth: '10rem' }}
+          optionLabel="name"
+        />
     ) : null
   ), [hasPermission, filteredStatus, getSeverity]);
 
   const dateFilterTemplate = useCallback(() => (
     hasPermission('service.filter.date') ? (
-      <Calendar
-        value={dates}
+        <Calendar
+          value={dates}
         onChange={(e) => setDates(e.value as Date[])}
-        selectionMode="range"
-        readOnlyInput
-        hideOnRangeSelection
+          selectionMode="range"
+          readOnlyInput
+          hideOnRangeSelection
         className="filter-calendar"
-        dateFormat="dd/mm/yy"
-      />
+          dateFormat="dd/mm/yy"
+        />
     ) : null
   ), [hasPermission, dates]);
 
   const clientNameFilterTemplate = useCallback(() => (
     hasPermission('service.filter.client_name') ? (
-      <InputText
-        placeholder="Ad ilə axtarış"
+        <InputText
+          placeholder="Ad ilə axtarış"
         className="filter-input"
-        value={clientName}
-        onChange={(e) => setClientName(e.target.value)}
-      />
+          value={clientName}
+          onChange={(e) => setClientName(e.target.value)}
+        />
     ) : null
   ), [hasPermission, clientName, setClientName]);
 
   const clientPhoneFilterTemplate = useCallback(() => (
     hasPermission('service.filter.client_phone') ? (
-      <InputNumber
+        <InputNumber
         className="input-phone-filter"
-        id="client_phone"
-        placeholder="+994 99 999-99-99"
-        value={clientPhone}
-        onChange={(e) => setClientPhone(e.value)}
-        prefix="+"
-        useGrouping={false}
-      />
+          id="client_phone"
+          placeholder="+994 99 999-99-99"
+          value={clientPhone}
+          onChange={(e) => setClientPhone(e.value)}
+          prefix="+"
+          useGrouping={false}
+        />
     ) : null
   ), [hasPermission, clientPhone, setClientPhone]);
 
@@ -468,12 +468,13 @@ const ServicesTable: React.FC<ServicesTableProps> = ({ userPermissions, role }) 
 
   return (
     <>
+      <div className="table-responsive">
       <DataTable
         value={services}
         dataKey="id"
-        header={headerContent}
+          header={headerContent}
         tableStyle={{ minWidth: '50rem' }}
-        className="table-container"
+          className="table-container"
         filterDisplay={filter ? 'row' : undefined}
       >
         <Column body={idBodyTemplate} header="#" style={{ width: '2%' }} />
@@ -532,7 +533,8 @@ const ServicesTable: React.FC<ServicesTableProps> = ({ userPermissions, role }) 
           filterElement={statusFilterTemplate}
         />
         <Column body={actionBodyTemplate} exportable={false} style={{ width: '10%' }} />
-      </DataTable>
+        </DataTable>
+      </div>
 
       <div ref={navigationRef}>
         <Paginator

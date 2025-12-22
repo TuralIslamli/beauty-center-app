@@ -140,15 +140,16 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
 
   return (
     <div>
-      <DataTable
-        value={bookingTimes}
-        editMode="row"
-        dataKey="id"
-        onRowEditComplete={handleRowEditComplete}
-        tableStyle={{ minWidth: '50rem' }}
-        header={headerContent}
-        className="table-container"
-      >
+      <div className="table-responsive">
+        <DataTable
+          value={bookingTimes}
+          editMode="row"
+          dataKey="id"
+          onRowEditComplete={handleRowEditComplete}
+          tableStyle={{ minWidth: '50rem' }}
+          header={headerContent}
+          className="table-container"
+        >
         <Column
           field="time"
           header="Saat"
@@ -175,7 +176,8 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
             style={{ width: '1%' }}
           />
         )}
-      </DataTable>
+        </DataTable>
+      </div>
 
       <Paginator
         first={first}
