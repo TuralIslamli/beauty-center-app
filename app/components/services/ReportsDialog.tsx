@@ -1,52 +1,38 @@
-import api from "@/app/api";
-import { formatDate } from "@/app/utils";
-import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
-import { Dialog } from "primereact/dialog";
-import { Nullable } from "primereact/ts-helpers";
-import React, { useState } from "react";
+import React, { useState, useCallback } from 'react';
+import { Dialog } from 'primereact/dialog';
+import { Button } from 'primereact/button';
+import { Calendar } from 'primereact/calendar';
+import { Nullable } from 'primereact/ts-helpers';
 
-interface IDialogProps {
-  dialog: boolean;
-  setDialog: (state: boolean) => void;
+import api from '@/app/api';
+import { formatDate } from '@/app/utils';
+
+interface ReportsDialogProps {
+  visible: boolean;
+  onHide: () => void;
 }
-const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
-  const [dailyReportDate, setDailyReportDate] = useState<Nullable<Date>>(
-    new Date()
-  );
 
-  const [bonusesReportDates, setBonusesReportDates] = useState<
-    Nullable<(Date | null)[]>
-  >([new Date(), new Date()]);
+const ReportsDialog: React.FC<ReportsDialogProps> = ({ visible, onHide }) => {
+  const [dailyReportDate, setDailyReportDate] = useState<Nullable<Date>>(new Date());
 
-  const [generalReportDates, setGeneralReportDates] = useState<any>([
-    new Date(),
-    new Date(),
-  ]);
+  const handleExport = useCallback(() => {
+    if (dailyReportDate) {
+      api.getDailyReportExcel(formatDate(dailyReportDate));
+    }
+  }, [dailyReportDate]);
 
   return (
     <Dialog
-      header="Reports"
-      visible={dialog}
-      onHide={() => {
-        if (!dialog) return;
-        setDialog(false);
-      }}
+      header="Hesabatlar"
+      visible={visible}
+      onHide={onHide}
+      style={{ minWidth: '400px' }}
     >
-      <div
-        style={{ minWidth: "40vw", display: "flex", flexDirection: "column" }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "10px",
-          }}
-        >
+      <div className="flex flex-column gap-4">
+        <div className="flex justify-between align-center gap-4">
           <Calendar
             value={dailyReportDate}
             onChange={(e) => setDailyReportDate(e.value)}
-            style={{ width: "170px" }}
             showIcon
             dateFormat="dd/mm/yy"
           />
@@ -54,8 +40,7 @@ const ReportsDialog = ({ dialog, setDialog }: IDialogProps) => {
             severity="success"
             label="Export"
             icon="pi pi-upload"
-            style={{ width: "180px" }}
-            onClick={() => api.getDailyReportExcel(formatDate(dailyReportDate))}
+            onClick={handleExport}
           />
         </div>
       </div>

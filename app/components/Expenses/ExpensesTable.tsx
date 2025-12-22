@@ -1,52 +1,54 @@
-import React, { useEffect, useRef, useState } from 'react';
-import api from '../../api';
-import { IExpense, IExpensesData } from '@/app/types';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import AddDialog from './AddDialog';
-import DeleteDialog from './DeleteDialog';
-import { formatDate } from '@/app/utils';
-import { Skeleton } from 'primereact/skeleton';
 import { Calendar } from 'primereact/calendar';
+import { Skeleton } from 'primereact/skeleton';
 import { Message } from 'primereact/message';
 
-interface IBookingTimeProps {
+import api from '../../api';
+import { IExpense, IExpensesData } from '@/app/types';
+import { formatDate, formatPrice, haveFilterPermissions } from '@/app/utils';
+import { TableHeader } from '../shared';
+import AddDialog from './AddDialog';
+import DeleteDialog from './DeleteDialog';
+
+interface ExpensesTableProps {
   userPermissions: string[];
 }
 
-function ExpensesTable({ userPermissions }: IBookingTimeProps) {
+const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
   const [expense, setExpense] = useState<IExpense>();
-  const [deleteDialog, setDeleteDiaolog] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [expenses, setExpenses] = useState<IExpense[]>([]);
-  const [total, setTotal] = useState<number>(0);
-  const [rows, setRows] = useState<number>(10);
-  const [dialog, setDialog] = useState(false);
-  const toast = useRef<Toast>(null);
-  const [dates, setDates] = useState<any>([new Date(), new Date()]);
-  const [filter, setFilter] = useState(false);
-  const [totalAmount, setTotalAmount] = useState<string>('0');
+  const [total, setTotal] = useState(0);
+  const [rows] = useState(10);
   const [first, setFirst] = useState(0);
+  const [filter, setFilter] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalAmount, setTotalAmount] = useState('0');
+  const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
+  const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
 
-  const showSuccess = (message: string) => {
+  const toast = useRef<Toast>(null);
+
+  const hasPermission = useCallback(
+    (permission: string) => userPermissions.includes(permission),
+    [userPermissions]
+  );
+
+  const showSuccess = useCallback((message: string) => {
     toast.current?.show({
       severity: 'success',
       summary: 'Success',
       detail: message,
       life: 3000,
     });
-  };
+  }, []);
 
-  const onPageChange = (event: PaginatorPageChangeEvent) => {
-    fetchData(event.page + 1);
-    setFirst(event.first);
-  };
-
-  const fetchData = async (page = 1) => {
+  const fetchData = useCallback(async (page = 1) => {
     setIsLoading(true);
     try {
       const { data, meta }: IExpensesData = await api.getExpenses({
@@ -55,7 +57,7 @@ function ExpensesTable({ userPermissions }: IBookingTimeProps) {
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
       });
-      const { amount }: any = await api.getExpensesTotal({
+      const { amount }: { amount: string } = await api.getExpensesTotal({
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
       });
@@ -63,136 +65,103 @@ function ExpensesTable({ userPermissions }: IBookingTimeProps) {
       setExpenses(data);
       setTotal(meta?.total);
     } catch (error) {
-      console.error(error);
+      console.error('Failed to fetch expenses:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [rows, dates]);
 
   useEffect(() => {
     if (dates[1]) {
       fetchData();
     }
-  }, [dates[1]]);
+  }, [fetchData]);
 
-  const confirmDeleteServiceType = (expense: IExpense) => {
-    setExpense(expense);
-    setDeleteDiaolog(true);
-  };
+  const handlePageChange = useCallback((event: PaginatorPageChangeEvent) => {
+    fetchData(event.page + 1);
+    setFirst(event.first);
+  }, [fetchData]);
 
-  const editExpense = (user: IExpense) => {
-    setExpense(user);
-    setDialog(true);
-  };
+  const handleEditClick = useCallback((expenseData: IExpense) => {
+    setExpense(expenseData);
+    setIsAddDialogVisible(true);
+  }, []);
 
-  const content = <div>{totalAmount} AZN</div>;
+  const handleDeleteClick = useCallback((expenseData: IExpense) => {
+    setExpense(expenseData);
+    setIsDeleteDialogVisible(true);
+  }, []);
 
-  const header = userPermissions?.includes('expense.create') && (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}
-    >
-      <div>
-        <Button
-          type="button"
-          icon="pi pi-filter-slash"
-          label="Filter"
-          onClick={() => setFilter((prev) => !prev)}
-          style={{ marginRight: '20px' }}
-        />
+  // Body Templates
+  const dateBodyTemplate = useCallback((rowData: IExpense) => (
+    isLoading ? <Skeleton width="100px" /> : rowData.created_at?.slice(0, -3)
+  ), [isLoading]);
 
-        <Button
-          icon="pi pi-refresh"
-          rounded
-          raised
-          onClick={() => fetchData()}
-        />
-      </div>
-      <Message
-        style={{
-          border: 'solid #696cff',
-          borderWidth: '0 0 0 6px',
-          marginTop: '20px',
-          marginRight: '20px',
-        }}
-        severity="info"
-        content={content}
+  const nameBodyTemplate = useCallback((rowData: IExpense) => (
+    isLoading ? <Skeleton width="100px" /> : <div>{rowData.name}</div>
+  ), [isLoading]);
+
+  const descriptionBodyTemplate = useCallback((rowData: IExpense) => (
+    isLoading ? <Skeleton width="100px" /> : <div>{rowData.description}</div>
+  ), [isLoading]);
+
+  const priceBodyTemplate = useCallback((rowData: IExpense) => (
+    formatPrice(rowData.amount)
+  ), []);
+
+  const actionBodyTemplate = useCallback((rowData: IExpense) => (
+    <>
+      <Button
+        icon="pi pi-pencil"
+        rounded
+        text
+        severity="secondary"
+        className="btn-icon-right"
+        onClick={() => handleEditClick(rowData)}
       />
       <Button
-        label="Əlavə et"
-        icon="pi pi-plus"
-        onClick={() => setDialog(true)}
+        icon="pi pi-trash"
+        rounded
+        text
+        severity="danger"
+        onClick={() => handleDeleteClick(rowData)}
       />
-    </div>
-  );
+    </>
+  ), [handleEditClick, handleDeleteClick]);
 
-  const actionBodyTemplate = (rowData: IExpense) => {
-    return (
-      <React.Fragment>
-        <Button
-          icon="pi pi-pencil"
-          rounded
-          text
-          severity="secondary"
-          style={{ marginRight: '10px' }}
-          onClick={() => editExpense(rowData)}
-        />
+  // Filter Templates
+  const dateFilterTemplate = useCallback(() => (
+    hasPermission('service.filter.date') ? (
+      <Calendar
+        value={dates}
+        onChange={(e) => setDates(e.value as Date[])}
+        selectionMode="range"
+        readOnlyInput
+        hideOnRangeSelection
+        className="filter-calendar"
+        dateFormat="dd/mm/yy"
+      />
+    ) : null
+  ), [hasPermission, dates]);
 
-        <Button
-          icon="pi pi-trash"
-          rounded
-          text
-          severity="danger"
-          onClick={() => confirmDeleteServiceType(rowData)}
-        />
-      </React.Fragment>
-    );
-  };
-
-  const dateBodyTemplate = (rowData: IExpense) =>
-    isLoading ? <Skeleton width="100px" /> : rowData.created_at?.slice(0, -3);
-
-  const dateRowFilterTemplate = () => {
-    return (
-      userPermissions.includes('service.filter.date') && (
-        <Calendar
-          value={dates}
-          onChange={(e) => setDates(e.value)}
-          selectionMode="range"
-          readOnlyInput
-          hideOnRangeSelection
-          style={{ width: '220px' }}
-          dateFormat="dd/mm/yy"
-        />
-      )
-    );
-  };
-
-  const nameBody = (rowData: IExpense) =>
-    isLoading ? <Skeleton width="100px" /> : <div>{rowData.name}</div>;
-
-  const descriptionBody = (rowData: IExpense) =>
-    isLoading ? <Skeleton width="100px" /> : <div>{rowData.description}</div>;
-
-  const priceBodyTemplate = (rowData: IExpense) => {
-    const formatter = new Intl.NumberFormat('az-AZ', {
-      style: 'currency',
-      currency: 'AZN',
-    });
-
-    const parts = formatter.formatToParts(+rowData.amount);
-    const currencySymbol =
-      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
-    const formattedPrice = parts
-      .filter((part) => part.type !== 'currency')
-      .map((part) => part.value)
-      .join('');
-
-    return `${formattedPrice} ${currencySymbol}`;
-  };
+  const headerContent = useMemo(() => (
+    hasPermission('expense.create') ? (
+      <TableHeader
+        onFilterToggle={() => setFilter((prev) => !prev)}
+        onRefresh={() => fetchData()}
+        leftContent={
+          <Message className="info-message" severity="info" content={<div>{totalAmount} AZN</div>} />
+        }
+        rightContent={
+          <Button
+            label="Əlavə et"
+            icon="pi pi-plus"
+            onClick={() => setIsAddDialogVisible(true)}
+          />
+        }
+      />
+    ) : null
+  ), [hasPermission, fetchData, totalAmount]);
 
   return (
     <div>
@@ -200,8 +169,8 @@ function ExpensesTable({ userPermissions }: IBookingTimeProps) {
         value={expenses}
         dataKey="id"
         tableStyle={{ minWidth: '50rem' }}
-        header={header}
-        style={{ marginBottom: '10px' }}
+        header={headerContent}
+        className="table-container"
         filterDisplay={filter ? 'row' : undefined}
       >
         <Column
@@ -211,57 +180,45 @@ function ExpensesTable({ userPermissions }: IBookingTimeProps) {
           style={{ width: '10%' }}
           showFilterMenu={false}
           filter
-          filterElement={dateRowFilterTemplate}
-        ></Column>
-        <Column
-          header="Ad"
-          style={{ width: '10%' }}
-          showFilterMenu={false}
-          body={nameBody}
-        ></Column>
-        <Column
-          header="Izah"
-          style={{ width: '10%' }}
-          showFilterMenu={false}
-          body={descriptionBody}
-        ></Column>
-        <Column
-          field="price"
-          header="Məbləğ"
-          body={priceBodyTemplate}
-          style={{ width: '10%' }}
-        ></Column>
-        {userPermissions?.includes('expense.delete') && (
-          <Column
-            body={actionBodyTemplate}
-            exportable={false}
-            style={{ width: '10%' }}
-          ></Column>
+          filterElement={dateFilterTemplate}
+        />
+        <Column header="Ad" body={nameBodyTemplate} style={{ width: '10%' }} showFilterMenu={false} />
+        <Column header="Izah" body={descriptionBodyTemplate} style={{ width: '10%' }} showFilterMenu={false} />
+        <Column field="price" header="Məbləğ" body={priceBodyTemplate} style={{ width: '10%' }} />
+        {hasPermission('expense.delete') && (
+          <Column body={actionBodyTemplate} exportable={false} style={{ width: '10%' }} />
         )}
       </DataTable>
+
       <Paginator
         first={first}
         rows={rows}
         totalRecords={total}
-        onPageChange={onPageChange}
+        onPageChange={handlePageChange}
       />
+
       <Toast ref={toast} />
+
       <AddDialog
         expense={expense}
-        dialog={dialog}
-        setDialog={setDialog}
-        showSuccess={showSuccess}
+        visible={isAddDialogVisible}
+        onHide={() => {
+          setIsAddDialogVisible(false);
+          setExpense(undefined);
+        }}
+        onSuccess={showSuccess}
         getExpenses={fetchData}
       />
+
       <DeleteDialog
         expense={expense}
-        deleteDialog={deleteDialog}
-        setDeleteDialog={setDeleteDiaolog}
+        visible={isDeleteDialogVisible}
+        onHide={() => setIsDeleteDialogVisible(false)}
         setExpenses={setExpenses}
-        showSuccess={showSuccess}
+        onSuccess={showSuccess}
       />
     </div>
   );
-}
+};
 
 export default ExpensesTable;

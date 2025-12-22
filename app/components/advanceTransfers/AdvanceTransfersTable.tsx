@@ -1,34 +1,39 @@
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
-import React, { useEffect, useRef, useState } from 'react';
-import { IAdvanceInfo, IAdvanceListData, IUser, IUserData } from '../../types';
-import api from '../../api';
 import { Toast } from 'primereact/toast';
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
-import { formatDate, getRoleName, haveFilterPermissions } from '@/app/utils';
-import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 
-interface IProps {
+import api from '../../api';
+import { IAdvanceInfo, IAdvanceListData } from '../../types';
+import { formatDate, getRoleName, haveFilterPermissions, getDaysAgo } from '@/app/utils';
+import { TableHeader } from '../shared';
+
+interface AdvanceTransfersTableProps {
   userPermissions: string[];
 }
 
-function AdvanceTransfersTable({ userPermissions }: IProps) {
+const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({ userPermissions }) => {
   const [advanceList, setAdvanceList] = useState<IAdvanceInfo[]>([]);
   const [first, setFirst] = useState(0);
   const [total, setTotal] = useState(0);
-  const [rows, setRows] = useState<number>(10);
+  const [rows] = useState(10);
   const [page, setPage] = useState(1);
-  const toast = useRef<Toast>(null);
   const [filter, setFilter] = useState(false);
-  const tenDaysAgo = new Date();
-  tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-  const [dates, setDates] = useState<any>([tenDaysAgo, new Date()]);
+  const [dates, setDates] = useState<Date[]>([getDaysAgo(10), new Date()]);
 
-  const fetchData = async (page: number) => {
+  const toast = useRef<Toast>(null);
+
+  const hasPermission = useCallback(
+    (permission: string) => userPermissions.includes(permission),
+    [userPermissions]
+  );
+
+  const fetchData = useCallback(async (currentPage: number) => {
     try {
       const { data, meta }: IAdvanceListData = await api.getAdvances({
-        page,
+        page: currentPage,
         size: rows,
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
@@ -36,67 +41,55 @@ function AdvanceTransfersTable({ userPermissions }: IProps) {
       setAdvanceList(data);
       setTotal(meta?.total);
     } catch (error) {
-      console.error(error);
+      console.error('Failed to fetch advance transfers:', error);
     }
-  };
+  }, [rows, dates]);
 
   useEffect(() => {
     if (dates[1]) {
       fetchData(page);
     }
-  }, [dates[1]]);
+  }, [fetchData, dates, page]);
 
-  const onPageChange = (event: PaginatorPageChangeEvent) => {
+  const handlePageChange = useCallback((event: PaginatorPageChangeEvent) => {
     fetchData(event.page + 1);
     setPage(event.page + 1);
     setFirst(event.first);
-  };
+  }, [fetchData]);
 
-  const roleBody = (rowData: IAdvanceInfo) => {
-    return <div>{getRoleName(rowData?.user?.role?.id)}</div>;
-  };
-
-  const userBody = (rowData: IAdvanceInfo) => {
-    return (
-      <div>
-        {rowData?.user
-          ? `${rowData?.user?.name} ${rowData?.user?.surname}`
-          : 'sistem'}
-      </div>
-    );
-  };
-
-  const dateRowFilterTemplate = () => {
-    return (
-      userPermissions.includes('service.filter.date') && (
-        <Calendar
-          value={dates}
-          onChange={(e) => setDates(e.value)}
-          selectionMode="range"
-          readOnlyInput
-          hideOnRangeSelection
-          style={{ width: '220px' }}
-          dateFormat="dd/mm/yy"
-        />
-      )
-    );
-  };
-
-  const header = (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div>
-        {haveFilterPermissions(userPermissions) && (
-          <Button
-            type="button"
-            icon="pi pi-filter-slash"
-            label="Filter"
-            onClick={() => setFilter((prev) => !prev)}
-            style={{ marginRight: '20px' }}
-          />
-        )}
-      </div>
+  // Body Templates
+  const userBodyTemplate = useCallback((rowData: IAdvanceInfo) => (
+    <div>
+      {rowData?.user
+        ? `${rowData.user.name} ${rowData.user.surname}`
+        : 'sistem'}
     </div>
-  );
+  ), []);
+
+  const roleBodyTemplate = useCallback((rowData: IAdvanceInfo) => (
+    <div>{getRoleName(rowData?.user?.role?.id)}</div>
+  ), []);
+
+  // Filter Templates
+  const dateFilterTemplate = useCallback(() => (
+    hasPermission('service.filter.date') ? (
+      <Calendar
+        value={dates}
+        onChange={(e) => setDates(e.value as Date[])}
+        selectionMode="range"
+        readOnlyInput
+        hideOnRangeSelection
+        className="filter-calendar"
+        dateFormat="dd/mm/yy"
+      />
+    ) : null
+  ), [hasPermission, dates]);
+
+  const headerContent = useMemo(() => (
+    <TableHeader
+      onFilterToggle={haveFilterPermissions(userPermissions) ? () => setFilter((prev) => !prev) : undefined}
+    />
+  ), [userPermissions]);
 
   return (
     <>
@@ -105,8 +98,8 @@ function AdvanceTransfersTable({ userPermissions }: IProps) {
         editMode="row"
         dataKey="id"
         tableStyle={{ minWidth: '50rem' }}
-        style={{ marginBottom: '10px' }}
-        header={header}
+        className="table-container"
+        header={headerContent}
         filterDisplay={filter ? 'row' : undefined}
       >
         <Column
@@ -114,30 +107,32 @@ function AdvanceTransfersTable({ userPermissions }: IProps) {
           header="Tarix və saat"
           style={{ width: '20%' }}
           filter
-          filterElement={dateRowFilterTemplate}
-        ></Column>
+          filterElement={dateFilterTemplate}
+        />
         <Column
           field="user"
           header="Bağlayan şəxs"
-          body={userBody}
+          body={userBodyTemplate}
           style={{ width: '20%' }}
-        ></Column>
+        />
         <Column
           field="role"
-          body={roleBody}
+          body={roleBodyTemplate}
           header="Rol"
           style={{ width: '20%' }}
-        ></Column>
+        />
       </DataTable>
+
       <Paginator
         first={first}
         rows={rows}
         totalRecords={total}
-        onPageChange={onPageChange}
+        onPageChange={handlePageChange}
       />
+
       <Toast ref={toast} />
     </>
   );
-}
+};
 
 export default AdvanceTransfersTable;

@@ -1,77 +1,46 @@
-import { Button } from 'primereact/button';
-import { Dialog } from 'primereact/dialog';
-import React, { Dispatch, SetStateAction } from 'react';
-import { IBookingTime, IExpense } from '../../types';
-import api from '@/app/api';
+import React, { Dispatch, SetStateAction, useCallback } from 'react';
 
-interface IDeleteServiceTypeProps {
-  showSuccess: (message: string) => void;
+import api from '@/app/api';
+import { IExpense } from '../../types';
+import { ConfirmDialog } from '../shared';
+
+interface DeleteDialogProps {
   expense?: IExpense;
-  deleteDialog: boolean;
-  setDeleteDialog: (state: boolean) => void;
+  visible: boolean;
+  onHide: () => void;
+  onSuccess: (message: string) => void;
   setExpenses: Dispatch<SetStateAction<IExpense[]>>;
 }
 
-function DeleteServiceTypeDialog({
+const DeleteDialog: React.FC<DeleteDialogProps> = ({
   expense,
-  deleteDialog,
-  setDeleteDialog,
+  visible,
+  onHide,
   setExpenses,
-  showSuccess,
-}: IDeleteServiceTypeProps) {
-  const deleteServiceType = () => {
-    setExpenses((prev) =>
-      prev.filter((item) => item.id !== expense?.id)
-    );
-    try {
-      api.deleteExpense(expense?.id);
-      setDeleteDialog(false);
-      showSuccess('Silindi');
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  onSuccess,
+}) => {
+  const handleDelete = useCallback(async () => {
+    if (!expense?.id) return;
 
-  const deleteProductDialogFooter = (
-    <React.Fragment>
-      <Button
-        label="No"
-        icon="pi pi-times"
-        outlined
-        onClick={() => setDeleteDialog(false)}
-      />
-      <Button
-        label="Yes"
-        icon="pi pi-check"
-        severity="danger"
-        onClick={deleteServiceType}
-      />
-    </React.Fragment>
-  );
+    try {
+      await api.deleteExpense(expense.id);
+      setExpenses((prev) => prev.filter((item) => item.id !== expense.id));
+      onHide();
+      onSuccess('Xərc uğurla silindi');
+    } catch (error) {
+      console.error('Failed to delete expense:', error);
+    }
+  }, [expense?.id, setExpenses, onHide, onSuccess]);
 
   return (
-    <Dialog
-      visible={deleteDialog}
-      style={{ width: '32rem' }}
-      breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-      header="Confirm"
-      modal
-      footer={deleteProductDialogFooter}
-      onHide={() => setDeleteDialog(false)}
-    >
-      <div className="confirmation-content">
-        <i
-          className="pi pi-exclamation-triangle"
-          style={{ fontSize: '2rem', marginRight: '10px' }}
-        />
-        {expense && (
-          <span>
-            Are you sure you want to delete <b>{expense?.name}</b>?
-          </span>
-        )}
-      </div>
-    </Dialog>
+    <ConfirmDialog
+      visible={visible}
+      onHide={onHide}
+      onConfirm={handleDelete}
+      header="Silmə təsdiqi"
+      message={`"${expense?.name}" xərcini silmək istədiyinizə əminsiniz?`}
+    />
   );
-}
+};
 
-export default DeleteServiceTypeDialog;
+export default DeleteDialog;

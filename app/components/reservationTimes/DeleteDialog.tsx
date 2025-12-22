@@ -1,77 +1,46 @@
-import { Button } from 'primereact/button';
-import { Dialog } from 'primereact/dialog';
-import React, { Dispatch, SetStateAction } from 'react';
-import { IBookingTime } from '../../types';
-import api from '@/app/api';
+import React, { Dispatch, SetStateAction, useCallback } from 'react';
 
-interface IDeleteServiceTypeProps {
-  showSuccess: (message: string) => void;
+import api from '@/app/api';
+import { IBookingTime } from '../../types';
+import { ConfirmDialog } from '../shared';
+
+interface DeleteDialogProps {
   bookingTime?: IBookingTime;
-  deleteDialog: boolean;
-  setDeleteDialog: (state: boolean) => void;
+  visible: boolean;
+  onHide: () => void;
+  onSuccess: (message: string) => void;
   setBookingTimes: Dispatch<SetStateAction<IBookingTime[]>>;
 }
 
-function DeleteServiceTypeDialog({
+const DeleteDialog: React.FC<DeleteDialogProps> = ({
   bookingTime,
-  deleteDialog,
-  setDeleteDialog,
+  visible,
+  onHide,
   setBookingTimes,
-  showSuccess,
-}: IDeleteServiceTypeProps) {
-  const deleteServiceType = () => {
-    setBookingTimes((prev) =>
-      prev.filter((item) => item.id !== bookingTime?.id)
-    );
-    try {
-      api.deleteBookingTime(bookingTime?.id);
-      setDeleteDialog(false);
-      showSuccess('Rezerv saatı silindi');
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  onSuccess,
+}) => {
+  const handleDelete = useCallback(async () => {
+    if (!bookingTime?.id) return;
 
-  const deleteProductDialogFooter = (
-    <React.Fragment>
-      <Button
-        label="No"
-        icon="pi pi-times"
-        outlined
-        onClick={() => setDeleteDialog(false)}
-      />
-      <Button
-        label="Yes"
-        icon="pi pi-check"
-        severity="danger"
-        onClick={deleteServiceType}
-      />
-    </React.Fragment>
-  );
+    try {
+      await api.deleteBookingTime(bookingTime.id);
+      setBookingTimes((prev) => prev.filter((item) => item.id !== bookingTime.id));
+      onHide();
+      onSuccess('Rezerv saatı uğurla silindi');
+    } catch (error) {
+      console.error('Failed to delete booking time:', error);
+    }
+  }, [bookingTime?.id, setBookingTimes, onHide, onSuccess]);
 
   return (
-    <Dialog
-      visible={deleteDialog}
-      style={{ width: '32rem' }}
-      breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-      header="Confirm"
-      modal
-      footer={deleteProductDialogFooter}
-      onHide={() => setDeleteDialog(false)}
-    >
-      <div className="confirmation-content">
-        <i
-          className="pi pi-exclamation-triangle"
-          style={{ fontSize: '2rem', marginRight: '10px' }}
-        />
-        {bookingTime && (
-          <span>
-            Are you sure you want to delete <b>{bookingTime?.time}</b>?
-          </span>
-        )}
-      </div>
-    </Dialog>
+    <ConfirmDialog
+      visible={visible}
+      onHide={onHide}
+      onConfirm={handleDelete}
+      header="Silmə təsdiqi"
+      message={`"${bookingTime?.time}" saatını silmək istədiyinizə əminsiniz?`}
+    />
   );
-}
+};
 
-export default DeleteServiceTypeDialog;
+export default DeleteDialog;

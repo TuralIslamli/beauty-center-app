@@ -1,17 +1,2 @@
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 40px;
-  margin: 10px 20px;
-  gap: 10px;
-}
-
-.info{
-    display: flex;
-    gap: 10px;
-}
-
-.main{
-  margin: 40px;
-}
+/* Стили перенесены в globals.css как общие классы */
+/* .app-header, .app-header-info, .app-main */

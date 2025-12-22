@@ -1,76 +1,46 @@
-import { Button } from 'primereact/button';
-import { Dialog } from 'primereact/dialog';
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { useCallback } from 'react';
+
 import api from '@/app/api';
 import { IService } from '@/app/types';
+import { ConfirmDialog } from '../shared';
 
-interface IProps {
+interface DeleteServiceDialogProps {
   service?: IService;
-  deleteDialog: boolean;
-  setDeleteDialog: (state: boolean) => void;
-  showSuccess: (message: string) => void;
+  visible: boolean;
+  onHide: () => void;
+  onSuccess: (message: string) => void;
   getServices: (page: number) => Promise<void>;
 }
 
-function DeleteServiceDialog({
-  deleteDialog,
-  setDeleteDialog,
+const DeleteServiceDialog: React.FC<DeleteServiceDialogProps> = ({
+  visible,
+  onHide,
   service,
-  showSuccess,
+  onSuccess,
   getServices,
-}: IProps) {
-  const onDelete = () => {
-    api
-      .deleteService(service?.id)
-      .then(() => {
-        setDeleteDialog(false);
-        getServices(1);
-        showSuccess('Service has been successfully deleted');
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
-  const deleteProductDialogFooter = (
-    <React.Fragment>
-      <Button
-        label="No"
-        icon="pi pi-times"
-        outlined
-        onClick={() => setDeleteDialog(false)}
-      />
-      <Button
-        label="Yes"
-        icon="pi pi-check"
-        severity="danger"
-        onClick={onDelete}
-      />
-    </React.Fragment>
-  );
+}) => {
+  const handleDelete = useCallback(async () => {
+    if (!service?.id) return;
+
+    try {
+      await api.deleteService(service.id);
+      onHide();
+      getServices(1);
+      onSuccess('Xidmət uğurla silindi');
+    } catch (error) {
+      console.error('Failed to delete service:', error);
+    }
+  }, [service?.id, onHide, getServices, onSuccess]);
 
   return (
-    <Dialog
-      visible={deleteDialog}
-      style={{ width: '32rem' }}
-      breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-      header="Confirm"
-      modal
-      footer={deleteProductDialogFooter}
-      onHide={() => setDeleteDialog(false)}
-    >
-      <div className="confirmation-content">
-        <i
-          className="pi pi-exclamation-triangle"
-          style={{ fontSize: '2rem', marginRight: '10px' }}
-        />
-        {service && (
-          <span>
-            Are you sure you want to delete <b>{service?.client_name}</b>?
-          </span>
-        )}
-      </div>
-    </Dialog>
+    <ConfirmDialog
+      visible={visible}
+      onHide={onHide}
+      onConfirm={handleDelete}
+      header="Silmə təsdiqi"
+      message={`"${service?.client_name}" xidmətini silmək istədiyinizə əminsiniz?`}
+    />
   );
-}
+};
 
 export default DeleteServiceDialog;

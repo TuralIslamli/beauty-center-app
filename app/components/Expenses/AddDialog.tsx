@@ -1,27 +1,29 @@
-import { Button } from 'primereact/button';
+import React, { useEffect, useCallback } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputText } from 'primereact/inputtext';
+import { Button } from 'primereact/button';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import api from '../../api';
-import { IExpenseFields, IServiceTypeRS, IExpense } from '@/app/types';
-import { Dispatch, SetStateAction, useEffect } from 'react';
 
-interface IDialogProps {
-  getExpenses: (page: number) => Promise<void>;
+import api from '../../api';
+import { IExpenseFields, IExpense } from '@/app/types';
+import { FormField } from '../shared';
+
+interface AddDialogProps {
   expense?: IExpense;
-  dialog: boolean;
-  setDialog: (state: boolean) => void;
-  showSuccess: (message: string) => void;
+  visible: boolean;
+  onHide: () => void;
+  onSuccess: (message: string) => void;
+  getExpenses: (page: number) => Promise<void>;
 }
 
-function AddDialog({
+const AddDialog: React.FC<AddDialogProps> = ({
   expense,
-  dialog,
-  setDialog,
-  showSuccess,
+  visible,
+  onHide,
+  onSuccess,
   getExpenses,
-}: IDialogProps) {
+}) => {
   const {
     control,
     setValue,
@@ -30,34 +32,28 @@ function AddDialog({
     reset,
   } = useForm<IExpenseFields>();
 
-  const onSubmit: SubmitHandler<IExpenseFields> = async ({
-    name,
-    amount,
-    description,
-  }: IExpenseFields) => {
-    amount = amount || 0;
+  const handleFormHide = useCallback(() => {
+    onHide();
+    reset();
+  }, [onHide, reset]);
 
+  const onSubmit: SubmitHandler<IExpenseFields> = useCallback(async ({
+    name,
+    amount = 0,
+    description,
+  }) => {
     try {
-      const { data }: IServiceTypeRS = expense?.id
-        ? await api.updateExpense({
-            name,
-            amount,
-            description,
-            id: expense.id,
-          })
-        : await api.createExpense({
-            name,
-            amount,
-            description,
-          });
+      expense?.id
+        ? await api.updateExpense({ name, amount, description, id: expense.id })
+        : await api.createExpense({ name, amount, description });
+
       getExpenses(1);
-      showSuccess(`Xərc ${expense?.id ? 'yeniləndi' : 'əlavə olundu'}`);
-      setDialog(false);
-      reset();
-    } catch (error: any) {
-      console.error(error);
+      onSuccess(`Xərc ${expense?.id ? 'yeniləndi' : 'əlavə olundu'}`);
+      handleFormHide();
+    } catch (error) {
+      console.error('Failed to save expense:', error);
     }
-  };
+  }, [expense?.id, getExpenses, onSuccess, handleFormHide]);
 
   useEffect(() => {
     if (expense?.id) {
@@ -67,81 +63,62 @@ function AddDialog({
     }
   }, [expense, setValue]);
 
-  const onHide = () => {
-    setDialog(false);
-    reset();
-  };
   return (
     <Dialog
-      visible={dialog}
+      visible={visible}
       style={{ width: '25rem' }}
       header="Xərc"
       modal
-      onHide={onHide}
+      onHide={handleFormHide}
     >
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        style={{ display: 'flex', flexDirection: 'column' }}
-      >
-        <label style={{ marginBottom: '5px' }} htmlFor="name">
-          Ad:
-        </label>
-        <Controller
-          name="name"
-          control={control}
-          rules={{ required: true }}
-          render={({ field }) => (
-            <InputText
-              style={{ marginBottom: '10px' }}
-              id="name"
-              invalid={!!errors?.name}
-              {...field}
-            />
-          )}
-        />
-        <label style={{ marginBottom: '5px' }} htmlFor="name">
-          İzah:
-        </label>
-        <Controller
-          name="description"
-          control={control}
-          rules={{ required: true }}
-          render={({ field }) => (
-            <InputText
-              style={{ marginBottom: '10px' }}
-              id="description"
-              invalid={!!errors?.description}
-              {...field}
-            />
-          )}
-        />
-        <label style={{ marginBottom: '5px' }} htmlFor="surname">
-          Qiymət:
-        </label>
-        <Controller
-          name="amount"
-          control={control}
-          render={({ field }) => (
-            <InputNumber
-              onBlur={field.onBlur}
-              ref={field.ref}
-              value={field?.value || 0}
-              onValueChange={(e) => field.onChange(e)}
-              mode="currency"
-              currency="AZN"
-              locale="de-DE"
-              style={{ marginBottom: '10px' }}
-              invalid={!!errors.amount}
-            />
-          )}
-        />
+      <form onSubmit={handleSubmit(onSubmit)} className="dialog-form">
+        <FormField label="Ad:" htmlFor="name">
+          <Controller
+            name="name"
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <InputText id="name" invalid={!!errors?.name} {...field} />
+            )}
+          />
+        </FormField>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button label="Save" type="submit" />
+        <FormField label="İzah:" htmlFor="description">
+          <Controller
+            name="description"
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <InputText id="description" invalid={!!errors?.description} {...field} />
+            )}
+          />
+        </FormField>
+
+        <FormField label="Qiymət:" htmlFor="amount">
+          <Controller
+            name="amount"
+            control={control}
+            render={({ field }) => (
+              <InputNumber
+                onBlur={field.onBlur}
+                ref={field.ref}
+                value={field?.value || 0}
+                onValueChange={(e) => field.onChange(e)}
+                mode="currency"
+                currency="AZN"
+                locale="de-DE"
+                invalid={!!errors.amount}
+              />
+            )}
+          />
+        </FormField>
+
+        <div className="dialog-footer">
+          <Button label="Saxla" type="submit" />
         </div>
       </form>
     </Dialog>
   );
-}
+};
 
 export default AddDialog;

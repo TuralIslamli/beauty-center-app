@@ -1,130 +1,130 @@
-import { Button } from "primereact/button";
-import { Checkbox } from "primereact/checkbox";
-import { Dialog } from "primereact/dialog";
-import { InputNumber } from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import api from "../../api";
-import { IServiceTypeFields, IServiceTypeRS, IServiceType } from "@/app/types";
-import { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction, useCallback, useState } from 'react';
+import { Dialog } from 'primereact/dialog';
+import { InputText } from 'primereact/inputtext';
+import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
+import { Button } from 'primereact/button';
+import { Checkbox, CheckboxChangeEvent } from 'primereact/checkbox';
 
-interface IDialogProps {
-  dialog: boolean;
-  setDialog: (state: boolean) => void;
-  showSuccess: (message: string) => void;
-  setServicesTypes: Dispatch<SetStateAction<IServiceType[]>>;
+import api from '../../api';
+import { IServiceType, IServiceTypeFields } from '@/app/types';
+import { FormField } from '../shared';
+
+interface AddDialogProps {
+  visible: boolean;
+  onHide: () => void;
+  onSuccess: (message: string) => void;
+  setServiceTypes: Dispatch<SetStateAction<IServiceType[]>>;
 }
 
-function AddDialog({
-  dialog,
-  setDialog,
-  showSuccess,
-  setServicesTypes,
-}: IDialogProps) {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<IServiceTypeFields>();
+const INITIAL_FORM_STATE: IServiceTypeFields = {
+  name: '',
+  price: 0,
+  customer_visible: false,
+};
 
-  const onSubmit: SubmitHandler<IServiceTypeFields> = async ({
-    name,
-    price,
-    customer_visible,
-  }: IServiceTypeFields) => {
-    price = price || 0;
+const AddDialog: React.FC<AddDialogProps> = ({
+  visible,
+  onHide,
+  onSuccess,
+  setServiceTypes,
+}) => {
+  const [formData, setFormData] = useState<IServiceTypeFields>(INITIAL_FORM_STATE);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const resetForm = useCallback(() => {
+    setFormData(INITIAL_FORM_STATE);
+  }, []);
+
+  const handleHide = useCallback(() => {
+    resetForm();
+    onHide();
+  }, [resetForm, onHide]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name) return;
+
+    setIsSubmitting(true);
     try {
-      const { data }: IServiceTypeRS = await api.createServiceType({
-        name,
-        price,
-        customer_visible,
-      });
-      setServicesTypes((prev: any) => {
-        return [...prev, data];
-      });
-      showSuccess("Service type has been successfully created");
-      setDialog(false);
-      reset();
-    } catch (error: any) {
-      console.error(error);
+      const { data }: { data: IServiceType } = await api.createServiceType(formData);
+      setServiceTypes((prev) => [data, ...prev]);
+      onSuccess('Xidmət növü uğurla yaradıldı');
+      handleHide();
+    } catch (error) {
+      console.error('Failed to create service type:', error);
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  }, [formData, setServiceTypes, onSuccess, handleHide]);
+
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, name: e.target.value }));
+  }, []);
+
+  const handlePriceChange = useCallback((e: InputNumberValueChangeEvent) => {
+    setFormData((prev) => ({ ...prev, price: e.value ?? 0 }));
+  }, []);
+
+  const handleVisibilityChange = useCallback((e: CheckboxChangeEvent) => {
+    setFormData((prev) => ({ ...prev, customer_visible: e.checked ?? false }));
+  }, []);
 
   return (
     <Dialog
-      visible={dialog}
-      style={{ width: "25rem" }}
-      header="Xidmət növü"
+      visible={visible}
       modal
-      onHide={() => setDialog(false)}
+      onHide={handleHide}
+      header="Yeni xidmət növü"
+      style={{ maxWidth: '400px', width: '100%' }}
     >
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        style={{ display: "flex", flexDirection: "column" }}
-      >
-        <label style={{ marginBottom: "5px" }} htmlFor="name">
-          Ad:
-        </label>
-        <Controller
-          name="name"
-          control={control}
-          rules={{ required: true }}
-          render={({ field }) => (
-            <InputText
-              style={{ marginBottom: "10px" }}
-              id="name"
-              invalid={!!errors?.name}
-              {...field}
-            />
-          )}
-        />
-        <label style={{ marginBottom: "5px" }} htmlFor="surname">
-          Qiymət:
-        </label>
-        <Controller
-          name="price"
-          control={control}
-          render={({ field }) => (
-            <InputNumber
-              onBlur={field.onBlur}
-              ref={field.ref}
-              value={field?.value || 0}
-              onValueChange={(e) => field.onChange(e)}
-              mode="currency"
-              currency="AZN"
-              locale="de-DE"
-              style={{ marginBottom: "10px" }}
-              invalid={!!errors.price}
-            />
-          )}
-        />
-
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
-          <Controller
-            name="customer_visible"
-            control={control}
-            defaultValue={true}
-            render={({ field }) => (
-              <Checkbox
-                inputId="customer_visible"
-                checked={field.value}
-                onChange={(e) => field.onChange(e.checked)}
-              />
-            )}
+      <form onSubmit={handleSubmit} className="dialog-form">
+        <FormField label="Ad:" htmlFor="name">
+          <InputText
+            id="name"
+            value={formData.name}
+            onChange={handleNameChange}
+            required
           />
-          <label htmlFor="customer_visible" style={{ marginLeft: "8px", cursor: "pointer" }}>
-            Müştəri üçün görünən
-          </label>
-        </div>
+        </FormField>
 
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button label="Save" type="submit" />
+        <FormField label="Qiymət:" htmlFor="price">
+          <InputNumber
+            id="price"
+            value={formData.price}
+            onValueChange={handlePriceChange}
+            mode="currency"
+            currency="AZN"
+            locale="de-DE"
+          />
+        </FormField>
+
+        <FormField label="Göstərilmə" htmlFor="customer_visible" inline>
+          <Checkbox
+            inputId="customer_visible"
+            checked={formData.customer_visible}
+            onChange={handleVisibilityChange}
+          />
+        </FormField>
+
+        <div className="dialog-footer">
+          <Button
+            label="Ləğv et"
+            icon="pi pi-times"
+            outlined
+            type="button"
+            onClick={handleHide}
+          />
+          <Button
+            label="Saxla"
+            icon="pi pi-check"
+            type="submit"
+            disabled={isSubmitting || !formData.name}
+          />
         </div>
       </form>
     </Dialog>
   );
-}
+};
 
 export default AddDialog;

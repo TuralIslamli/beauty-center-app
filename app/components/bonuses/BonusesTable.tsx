@@ -1,4 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { DataTable, DataTableExpandedRows } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Button } from 'primereact/button';
+import { Calendar } from 'primereact/calendar';
+import { Dropdown } from 'primereact/dropdown';
+import { InputNumber } from 'primereact/inputnumber';
+
 import api from '../../api';
 import {
   IBonus,
@@ -7,215 +14,139 @@ import {
   IDoctor,
   IDoctorRS,
 } from '@/app/types';
-import { DataTable, DataTableExpandedRows } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Button } from 'primereact/button';
-import { Calendar } from 'primereact/calendar';
-import { Dropdown } from 'primereact/dropdown';
-import { formatDate } from '@/app/utils';
-import { InputNumber } from 'primereact/inputnumber';
+import { formatDate, formatPrice } from '@/app/utils';
+import { TableHeader } from '../shared';
 
-function BonusesTable() {
+const BonusesTable: React.FC = () => {
   const [bonuses, setBonuses] = useState<IBonus[]>();
-  const [dates, setDates] = useState<any>([new Date(), new Date()]);
+  const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
   const [doctors, setDoctors] = useState<IDoctor[]>();
   const [doctor, setDoctor] = useState<IDoctor>();
   const [expandedRows, setExpandedRows] = useState<DataTableExpandedRows>({});
   const [coefficient, setCoefficient] = useState<number>();
 
-  const priceBodyTemplate = (rowData: IBonus) => {
-    const formatter = new Intl.NumberFormat('az-AZ', {
-      style: 'currency',
-      currency: 'AZN',
-    });
-
-    const parts = formatter.formatToParts(+rowData.total_amount);
-    const currencySymbol =
-      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
-    const formattedPrice = parts
-      .filter((part) => part.type !== 'currency')
-      .map((part) => part.value)
-      .join('');
-
-    return `${formattedPrice} ${currencySymbol}`;
-  };
-
-  const bonusBodyTemplate = (rowData: IBonus) => {
-    const formatter = new Intl.NumberFormat('az-AZ', {
-      style: 'currency',
-      currency: 'AZN',
-    });
-
-    const tempCoefficient = coefficient || 1;
-
-    const parts = formatter.formatToParts(
-      +rowData.total_amount / tempCoefficient
-    );
-
-    const currencySymbol =
-      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
-    const formattedPrice = parts
-      .filter((part) => part.type !== 'currency')
-      .map((part) => part.value)
-      .join('');
-
-    return `${formattedPrice} ${currencySymbol}`;
-  };
-
-  const priceTemplate = (bonus: IBonus) => {
-    const formatter = new Intl.NumberFormat('az-AZ', {
-      style: 'currency',
-      currency: 'AZN',
-    });
-
-    const parts = formatter.formatToParts(+bonus.bonus_per_days);
-    const currencySymbol =
-      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
-    const formattedPrice = parts
-      .filter((part) => part.type !== 'currency')
-      .map((part) => part.value)
-      .join('');
-
-    return `${formattedPrice} ${currencySymbol}`;
-  };
-
-  const bonusTemplate = (bonus: IBonus) => {
-    const formatter = new Intl.NumberFormat('az-AZ', {
-      style: 'currency',
-      currency: 'AZN',
-    });
-
-    const tempCoefficient = coefficient || 1;
-
-    const parts = formatter.formatToParts(
-      +bonus.bonus_per_days / tempCoefficient
-    );
-    const currencySymbol =
-      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
-    const formattedPrice = parts
-      .filter((part) => part.type !== 'currency')
-      .map((part) => part.value)
-      .join('');
-
-    return `${formattedPrice} ${currencySymbol}`;
-  };
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const { data }: IBonusesRS = await api.getBonuses({
         from_date: formatDate(dates[0]),
         to_date: formatDate(dates[1]),
         user_id: doctor?.id,
       });
-      const { data: coefficient }: IBonusesCoefficientRS =
-        await api.getBonusesCoefficient();
+      const { data: coefficientData }: IBonusesCoefficientRS = await api.getBonusesCoefficient();
       setBonuses(data);
-      setCoefficient(coefficient?.coefficient);
+      setCoefficient(coefficientData?.coefficient);
     } catch (error) {
-      console.error(error);
+      console.error('Failed to fetch bonuses:', error);
     }
-  };
+  }, [dates, doctor?.id]);
 
   useEffect(() => {
     if (dates[1]) {
       fetchData();
     }
-  }, [dates[1], doctor]);
+  }, [fetchData]);
 
   useEffect(() => {
-    if (coefficient) api.patchBonusCoefficient(coefficient);
+    if (coefficient) {
+      api.patchBonusCoefficient(coefficient);
+    }
   }, [coefficient]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: doctorsData }: IDoctorRS = await api.getDoctors();
-      setDoctors(doctorsData);
+    const fetchDoctors = async () => {
+      const { data }: IDoctorRS = await api.getDoctors();
+      setDoctors(data);
     };
-    fetchData();
+    fetchDoctors();
   }, []);
 
-  const getDoctorFullName = (rowData: IBonus) => {
-    return `${rowData.user?.name} ${rowData.user?.surname}`;
-  };
+  const calculateBonus = useCallback((amount: number | string) => {
+    const tempCoefficient = coefficient || 1;
+    return formatPrice(+amount / tempCoefficient);
+  }, [coefficient]);
 
-  const onDownloadBonuses = () => {
+  // Body Templates
+  const doctorBodyTemplate = useCallback((rowData: IBonus) => (
+    `${rowData.user?.name} ${rowData.user?.surname}`
+  ), []);
+
+  const totalAmountBodyTemplate = useCallback((rowData: IBonus) => (
+    formatPrice(rowData.total_amount)
+  ), []);
+
+  const bonusBodyTemplate = useCallback((rowData: IBonus) => (
+    calculateBonus(rowData.total_amount)
+  ), [calculateBonus]);
+
+  const priceTemplate = useCallback((bonus: IBonus) => (
+    formatPrice(bonus.bonus_per_days)
+  ), []);
+
+  const bonusTemplate = useCallback((bonus: IBonus) => (
+    calculateBonus(bonus.bonus_per_days)
+  ), [calculateBonus]);
+
+  const handleExport = useCallback(() => {
     api.getBonusesExcel({
       from_date: formatDate(dates[0]),
       to_date: formatDate(dates[1]),
       user_id: doctor?.id,
     });
-  };
+  }, [dates, doctor?.id]);
 
-  const rowExpansionTemplate = (data: IBonus) => {
-    return (
-      <div>
-        <DataTable value={data.bonus_per_days}>
-          <Column field="date" header="Tarix" style={{ width: '20%' }}></Column>
-          <Column
-            field="bonus_per_days"
-            header="Məbləğ"
-            body={priceTemplate}
-            style={{ width: '20%' }}
-          ></Column>
-          <Column
-            field="bonus_per_days"
-            header="Bonus"
-            body={bonusTemplate}
-            style={{ width: '90%' }}
-          ></Column>
-        </DataTable>
-      </div>
-    );
-  };
+  const allowExpansion = useCallback((rowData: IBonus) => (
+    rowData.bonus_per_days?.length > 0
+  ), []);
 
-  const header = (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div>
-        <Calendar
-          value={dates}
-          onChange={(e) => setDates(e.value)}
-          selectionMode="range"
-          readOnlyInput
-          hideOnRangeSelection
-          style={{ width: '220px', marginRight: '10px' }}
-          dateFormat="dd/mm/yy"
-        />
-
-        <Dropdown
-          filter
-          style={{ marginBottom: '10px' }}
-          value={doctor}
-          onChange={(e) => {
-            setDoctor(e.value);
-          }}
-          options={doctors}
-          placeholder="Həkim seçin"
-          optionLabel="full_name"
-          showClear
-        />
-        <InputNumber
-          style={{ marginLeft: '10px', maxWidth: 10 }}
-          value={coefficient}
-          onValueChange={(e) => setCoefficient(e.value || 0)}
-        />
-      </div>
-      <Button
-        label="Export"
-        icon="pi pi-upload"
-        severity="success"
-        onClick={onDownloadBonuses}
-        style={{ marginRight: '10px' }}
-      />
+  const rowExpansionTemplate = useCallback((data: IBonus) => (
+    <div>
+      <DataTable value={data.bonus_per_days}>
+        <Column field="date" header="Tarix" style={{ width: '20%' }} />
+        <Column field="bonus_per_days" header="Məbləğ" body={priceTemplate} style={{ width: '20%' }} />
+        <Column field="bonus_per_days" header="Bonus" body={bonusTemplate} style={{ width: '90%' }} />
+      </DataTable>
     </div>
-  );
+  ), [priceTemplate, bonusTemplate]);
 
-  const allowExpansion = (rowData: IBonus) => {
-    return rowData.bonus_per_days!.length > 0;
-  };
-
-  const handleRowToggle = (e: { data: DataTableExpandedRows }) => {
-    setExpandedRows(e.data);
-  };
+  const headerContent = useMemo(() => (
+    <TableHeader
+      leftContent={
+        <div className="flex align-center gap-3">
+          <Calendar
+            value={dates}
+            onChange={(e) => setDates(e.value as Date[])}
+            selectionMode="range"
+            readOnlyInput
+            hideOnRangeSelection
+            className="filter-calendar"
+            dateFormat="dd/mm/yy"
+          />
+          <Dropdown
+            filter
+            value={doctor}
+            onChange={(e) => setDoctor(e.value)}
+            options={doctors}
+            placeholder="Həkim seçin"
+            optionLabel="full_name"
+            showClear
+          />
+          <InputNumber
+            style={{ maxWidth: '80px' }}
+            value={coefficient}
+            onValueChange={(e) => setCoefficient(e.value || 0)}
+          />
+        </div>
+      }
+      rightContent={
+        <Button
+          label="Export"
+          icon="pi pi-upload"
+          severity="success"
+          onClick={handleExport}
+        />
+      }
+    />
+  ), [dates, doctor, doctors, coefficient, handleExport]);
 
   return (
     <div>
@@ -223,33 +154,19 @@ function BonusesTable() {
         value={bonuses}
         editMode="row"
         dataKey="user.id"
-        style={{ marginBottom: '10px' }}
-        header={header}
+        className="table-container"
+        header={headerContent}
         expandedRows={expandedRows}
-        onRowToggle={handleRowToggle}
+        onRowToggle={(e) => setExpandedRows(e.data as DataTableExpandedRows)}
         rowExpansionTemplate={rowExpansionTemplate}
       >
         <Column expander={allowExpansion} />
-        <Column
-          body={getDoctorFullName}
-          header="Həkim"
-          style={{ width: '20%' }}
-        ></Column>
-        <Column
-          field="total_amount"
-          header="Toplam məbləğ"
-          body={priceBodyTemplate}
-          style={{ width: '20%' }}
-        ></Column>
-        <Column
-          field="total_amount"
-          header="Bonus"
-          body={bonusBodyTemplate}
-          style={{ width: '60%' }}
-        ></Column>
+        <Column body={doctorBodyTemplate} header="Həkim" style={{ width: '20%' }} />
+        <Column field="total_amount" header="Toplam məbləğ" body={totalAmountBodyTemplate} style={{ width: '20%' }} />
+        <Column field="total_amount" header="Bonus" body={bonusBodyTemplate} style={{ width: '60%' }} />
       </DataTable>
     </div>
   );
-}
+};
 
 export default BonusesTable;

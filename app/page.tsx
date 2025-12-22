@@ -1,5 +1,6 @@
 'use client';
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Divider } from 'primereact/divider';
 import { Avatar } from 'primereact/avatar';
 import { Button } from 'primereact/button';
@@ -8,13 +9,13 @@ import { useRouter } from 'next/navigation';
 import { Toast } from 'primereact/toast';
 
 import api from './api';
-import UsersTable from './components/users/UsersTable';
-import styles from './page.module.css';
-import ServiceTypesTable from './components/serviceTypes/ServiceTypesTable';
 import { getRoleName } from './utils';
-import ServicesTable from './components/services/ServicesTable';
 import { IUser, IUserRS } from './types';
 import { setToastInstance } from '@/lib/axios';
+
+import UsersTable from './components/users/UsersTable';
+import ServiceTypesTable from './components/serviceTypes/ServiceTypesTable';
+import ServicesTable from './components/services/ServicesTable';
 import BonusesTable from './components/bonuses/BonusesTable';
 import BookingTimesTable from './components/reservationTimes/BookingTimesTable';
 import BookingTable from './components/bookings/BookingTable';
@@ -23,148 +24,189 @@ import AdvanceTransfersTable from './components/advanceTransfers/AdvanceTransfer
 import ReportsTable from './components/reports/ReportsTable';
 import ExpensesTable from './components/Expenses/ExpensesTable';
 
+const STORAGE_KEYS = {
+  TOKEN: 'token',
+  ACTIVE_TAB: 'activeTabIndex',
+} as const;
+
+const RESERVER_ROLE_ID = 5;
+
 function Page() {
   const [userData, setUserData] = useState<IUser>();
   const [activeIndex, setActiveIndex] = useState<number>(() => {
     if (typeof window !== 'undefined') {
-      const savedIndex = localStorage.getItem('activeTabIndex');
+      const savedIndex = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB);
       return savedIndex ? parseInt(savedIndex, 10) : 0;
     }
     return 0;
   });
+  
   const router = useRouter();
-  const userPermissions = userData?.role.permissions.map((item) => item?.name);
+  const toast = useRef<Toast>(null);
 
-  const onLogOut = () => {
+  const userPermissions = useMemo(
+    () => userData?.role.permissions.map((item) => item?.name) ?? [],
+    [userData?.role.permissions]
+  );
+
+  const handleLogout = useCallback(() => {
     localStorage.clear();
     router.push('/login');
-  };
+  }, [router]);
 
-  const onTabChange = (index: number) => {
+  const handleTabChange = useCallback((index: number) => {
     setActiveIndex(index);
-    localStorage.setItem('activeTabIndex', index.toString());
-  };
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, index.toString());
+  }, []);
 
+  // Проверка авторизации
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     if (!token) {
       router.push('/login');
     }
   }, [router]);
 
+  // Загрузка данных пользователя
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUserData = async () => {
       try {
         const { data }: IUserRS = await api.getSelfInfo();
-        if (data?.role?.id === 5) {
-          const savedIndex = localStorage.getItem('activeTabIndex');
+        
+        // Для reserver роли устанавливаем вкладку по умолчанию
+        if (data?.role?.id === RESERVER_ROLE_ID) {
+          const savedIndex = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB);
           if (!savedIndex) {
             setActiveIndex(1);
-            localStorage.setItem('activeTabIndex', '1');
+            localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, '1');
           }
         }
+        
         setUserData(data);
       } catch (error) {
-        console.error(error);
+        console.error('Failed to fetch user data:', error);
       }
     };
-    fetchData();
+    
+    fetchUserData();
   }, []);
 
-  const toast = useRef<Toast>(null);
-
+  // Установка toast instance
   useEffect(() => {
     if (toast.current) {
       setToastInstance(toast.current);
     }
-  });
+  }, []);
 
-  return userData?.name ? (
+  // Проверка наличия разрешения
+  const hasPermission = useCallback(
+    (permission: string) => userPermissions.includes(permission),
+    [userPermissions]
+  );
+
+  if (!userData?.name) {
+    return null;
+  }
+
+  return (
     <>
-      <header className={styles.header}>
-        <div className={styles.info}>
+      <header className="app-header">
+        <div className="app-header-info">
           <Avatar
             shape="circle"
-            label={userData?.name[0]?.toUpperCase()}
-            style={{ backgroundColor: '#60A5FA' }}
+            label={userData.name[0]?.toUpperCase()}
+            className="avatar-primary"
           />
           <div>
-            <div>{`${userData?.name} ${userData?.surname}`}</div>
-            <small>{getRoleName(userData?.role?.id)}</small>
+            <div>{`${userData.name} ${userData.surname}`}</div>
+            <small>{getRoleName(userData.role?.id)}</small>
           </div>
         </div>
         <Button
           icon="pi pi-sign-out"
           severity="info"
-          aria-label="User"
-          onClick={onLogOut}
+          aria-label="Выход"
+          onClick={handleLogout}
         />
       </header>
+
       <Divider />
-      <main className={styles.main}>
-        <TabView activeIndex={activeIndex} onTabChange={(e) => onTabChange(e.index)}>
-          {userPermissions?.includes('service.get_all') && (
+
+      <main className="app-main">
+        <TabView
+          activeIndex={activeIndex}
+          onTabChange={(e) => handleTabChange(e.index)}
+        >
+          {hasPermission('service.get_all') && (
             <TabPanel header="Xidmətlər">
               <ServicesTable
                 userPermissions={userPermissions}
-                role={userData?.role}
+                role={userData.role}
               />
             </TabPanel>
           )}
-          {userPermissions?.includes('reservation.get_all') && (
+          
+          {hasPermission('reservation.get_all') && (
             <TabPanel header="Rezervlər">
               <BookingTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('report.get_all') && (
+          
+          {hasPermission('report.get_all') && (
             <TabPanel header="Kassa">
               <ReportsTable
                 userPermissions={userPermissions}
-                role={userData?.role}
+                role={userData.role}
               />
             </TabPanel>
           )}
-          {userPermissions?.includes('reservation_time.get_all') && (
+          
+          {hasPermission('reservation_time.get_all') && (
             <TabPanel header="Rezerv saatları">
               <BookingTimesTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('expense.get_all') && (
+          
+          {hasPermission('expense.get_all') && (
             <TabPanel header="Xərclər">
               <ExpensesTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('advance_transfer.get_all') && (
+          
+          {hasPermission('advance_transfer.get_all') && (
             <TabPanel header="Növbələr">
               <AdvanceTransfersTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('service_type.get_all') && (
+          
+          {hasPermission('service_type.get_all') && (
             <TabPanel header="Xidmət növləri">
               <ServiceTypesTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('user.get_all') && (
+          
+          {hasPermission('user.get_all') && (
             <TabPanel header="İstifadəçilər">
               <UsersTable userPermissions={userPermissions} />
             </TabPanel>
           )}
-          {userPermissions?.includes('service.bonus_reports') && (
+          
+          {hasPermission('service.bonus_reports') && (
             <TabPanel header="Bonuslar">
               <BonusesTable />
             </TabPanel>
           )}
-          {userPermissions?.includes('action_log.get_all') && (
+          
+          {hasPermission('action_log.get_all') && (
             <TabPanel header="Loglar">
               <LogsTable userPermissions={userPermissions} />
             </TabPanel>
           )}
         </TabView>
       </main>
+
       <Toast ref={toast} />
     </>
-  ) : (
-    <></>
   );
 }
 

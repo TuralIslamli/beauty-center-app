@@ -1,278 +1,248 @@
-import React, { useEffect, useRef, useState } from 'react';
-import api from '../../api';
-import { IServiceType, IServiceTypesData } from '@/app/types';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
 import { DataTable, DataTableRowEditCompleteEvent } from 'primereact/datatable';
 import { Column, ColumnEditorOptions } from 'primereact/column';
-import {
-  InputNumber,
-  InputNumberValueChangeEvent,
-} from 'primereact/inputnumber';
+import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import AddDialog from './AddDialog';
-import DeleteServiceTypeDialog from './DeleteDialog';
 import { Checkbox } from 'primereact/checkbox';
 import { useDebounce } from 'primereact/hooks';
 
-interface IServiceTypeProps {
+import api from '../../api';
+import { IServiceType, IServiceTypesData } from '@/app/types';
+import { formatPrice } from '@/app/utils';
+import { TableHeader } from '../shared';
+import AddDialog from './AddDialog';
+import DeleteServiceTypeDialog from './DeleteDialog';
+
+interface ServiceTypesTableProps {
   userPermissions?: string[];
 }
 
-function ServiceTypesTable({ userPermissions }: IServiceTypeProps) {
-  const [servicesType, setServicesType] = useState<IServiceType>();
-  const [deleteDialog, setDeleteDiaolog] = useState(false);
-  const [servicesTypes, setServicesTypes] = useState<IServiceType[]>([]);
-  const [total, setTotal] = useState<number>(0);
-  const [rows, setRows] = useState<number>(10);
-  const [dialog, setDialog] = useState(false);
-  const toast = useRef<Toast>(null);
+const ServiceTypesTable: React.FC<ServiceTypesTableProps> = ({ userPermissions = [] }) => {
+  const [serviceType, setServiceType] = useState<IServiceType>();
+  const [serviceTypes, setServiceTypes] = useState<IServiceType[]>([]);
+  const [total, setTotal] = useState(0);
+  const [rows] = useState(10);
   const [first, setFirst] = useState(0);
   const [filter, setFilter] = useState(false);
+  const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
   const [name, debouncedName, setName] = useDebounce('', 400);
 
-  const showSuccess = (message: string) => {
+  const toast = useRef<Toast>(null);
+
+  const showSuccess = useCallback((message: string) => {
     toast.current?.show({
       severity: 'success',
       summary: 'Success',
       detail: message,
       life: 3000,
     });
-  };
+  }, []);
 
-  const onPageChange = (event: PaginatorPageChangeEvent) => {
-    setFirst(event.first);
-    fetchData(event.page + 1);
-  };
-
-  const onRowEditComplete = ({ newData }: DataTableRowEditCompleteEvent) => {
-    let { id, name, price, customer_visible } = newData;
-    console.log(newData, 'newData');
-    
-    console.log(customer_visible, 'customer_visible');
-    price = price || 0;
-    try {
-      api.updateServiceType({ id, name, price, customer_visible });
-      const updatedServiceType = {
-        ...newData,
-        name,
-        price,
-        id,
-        customer_visible,
-      };
-
-      const updatedServices = servicesTypes.map((service) =>
-        service.id === updatedServiceType.id ? updatedServiceType : service
-      );
-      setServicesTypes(updatedServices);
-
-      showSuccess('Service type has been successfully updated');
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const priceEditor = (options: ColumnEditorOptions) => {
-    return (
-      <InputNumber
-        value={options.value}
-        onValueChange={(e: InputNumberValueChangeEvent) =>
-          options.editorCallback!(e.value)
-        }
-        mode="currency"
-        currency="AZN"
-        locale="de-DE"
-      />
-    );
-  };
-
-  const visibilityEditor = (options: ColumnEditorOptions) => {
-    console.log(options, 'options');
-
-    return (
-      <Checkbox
-        checked={!!options.value}
-        onChange={(e) => options.editorCallback!(e.checked)}
-      />
-    );
-  };
-
-  const textEditor = (options: ColumnEditorOptions) => {
-    return (
-      <InputText
-        type="text"
-        value={options.value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          options.editorCallback!(e.target.value)
-        }
-      />
-    );
-  };
-
-  const priceBodyTemplate = (rowData: IServiceType) => {
-    const formatter = new Intl.NumberFormat('az-AZ', {
-      style: 'currency',
-      currency: 'AZN',
-    });
-
-    const parts = formatter.formatToParts(+rowData.price);
-    const currencySymbol =
-      parts.find((part) => part.type === 'currency')?.value ?? 'AZN';
-    const formattedPrice = parts
-      .filter((part) => part.type !== 'currency')
-      .map((part) => part.value)
-      .join('');
-
-    return `${formattedPrice} ${currencySymbol}`;
-  };
-
-  const visibilityHandler = (rowData: IServiceType) => {
-    return <Checkbox checked={!!rowData.customer_visible} disabled></Checkbox>;
-  };
-
-  const allowEdit = (rowData: IServiceType) => {
-    return rowData?.name !== 'Blue Band';
-  };
-
-  const fetchData = async (page = 1) => {
+  const fetchData = useCallback(async (page = 1) => {
     try {
       const { data, meta }: IServiceTypesData = await api.getServiceTypes({
         page,
         size: rows,
         name: debouncedName || undefined,
       });
-      setServicesTypes(data);
+      setServiceTypes(data);
       setTotal(meta?.total);
     } catch (error) {
-      console.error(error);
+      console.error('Failed to fetch service types:', error);
     }
-  };
+  }, [rows, debouncedName]);
 
   useEffect(() => {
     fetchData();
-  }, [debouncedName]);
+  }, [fetchData]);
 
-  const confirmDeleteServiceType = (servicesType: IServiceType) => {
-    setServicesType(servicesType);
-    setDeleteDiaolog(true);
-  };
+  const handlePageChange = useCallback((event: PaginatorPageChangeEvent) => {
+    setFirst(event.first);
+    fetchData(event.page + 1);
+  }, [fetchData]);
 
-  const nameRowFilterTemplate = () => {
-    return (
-      <InputText
-        placeholder="Ad ilə axtarış"
-        style={{ width: '160px' }}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-    );
-  };
+  const handleRowEditComplete = useCallback(async ({ newData }: DataTableRowEditCompleteEvent) => {
+    const { id, name, price = 0, customer_visible } = newData;
 
-  const header = (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <Button
-        type="button"
-        icon="pi pi-filter-slash"
-        label="Filter"
-        onClick={() => setFilter((prev) => !prev)}
-      />
-      {userPermissions?.includes('service_type.create') && (
-        <Button
-          label="Əlavə et"
-          icon="pi pi-plus"
-          onClick={() => setDialog(true)}
-        />
-      )}
-    </div>
+    try {
+      await api.updateServiceType({ id, name, price, customer_visible });
+      
+      setServiceTypes((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...newData, name, price, id, customer_visible } : item
+        )
+      );
+
+      showSuccess('Xidmət növü uğurla yeniləndi');
+    } catch (error) {
+      console.error('Failed to update service type:', error);
+    }
+  }, [showSuccess]);
+
+  const handleDeleteClick = useCallback((serviceType: IServiceType) => {
+    setServiceType(serviceType);
+    setIsDeleteDialogVisible(true);
+  }, []);
+
+  const handleFilterToggle = useCallback(() => {
+    setFilter((prev) => !prev);
+  }, []);
+
+  // Editor Components
+  const textEditor = useCallback((options: ColumnEditorOptions) => (
+    <InputText
+      type="text"
+      value={options.value}
+      onChange={(e) => options.editorCallback!(e.target.value)}
+    />
+  ), []);
+
+  const priceEditor = useCallback((options: ColumnEditorOptions) => (
+    <InputNumber
+      value={options.value}
+      onValueChange={(e: InputNumberValueChangeEvent) => options.editorCallback!(e.value)}
+      mode="currency"
+      currency="AZN"
+      locale="de-DE"
+    />
+  ), []);
+
+  const visibilityEditor = useCallback((options: ColumnEditorOptions) => (
+    <Checkbox
+      checked={!!options.value}
+      onChange={(e) => options.editorCallback!(e.checked)}
+    />
+  ), []);
+
+  // Body Templates
+  const priceBodyTemplate = useCallback((rowData: IServiceType) => formatPrice(rowData.price), []);
+
+  const visibilityBodyTemplate = useCallback((rowData: IServiceType) => (
+    <Checkbox checked={!!rowData.customer_visible} disabled />
+  ), []);
+
+  const actionBodyTemplate = useCallback((rowData: IServiceType) => (
+    <Button
+      icon="pi pi-trash"
+      rounded
+      text
+      severity="danger"
+      onClick={() => handleDeleteClick(rowData)}
+    />
+  ), [handleDeleteClick]);
+
+  // Filter Templates
+  const nameFilterTemplate = useCallback(() => (
+    <InputText
+      placeholder="Ad ilə axtarış"
+      className="filter-input"
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+    />
+  ), [name, setName]);
+
+  const allowEdit = useCallback((rowData: IServiceType) => rowData?.name !== 'Blue Band', []);
+
+  const hasPermission = useCallback(
+    (permission: string) => userPermissions.includes(permission),
+    [userPermissions]
   );
 
-  const actionBodyTemplate = (rowData: IServiceType) => {
-    return (
-      <React.Fragment>
-        <Button
-          icon="pi pi-trash"
-          rounded
-          text
-          severity="danger"
-          onClick={() => confirmDeleteServiceType(rowData)}
-        />
-      </React.Fragment>
-    );
-  };
+  const headerContent = (
+    <TableHeader
+      onFilterToggle={handleFilterToggle}
+      rightContent={
+        hasPermission('service_type.create') && (
+          <Button
+            label="Əlavə et"
+            icon="pi pi-plus"
+            onClick={() => setIsAddDialogVisible(true)}
+          />
+        )
+      }
+    />
+  );
 
   return (
     <div>
       <DataTable
-        value={servicesTypes}
+        value={serviceTypes}
         editMode="row"
         dataKey="id"
-        onRowEditComplete={onRowEditComplete}
+        onRowEditComplete={handleRowEditComplete}
         tableStyle={{ minWidth: '50rem' }}
-        header={header}
-        style={{ marginBottom: '10px' }}
+        header={headerContent}
+        className="table-container"
         filterDisplay={filter ? 'row' : undefined}
       >
         <Column
           field="name"
           header="Ad"
-          editor={(options) => textEditor(options)}
+          editor={textEditor}
           style={{ width: '40%' }}
           filter
-          filterElement={nameRowFilterTemplate}
+          filterElement={nameFilterTemplate}
           showFilterMenu={false}
-        ></Column>
+        />
         <Column
           field="price"
           header="Qiymət"
           body={priceBodyTemplate}
-          editor={(options) => priceEditor(options)}
+          editor={priceEditor}
           style={{ width: '40%' }}
-        ></Column>
+        />
         <Column
           field="customer_visible"
           header="Göstərilmə"
-          body={visibilityHandler}
-          editor={(options) => visibilityEditor(options)}
+          body={visibilityBodyTemplate}
+          editor={visibilityEditor}
           style={{ width: '40%' }}
-        ></Column>
-        {userPermissions?.includes('service_type.update') && (
+        />
+        {hasPermission('service_type.update') && (
           <Column
             rowEditor={allowEdit}
             headerStyle={{ width: '10%' }}
             bodyStyle={{ textAlign: 'center' }}
-          ></Column>
+          />
         )}
-        {userPermissions?.includes('service_type.delete') && (
+        {hasPermission('service_type.delete') && (
           <Column
             body={actionBodyTemplate}
             exportable={false}
             style={{ width: '1%' }}
-          ></Column>
+          />
         )}
       </DataTable>
+
       <Paginator
         first={first}
         rows={rows}
         totalRecords={total}
-        onPageChange={onPageChange}
+        onPageChange={handlePageChange}
       />
+
       <Toast ref={toast} />
+
       <AddDialog
-        dialog={dialog}
-        setDialog={setDialog}
-        showSuccess={showSuccess}
-        setServicesTypes={setServicesTypes}
+        visible={isAddDialogVisible}
+        onHide={() => setIsAddDialogVisible(false)}
+        onSuccess={showSuccess}
+        setServiceTypes={setServiceTypes}
       />
+
       <DeleteServiceTypeDialog
-        serviceType={servicesType}
-        deleteDialog={deleteDialog}
-        setDeleteDialog={setDeleteDiaolog}
-        setServicesTypes={setServicesTypes}
-        showSuccess={showSuccess}
+        serviceType={serviceType}
+        visible={isDeleteDialogVisible}
+        onHide={() => setIsDeleteDialogVisible(false)}
+        setServiceTypes={setServiceTypes}
+        onSuccess={showSuccess}
       />
     </div>
   );
-}
+};
 
 export default ServiceTypesTable;

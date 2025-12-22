@@ -1,77 +1,46 @@
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import React, { Dispatch, SetStateAction } from "react";
-import { IServiceType } from "../../types";
-import api from "@/app/api";
+import React, { Dispatch, SetStateAction, useCallback } from 'react';
 
-interface IDeleteServiceTypeProps {
-  showSuccess: (message: string) => void;
+import api from '../../api';
+import { IServiceType } from '@/app/types';
+import { ConfirmDialog } from '../shared';
+
+interface DeleteDialogProps {
   serviceType?: IServiceType;
-  deleteDialog: boolean;
-  setDeleteDialog: (state: boolean) => void;
-  setServicesTypes: Dispatch<SetStateAction<IServiceType[]>>;
+  visible: boolean;
+  onHide: () => void;
+  setServiceTypes: Dispatch<SetStateAction<IServiceType[]>>;
+  onSuccess: (message: string) => void;
 }
 
-function DeleteServiceTypeDialog({
+const DeleteServiceTypeDialog: React.FC<DeleteDialogProps> = ({
   serviceType,
-  deleteDialog,
-  setDeleteDialog,
-  setServicesTypes,
-  showSuccess,
-}: IDeleteServiceTypeProps) {
-  const deleteServiceType = () => {
-    setServicesTypes((prev) =>
-      prev.filter((item) => item.id !== serviceType?.id)
-    );
-    try {
-      api.deleteServiceType(serviceType?.id);
-      setDeleteDialog(false);
-      showSuccess("Service type has been successfully deleted");
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  visible,
+  onHide,
+  setServiceTypes,
+  onSuccess,
+}) => {
+  const handleDelete = useCallback(async () => {
+    if (!serviceType?.id) return;
 
-  const deleteProductDialogFooter = (
-    <React.Fragment>
-      <Button
-        label="No"
-        icon="pi pi-times"
-        outlined
-        onClick={() => setDeleteDialog(false)}
-      />
-      <Button
-        label="Yes"
-        icon="pi pi-check"
-        severity="danger"
-        onClick={deleteServiceType}
-      />
-    </React.Fragment>
-  );
+    try {
+      await api.deleteServiceType(serviceType.id);
+      setServiceTypes((prev) => prev.filter((item) => item.id !== serviceType.id));
+      onSuccess('Xidmət növü uğurla silindi');
+      onHide();
+    } catch (error) {
+      console.error('Failed to delete service type:', error);
+    }
+  }, [serviceType?.id, setServiceTypes, onSuccess, onHide]);
 
   return (
-    <Dialog
-      visible={deleteDialog}
-      style={{ width: "32rem" }}
-      breakpoints={{ "960px": "75vw", "641px": "90vw" }}
-      header="Confirm"
-      modal
-      footer={deleteProductDialogFooter}
-      onHide={() => setDeleteDialog(false)}
-    >
-      <div className="confirmation-content">
-        <i
-          className="pi pi-exclamation-triangle"
-          style={{ fontSize: "2rem", marginRight: "10px" }}
-        />
-        {serviceType && (
-          <span>
-            Are you sure you want to delete <b>{serviceType?.name}</b>?
-          </span>
-        )}
-      </div>
-    </Dialog>
+    <ConfirmDialog
+      visible={visible}
+      onHide={onHide}
+      onConfirm={handleDelete}
+      header="Silmə təsdiqi"
+      message={`"${serviceType?.name}" xidmət növünü silmək istədiyinizə əminsiniz?`}
+    />
   );
-}
+};
 
 export default DeleteServiceTypeDialog;
