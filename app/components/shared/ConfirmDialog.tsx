@@ -10,7 +10,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmSeverity?: 'success' | 'info' | 'warning' | 'danger' | 'help' | 'secondary' | 'contrast';
+  confirmSeverity?: 'success' | 'info' | 'warning' | 'danger' | 'help' | 'secondary';
 }
 
 /**

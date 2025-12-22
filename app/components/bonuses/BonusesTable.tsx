@@ -13,6 +13,7 @@ import {
   IBonusesRS,
   IDoctor,
   IDoctorRS,
+  IPerDayBonus,
 } from '@/app/types';
 import { formatDate, formatPrice } from '@/app/utils';
 import { TableHeader } from '../shared';
@@ -78,11 +79,11 @@ const BonusesTable: React.FC = () => {
     calculateBonus(rowData.total_amount)
   ), [calculateBonus]);
 
-  const priceTemplate = useCallback((bonus: IBonus) => (
+  const priceTemplate = useCallback((bonus: IPerDayBonus) => (
     formatPrice(bonus.bonus_per_days)
   ), []);
 
-  const bonusTemplate = useCallback((bonus: IBonus) => (
+  const bonusTemplate = useCallback((bonus: IPerDayBonus) => (
     calculateBonus(bonus.bonus_per_days)
   ), [calculateBonus]);
 
