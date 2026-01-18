@@ -617,6 +617,12 @@ const ServicesTable: React.FC<ServicesTableProps> = ({ userPermissions, role }) 
         onHide={() => setIsDeleteDialogVisible(false)}
         onSuccess={showSuccess}
         getServices={getServices}
+        currentPage={page}
+        currentCount={services.length}
+        onPageChange={(nextPage) => {
+          setPage(nextPage);
+          setFirst((nextPage - 1) * rows);
+        }}
       />
     </>
   );

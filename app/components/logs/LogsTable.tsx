@@ -187,6 +187,12 @@ const LogsTable: React.FC<LogsTableProps> = ({ userPermissions }) => {
         onHide={() => setIsInfoDialogVisible(false)}
       >
         <div className="m-0">
+          <div>
+            <strong>Comment:</strong> {selectedLog?.service?.comment || '-'}
+          </div>
+          <div>
+            <strong>Reject comment:</strong> {selectedLog?.service?.reject_comment || '-'}
+          </div>
           <JSONTree data={selectedLog?.activity_logs} />
         </div>
       </Dialog>

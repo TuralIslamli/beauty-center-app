@@ -41,6 +41,11 @@ interface CreateUpdateDialogProps {
   setBooking: Dispatch<SetStateAction<IBooking | undefined>>;
 }
 
+type BookingFormFields = IBookingFields & {
+  client_first_name: string;
+  client_last_name: string;
+};
+
 const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
   visible,
   onHide,
@@ -72,10 +77,15 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       selectedStatus?.id === 3
         ? yup.array().of(yup.object().shape({ id: yup.number().required() })).min(1).required()
         : yup.array(),
-    client_name: yup
+    client_first_name: yup
       .string()
       .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
       .required('Müştəri adı mütləqdir'),
+    client_last_name: yup
+      .string()
+      .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
+      .required('Müştəri soyadı mütləqdir'),
+    client_name: yup.string().nullable(),
     client_phone: hasPermission('service.variable.phone')
       ? yup.string().required()
       : yup.string(),
@@ -90,9 +100,18 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     setValue,
     getValues,
     reset,
-  } = useForm<IBookingFields>({
+  } = useForm<BookingFormFields>({
     resolver: yupResolver(schema),
   });
+
+  const splitClientName = useCallback((fullName?: string) => {
+    const trimmed = (fullName || '').trim();
+    if (!trimmed) {
+      return { firstName: '', lastName: '' };
+    }
+    const [firstName, ...rest] = trimmed.split(/\s+/);
+    return { firstName, lastName: rest.join(' ') };
+  }, []);
 
   const handleFormHide = useCallback(() => {
     onHide();
@@ -108,15 +127,19 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     setIsAmountClicked(false);
   }, [onHide, reset, setBooking]);
 
-  const onSubmit: SubmitHandler<IBookingFields> = useCallback(async (payload) => {
+  const onSubmit: SubmitHandler<BookingFormFields> = useCallback(async (payload) => {
     setIsSubmitting(true);
     const advance_amount = payload?.advance_amount || 0;
+    const fullName = [payload.client_first_name, payload.client_last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
 
     try {
       const requestData = {
         ...payload,
         advance_amount,
-        client_name: payload.client_name,
+        client_name: fullName,
         doctor_id: payload.doctor_id,
         client_phone: payload.client_phone?.toString().replace(/[\s-]/g, ''),
       };
@@ -151,6 +174,9 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
   // Load booking data
   useEffect(() => {
     if (booking?.id) {
+      const { firstName, lastName } = splitClientName(booking.client_name);
+      setValue('client_first_name', firstName);
+      setValue('client_last_name', lastName);
       setValue('client_name', booking.client_name);
       setValue('client_phone', booking.client_phone);
       setValue('is_out_of_turn', booking.is_out_of_turn);
@@ -167,7 +193,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       setValue('advance_amount', booking.advance_amount);
       setSelectedStatus(bookingStatuses.find((status) => status?.id === booking.status));
     }
-  }, [booking, setValue]);
+  }, [booking, setValue, splitClientName]);
 
   // Fetch doctor for existing booking
   useEffect(() => {
@@ -268,15 +294,26 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       style={{ maxWidth: '500px', width: '100%' }}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="dialog-form">
-        <FormField label="Müştəri adı:" htmlFor="client_name" error={errors.client_name?.message}>
-          <Controller
-            name="client_name"
-            control={control}
-            render={({ field }) => (
-              <InputText id="client_name" invalid={!!errors.client_name} {...field} />
-            )}
-          />
-        </FormField>
+        <div className="form-row">
+          <FormField label="Müştəri adı:" htmlFor="client_first_name" error={errors.client_first_name?.message}>
+            <Controller
+              name="client_first_name"
+              control={control}
+              render={({ field }) => (
+                <InputText id="client_first_name" invalid={!!errors.client_first_name} {...field} />
+              )}
+            />
+          </FormField>
+          <FormField label="Müştəri soyadı:" htmlFor="client_last_name" error={errors.client_last_name?.message}>
+            <Controller
+              name="client_last_name"
+              control={control}
+              render={({ field }) => (
+                <InputText id="client_last_name" invalid={!!errors.client_last_name} {...field} />
+              )}
+            />
+          </FormField>
+        </div>
 
         <FormField label="Telefon:" htmlFor="client_phone">
           <Controller

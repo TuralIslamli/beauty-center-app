@@ -36,6 +36,11 @@ interface CreateUpdateDialogProps {
   page: number;
 }
 
+type ServiceFormFields = IServiceFields & {
+  client_first_name: string;
+  client_last_name: string;
+};
+
 const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
   visible,
   onHide,
@@ -67,10 +72,19 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       .array()
       .of(yup.object().shape({ id: yup.number().required() }))
       .required(),
-    client_name: yup
-      .string()
-      .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
-      .required('Müştəri adı mütləqdir'),
+    client_first_name: hasPermission('service.variable.client_name')
+      ? yup
+        .string()
+        .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
+        .required('Müştəri adı mütləqdir')
+      : yup.string().nullable(),
+    client_last_name: hasPermission('service.variable.client_name')
+      ? yup
+        .string()
+        .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
+        .required('Müştəri soyadı mütləqdir')
+      : yup.string().nullable(),
+    client_name: yup.string().nullable(),
     client_phone: hasPermission('service.variable.phone')
       ? yup.string().required()
       : yup.string().nullable(),
@@ -89,9 +103,18 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     formState: { errors },
     setValue,
     reset,
-  } = useForm<IServiceFields>({
+  } = useForm<ServiceFormFields>({
     resolver: yupResolver(schema),
   });
+
+  const splitClientName = useCallback((fullName?: string) => {
+    const trimmed = (fullName || '').trim();
+    if (!trimmed) {
+      return { firstName: '', lastName: '' };
+    }
+    const [firstName, ...rest] = trimmed.split(/\s+/);
+    return { firstName, lastName: rest.join(' ') };
+  }, []);
 
   const handleFormHide = useCallback(() => {
     onHide();
@@ -103,14 +126,19 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     setTotalPrice(0);
   }, [onHide, reset, setService]);
 
-  const onSubmit: SubmitHandler<IServiceFields> = useCallback(async (payload) => {
+  const onSubmit: SubmitHandler<ServiceFormFields> = useCallback(async (payload) => {
     const amount = payload?.amount || 0;
+    const fullName = [payload.client_first_name, payload.client_last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
 
     setIsSubmitting(true);
     try {
       const requestData = {
         ...payload,
         amount,
+        client_name: fullName,
         client_phone: payload.client_phone?.toString().replace(/[\s-]/g, ''),
       };
 
@@ -130,6 +158,9 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
 
   useEffect(() => {
     if (service?.id) {
+      const { firstName, lastName } = splitClientName(service.client_name);
+      setValue('client_first_name', firstName);
+      setValue('client_last_name', lastName);
       setValue('client_name', service.client_name);
       setValue('client_phone', service.client_phone);
       setValue('user_id', service.user?.id);
@@ -149,7 +180,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       setSelectedStatus(actualStatus);
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
     }
-  }, [service, setValue, doctors, isDoctor]);
+  }, [service, setValue, doctors, isDoctor, splitClientName]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -198,15 +229,26 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="dialog-form">
         {hasPermission('service.variable.client_name') && (
-          <FormField label="Müştəri adı:" htmlFor="client_name" error={errors.client_name?.message}>
-            <Controller
-              name="client_name"
-              control={control}
-              render={({ field }) => (
-                <InputText id="client_name" invalid={!!errors.client_name} {...field} />
-              )}
-            />
-          </FormField>
+          <div className="form-row">
+            <FormField label="Müştəri adı:" htmlFor="client_first_name" error={errors.client_first_name?.message}>
+              <Controller
+                name="client_first_name"
+                control={control}
+                render={({ field }) => (
+                  <InputText id="client_first_name" invalid={!!errors.client_first_name} {...field} />
+                )}
+              />
+            </FormField>
+            <FormField label="Müştəri soyadı:" htmlFor="client_last_name" error={errors.client_last_name?.message}>
+              <Controller
+                name="client_last_name"
+                control={control}
+                render={({ field }) => (
+                  <InputText id="client_last_name" invalid={!!errors.client_last_name} {...field} />
+                )}
+              />
+            </FormField>
+          </div>
         )}
 
         {hasPermission('service.variable.phone') && (

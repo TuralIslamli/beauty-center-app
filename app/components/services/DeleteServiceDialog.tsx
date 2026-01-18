@@ -10,6 +10,9 @@ interface DeleteServiceDialogProps {
   onHide: () => void;
   onSuccess: (message: string) => void;
   getServices: (page: number) => Promise<void>;
+  currentPage: number;
+  currentCount: number;
+  onPageChange: (page: number) => void;
 }
 
 const DeleteServiceDialog: React.FC<DeleteServiceDialogProps> = ({
@@ -18,6 +21,9 @@ const DeleteServiceDialog: React.FC<DeleteServiceDialogProps> = ({
   service,
   onSuccess,
   getServices,
+  currentPage,
+  currentCount,
+  onPageChange,
 }) => {
   const handleDelete = useCallback(async () => {
     if (!service?.id) return;
@@ -25,12 +31,14 @@ const DeleteServiceDialog: React.FC<DeleteServiceDialogProps> = ({
     try {
       await api.deleteService(service.id);
       onHide();
-      getServices(1);
+      const nextPage = currentCount === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+      onPageChange(nextPage);
+      getServices(nextPage);
       onSuccess('Xidmət uğurla silindi');
     } catch (error) {
       console.error('Failed to delete service:', error);
     }
-  }, [service?.id, onHide, getServices, onSuccess]);
+  }, [service?.id, onHide, getServices, onSuccess, currentCount, currentPage, onPageChange]);
 
   return (
     <ConfirmDialog
