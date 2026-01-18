@@ -7,7 +7,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
 import { MultiSelect } from 'primereact/multiselect';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 
@@ -36,7 +36,8 @@ interface CreateUpdateDialogProps {
   page: number;
 }
 
-type ServiceFormFields = IServiceFields & {
+type ServiceFormFields = Omit<IServiceFields, 'client_name'> & {
+  client_name: string;
   client_first_name: string;
   client_last_name: string;
 };
@@ -67,6 +68,8 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     [userPermissions]
   );
 
+  const clientNameBase = yup.string().transform((value) => value ?? '').defined();
+
   const schema = yup.object().shape({
     service_types: yup
       .array()
@@ -75,16 +78,20 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     client_first_name: hasPermission('service.variable.client_name')
       ? yup
         .string()
+        .transform((value) => value ?? '')
+        .defined()
         .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
         .required('Müştəri adı mütləqdir')
-      : yup.string().nullable(),
+      : clientNameBase,
     client_last_name: hasPermission('service.variable.client_name')
       ? yup
         .string()
+        .transform((value) => value ?? '')
+        .defined()
         .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
         .required('Müştəri soyadı mütləqdir')
-      : yup.string().nullable(),
-    client_name: yup.string().nullable(),
+      : clientNameBase,
+    client_name: clientNameBase,
     client_phone: hasPermission('service.variable.phone')
       ? yup.string().required()
       : yup.string().nullable(),
@@ -105,6 +112,11 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     reset,
   } = useForm<ServiceFormFields>({
     resolver: yupResolver(schema),
+    defaultValues: {
+      client_name: '',
+      client_first_name: '',
+      client_last_name: '',
+    },
   });
 
   const splitClientName = useCallback((fullName?: string) => {
@@ -115,6 +127,14 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     const [firstName, ...rest] = trimmed.split(/\s+/);
     return { firstName, lastName: rest.join(' ') };
   }, []);
+
+  const watchedFirstName = useWatch({ control, name: 'client_first_name' });
+  const watchedLastName = useWatch({ control, name: 'client_last_name' });
+
+  useEffect(() => {
+    const fullName = [watchedFirstName, watchedLastName].filter(Boolean).join(' ').trim();
+    setValue('client_name', fullName);
+  }, [watchedFirstName, watchedLastName, setValue]);
 
   const handleFormHide = useCallback(() => {
     onHide();

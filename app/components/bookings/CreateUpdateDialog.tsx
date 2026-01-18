@@ -11,7 +11,7 @@ import { MultiSelect } from 'primereact/multiselect';
 import { Checkbox } from 'primereact/checkbox';
 import { Message } from 'primereact/message';
 import { Nullable } from 'primereact/ts-helpers';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 
@@ -41,7 +41,8 @@ interface CreateUpdateDialogProps {
   setBooking: Dispatch<SetStateAction<IBooking | undefined>>;
 }
 
-type BookingFormFields = IBookingFields & {
+type BookingFormFields = Omit<IBookingFields, 'client_name'> & {
+  client_name: string;
   client_first_name: string;
   client_last_name: string;
 };
@@ -85,7 +86,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       .string()
       .matches(/^[A-Za-z ]+$/, 'Yalnız ingilis şrifti')
       .required('Müştəri soyadı mütləqdir'),
-    client_name: yup.string().nullable(),
+    client_name: yup.string().required(),
     client_phone: hasPermission('service.variable.phone')
       ? yup.string().required()
       : yup.string(),
@@ -102,6 +103,11 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     reset,
   } = useForm<BookingFormFields>({
     resolver: yupResolver(schema),
+    defaultValues: {
+      client_name: '',
+      client_first_name: '',
+      client_last_name: '',
+    },
   });
 
   const splitClientName = useCallback((fullName?: string) => {
@@ -112,6 +118,14 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     const [firstName, ...rest] = trimmed.split(/\s+/);
     return { firstName, lastName: rest.join(' ') };
   }, []);
+
+  const watchedFirstName = useWatch({ control, name: 'client_first_name' });
+  const watchedLastName = useWatch({ control, name: 'client_last_name' });
+
+  useEffect(() => {
+    const fullName = [watchedFirstName, watchedLastName].filter(Boolean).join(' ').trim();
+    setValue('client_name', fullName);
+  }, [watchedFirstName, watchedLastName, setValue]);
 
   const handleFormHide = useCallback(() => {
     onHide();
