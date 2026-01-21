@@ -332,4 +332,9 @@
   margin-right: 0;
 }
 
+/* Allow newlines in toast details */
+.p-toast-detail {
+  white-space: pre-line;
+}
+
 /* Note: Mobile/responsive styles are in styles/mobile.css */
