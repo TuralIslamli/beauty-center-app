@@ -102,7 +102,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     getValues,
     reset,
   } = useForm<BookingFormFields>({
-    // resolver: yupResolver(schema),
+    resolver: yupResolver(schema),
     defaultValues: {
       client_name: '',
       client_first_name: '',
@@ -503,7 +503,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
         <div className="dialog-footer">
           <Button
             label="Saxla"
-            // disabled={isSubmitting || !isAmountClicked}
+            disabled={isSubmitting || !isAmountClicked}
             type="submit"
           />
         </div>

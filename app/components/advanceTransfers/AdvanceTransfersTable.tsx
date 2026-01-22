@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
 import { Toast } from 'primereact/toast';
@@ -7,14 +13,21 @@ import { Calendar } from 'primereact/calendar';
 
 import api from '../../api';
 import { IAdvanceInfo, IAdvanceListData } from '../../types';
-import { formatDate, getRoleName, haveFilterPermissions, getDaysAgo } from '@/app/utils';
+import {
+  formatDate,
+  getRoleName,
+  haveFilterPermissions,
+  getDaysAgo,
+} from '@/app/utils';
 import { TableHeader } from '../shared';
 
 interface AdvanceTransfersTableProps {
   userPermissions: string[];
 }
 
-const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({ userPermissions }) => {
+const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({
+  userPermissions,
+}) => {
   const [advanceList, setAdvanceList] = useState<IAdvanceInfo[]>([]);
   const [first, setFirst] = useState(0);
   const [total, setTotal] = useState(0);
@@ -27,23 +40,26 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({ userPermi
 
   const hasPermission = useCallback(
     (permission: string) => userPermissions.includes(permission),
-    [userPermissions]
+    [userPermissions],
   );
 
-  const fetchData = useCallback(async (currentPage: number) => {
-    try {
-      const { data, meta }: IAdvanceListData = await api.getAdvances({
-        page: currentPage,
-        size: rows,
-        from_date: formatDate(dates[0]),
-        to_date: formatDate(dates[1]),
-      });
-      setAdvanceList(data);
-      setTotal(meta?.total);
-    } catch (error) {
-      console.error('Failed to fetch advance transfers:', error);
-    }
-  }, [rows, dates]);
+  const fetchData = useCallback(
+    async (currentPage: number) => {
+      try {
+        const { data, meta }: IAdvanceListData = await api.getAdvances({
+          page: currentPage,
+          size: rows,
+          from_date: formatDate(dates[0]),
+          to_date: formatDate(dates[1]),
+        });
+        setAdvanceList(data);
+        setTotal(meta?.total);
+      } catch (error) {
+        console.error('Failed to fetch advance transfers:', error);
+      }
+    },
+    [rows, dates],
+  );
 
   useEffect(() => {
     if (dates[1]) {
@@ -51,45 +67,63 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({ userPermi
     }
   }, [fetchData, dates, page]);
 
-  const handlePageChange = useCallback((event: PaginatorPageChangeEvent) => {
-    fetchData(event.page + 1);
-    setPage(event.page + 1);
-    setFirst(event.first);
-  }, [fetchData]);
+  const handlePageChange = useCallback(
+    (event: PaginatorPageChangeEvent) => {
+      fetchData(event.page + 1);
+      setPage(event.page + 1);
+      setFirst(event.first);
+    },
+    [fetchData],
+  );
 
   // Body Templates
-  const userBodyTemplate = useCallback((rowData: IAdvanceInfo) => (
-    <div>
-      {rowData?.user
-        ? `${rowData.user.name} ${rowData.user.surname}`
-        : 'sistem'}
-    </div>
-  ), []);
+  const userBodyTemplate = useCallback(
+    (rowData: IAdvanceInfo) => (
+      <div>
+        {rowData?.user
+          ? `${rowData.user.name} ${rowData.user.surname}`
+          : 'sistem'}
+      </div>
+    ),
+    [],
+  );
 
-  const roleBodyTemplate = useCallback((rowData: IAdvanceInfo) => (
-    <div>{getRoleName(rowData?.user?.role?.id)}</div>
-  ), []);
+  const roleBodyTemplate = useCallback(
+    (rowData: IAdvanceInfo) => (
+      <div>{getRoleName(rowData?.user?.role?.id)}</div>
+    ),
+    [],
+  );
 
   // Filter Templates
-  const dateFilterTemplate = useCallback(() => (
-    hasPermission('service.filter.date') ? (
-      <Calendar
-        value={dates}
-        onChange={(e) => setDates(e.value as Date[])}
-        selectionMode="range"
-        readOnlyInput
-        hideOnRangeSelection
-        className="filter-calendar"
-        dateFormat="dd/mm/yy"
-      />
-    ) : null
-  ), [hasPermission, dates]);
+  const dateFilterTemplate = useCallback(
+    () =>
+      hasPermission('service.filter.date') ? (
+        <Calendar
+          value={dates}
+          onChange={(e) => setDates(e.value as Date[])}
+          selectionMode="range"
+          readOnlyInput
+          hideOnRangeSelection
+          className="filter-calendar"
+          dateFormat="dd/mm/yy"
+        />
+      ) : null,
+    [hasPermission, dates],
+  );
 
-  const headerContent = useMemo(() => (
-    <TableHeader
-      onFilterToggle={haveFilterPermissions(userPermissions) ? () => setFilter((prev) => !prev) : undefined}
-    />
-  ), [userPermissions]);
+  const headerContent = useMemo(
+    () => (
+      <TableHeader
+        onFilterToggle={
+          haveFilterPermissions(userPermissions)
+            ? () => setFilter((prev) => !prev)
+            : undefined
+        }
+      />
+    ),
+    [userPermissions],
+  );
 
   return (
     <>
@@ -98,30 +132,27 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({ userPermi
           value={advanceList}
           editMode="row"
           dataKey="id"
-          tableStyle={{ minWidth: '50rem' }}
-          className="table-container"
-          header={headerContent}
-          filterDisplay={filter ? 'row' : undefined}
+          tableStyle={{ minWidth: '60rem' }}
         >
-        <Column
-          field="transferred_at"
-          header="Tarix və saat"
-          style={{ width: '20%' }}
-          filter
-          filterElement={dateFilterTemplate}
-        />
-        <Column
-          field="user"
-          header="Bağlayan şəxs"
-          body={userBodyTemplate}
-          style={{ width: '20%' }}
-        />
-        <Column
-          field="role"
-          body={roleBodyTemplate}
-          header="Rol"
-          style={{ width: '20%' }}
-        />
+          <Column
+            field="transferred_at"
+            header="Tarix və saat"
+            style={{ minWidth: '16rem' }}
+            filter
+            filterElement={dateFilterTemplate}
+          />
+          <Column
+            field="user"
+            header="Bağlayan şəxs"
+            body={userBodyTemplate}
+            style={{ minWidth: '12rem' }}
+          />
+          <Column
+            field="role"
+            body={roleBodyTemplate}
+            header="Rol"
+            style={{ minWidth: '12rem' }}
+          />
         </DataTable>
       </div>
 
