@@ -23,6 +23,7 @@ import LogsTable from './components/logs/LogsTable';
 import AdvanceTransfersTable from './components/advanceTransfers/AdvanceTransfersTable';
 import ReportsTable from './components/reports/ReportsTable';
 import ExpensesTable from './components/Expenses/ExpensesTable';
+import CreditsTable from './components/credits/CreditsTable';
 
 const STORAGE_KEYS = {
   TOKEN: 'token',
@@ -145,6 +146,10 @@ function Page() {
               />
             </TabPanel>
           )}
+
+          <TabPanel header="Kreditlər">
+            <CreditsTable />
+          </TabPanel>
           
           {hasPermission('reservation.get_all') && (
             <TabPanel header="Rezervlər">

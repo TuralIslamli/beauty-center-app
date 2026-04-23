@@ -222,6 +222,18 @@
   .p-inputnumber {
     width: 100%;
   }
+
+  .credit-session-row {
+    grid-template-columns: 2rem 1fr;
+  }
+
+  .credit-session-doctor {
+    grid-column: 2;
+  }
+
+  .credit-session-status {
+    grid-column: 2;
+  }
 }
 
 /* ============================================
@@ -589,4 +601,3 @@
     max-height: 95vh;
   }
 }
-
