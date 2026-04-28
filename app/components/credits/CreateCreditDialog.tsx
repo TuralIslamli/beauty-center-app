@@ -3,54 +3,65 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { InputMask } from 'primereact/inputmask';
 import { Button } from 'primereact/button';
-import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { MultiSelect } from 'primereact/multiselect';
-import { Calendar } from 'primereact/calendar';
 import { InputTextarea } from 'primereact/inputtextarea';
 
 import api from '@/app/api';
-import { IDoctor, IDoctorRS, IServiceType, IServiceTypeRS } from '@/app/types';
+import {
+  IDoctor,
+  IDoctorRS,
+  IServiceCreditBank,
+  IServiceCreditBanksData,
+  IServiceType,
+  IServiceTypeRS,
+} from '@/app/types';
 import { FormField } from '../shared';
 import {
-  creditBanks,
-  creditSessionStatuses,
-  mockDoctors,
-  mockServiceTypes,
+  createDefaultCreditSessions,
+  DEFAULT_CREDIT_SESSION_COUNT,
 } from './consts';
-import { ICreditFormPayload, ICreditSession } from './types';
+import CreditBankSelect from './CreditBankSelect';
+import CreditSessionsEditor from './CreditSessionsEditor';
+import { ICredit, ICreditFormPayload, ICreditSession } from './types';
+import {
+  getBankFromResponse,
+  getInitialCreditBank,
+  getInitialCreditSessions,
+  ServiceCreditBankResponse,
+} from './utils';
 
 interface CreateCreditDialogProps {
   visible: boolean;
   onHide: () => void;
-  onCreate: (payload: ICreditFormPayload) => void;
+  onSave: (payload: ICreditFormPayload, credit?: ICredit) => Promise<void> | void;
+  initialCredit?: ICredit;
 }
-
-const defaultSessions = Array.from({ length: 3 }, (_, index) => ({
-  id: index + 1,
-  date: null,
-  status: 'pending' as const,
-}));
-
-type CreditBankOption = (typeof creditBanks)[number];
 
 const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   visible,
   onHide,
-  onCreate,
+  onSave,
+  initialCredit,
 }) => {
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [selectedServiceTypes, setSelectedServiceTypes] = useState<IServiceType[]>([]);
-  const [sessionsCount, setSessionsCount] = useState(3);
-  const [banks, setBanks] = useState<CreditBankOption[]>(creditBanks);
-  const [selectedBank, setSelectedBank] = useState(creditBanks[0]);
+  const [sessionsCount, setSessionsCount] = useState(DEFAULT_CREDIT_SESSION_COUNT);
+  const [banks, setBanks] = useState<IServiceCreditBank[]>([]);
+  const [selectedBank, setSelectedBank] = useState<IServiceCreditBank | null>(null);
+  const [editingBank, setEditingBank] = useState<IServiceCreditBank | null>(null);
   const [newBankName, setNewBankName] = useState('');
+  const [isBankSaving, setIsBankSaving] = useState(false);
+  const [deletingBankId, setDeletingBankId] = useState<number | null>(null);
   const [receivedAmount, setReceivedAmount] = useState(0);
   const [comment, setComment] = useState('');
-  const [sessions, setSessions] = useState<ICreditSession[]>(defaultSessions);
-  const [doctors, setDoctors] = useState<IDoctor[]>(mockDoctors);
-  const [serviceTypes, setServiceTypes] = useState<IServiceType[]>(mockServiceTypes);
+  const [sessions, setSessions] = useState<ICreditSession[]>(
+    createDefaultCreditSessions(),
+  );
+  const [doctors, setDoctors] = useState<IDoctor[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<IServiceType[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalPrice = useMemo(
     () => selectedServiceTypes.reduce((sum, service) => sum + Number(service.price || 0), 0),
@@ -61,12 +72,14 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     setClientName('');
     setClientPhone('');
     setSelectedServiceTypes([]);
-    setSessionsCount(3);
-    setSelectedBank(creditBanks[0]);
+    setSessionsCount(DEFAULT_CREDIT_SESSION_COUNT);
+    setSelectedBank(null);
+    setEditingBank(null);
     setNewBankName('');
+    setDeletingBankId(null);
     setReceivedAmount(0);
     setComment('');
-    setSessions(defaultSessions);
+    setSessions(createDefaultCreditSessions());
   }, []);
 
   const handleHide = useCallback(() => {
@@ -77,15 +90,29 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   useEffect(() => {
     const fetchInputs = async () => {
       try {
-        const [{ data: servicesData }, { data: doctorsData }] = await Promise.all([
+        const [
+          { data: servicesData },
+          { data: doctorsData },
+          { data: banksData },
+        ] = await Promise.all([
           api.getInputServices<IServiceTypeRS>(),
           api.getDoctors<IDoctorRS>(),
+          api.getServiceCreditBanks<IServiceCreditBanksData>(),
         ]);
-        setServiceTypes(servicesData?.length ? servicesData : mockServiceTypes);
-        setDoctors(doctorsData?.length ? doctorsData : mockDoctors);
+
+        setServiceTypes(servicesData ?? []);
+        setDoctors(doctorsData ?? []);
+        setBanks(banksData ?? []);
+        setSelectedBank((currentBank) =>
+          currentBank && banksData?.some((bank) => bank.id === currentBank.id)
+            ? currentBank
+            : banksData?.[0] ?? null,
+        );
       } catch {
-        setServiceTypes(mockServiceTypes);
-        setDoctors(mockDoctors);
+        setServiceTypes([]);
+        setDoctors([]);
+        setBanks([]);
+        setSelectedBank(null);
       }
     };
 
@@ -95,8 +122,30 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   }, [visible]);
 
   useEffect(() => {
-    setReceivedAmount(totalPrice);
-  }, [totalPrice]);
+    if (!initialCredit?.id) {
+      setReceivedAmount(totalPrice);
+    }
+  }, [initialCredit?.id, totalPrice]);
+
+  useEffect(() => {
+    if (!visible || !initialCredit?.id) return;
+
+    const creditSessions = getInitialCreditSessions(initialCredit, doctors);
+    const initialBank = getInitialCreditBank(initialCredit.bank, banks);
+
+    setClientName(initialCredit.client_name);
+    setClientPhone(initialCredit.client_phone);
+    setSelectedServiceTypes(initialCredit.service_types);
+    setSessionsCount(creditSessions.length || 1);
+    setSessions(
+      creditSessions.length ? creditSessions : createDefaultCreditSessions(),
+    );
+    setSelectedBank(initialBank);
+    setReceivedAmount(
+      initialCredit.received_amount ?? Number(initialCredit.amount || 0),
+    );
+    setComment(initialCredit.comment ?? '');
+  }, [banks, doctors, initialCredit, visible]);
 
   useEffect(() => {
     setSessions((prev) =>
@@ -120,58 +169,122 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     [],
   );
 
-  const handleAddBank = useCallback(() => {
+  const resetBankEditor = useCallback(() => {
+    setEditingBank(null);
+    setNewBankName('');
+  }, []);
+
+  const handleEditBank = useCallback((bank: IServiceCreditBank) => {
+    setEditingBank(bank);
+    setNewBankName(bank.name);
+  }, []);
+
+  const handleSaveBank = useCallback(async () => {
     const trimmedName = newBankName.trim();
     if (!trimmedName) {
       return;
     }
 
     const exists = banks.some(
-      (bank) => bank.name.toLowerCase() === trimmedName.toLowerCase(),
+      (bank) =>
+        bank.id !== editingBank?.id &&
+        bank.name.toLowerCase() === trimmedName.toLowerCase(),
     );
     if (exists) {
-      setNewBankName('');
+      resetBankEditor();
       return;
     }
 
-    const bank = {
-      id: trimmedName.toLowerCase().replace(/\s+/g, '-'),
-      name: trimmedName,
-    };
-    setBanks((prev) => [...prev, bank]);
-    setSelectedBank(bank);
-    setNewBankName('');
-  }, [banks, newBankName]);
+    setIsBankSaving(true);
+    try {
+      const response = editingBank
+        ? await api.updateServiceCreditBank<ServiceCreditBankResponse>({
+            id: editingBank.id,
+            name: trimmedName,
+          })
+        : await api.createServiceCreditBank<ServiceCreditBankResponse>({
+            name: trimmedName,
+          });
+      const savedBank =
+        response && getBankFromResponse(response)?.id
+          ? getBankFromResponse(response)
+          : editingBank
+            ? { ...editingBank, name: trimmedName }
+            : undefined;
+
+      if (savedBank) {
+        setBanks((prev) =>
+          editingBank
+            ? prev.map((bank) => (bank.id === savedBank.id ? savedBank : bank))
+            : [...prev, savedBank],
+        );
+        setSelectedBank(savedBank);
+      } else {
+        const { data: banksData } =
+          await api.getServiceCreditBanks<IServiceCreditBanksData>();
+        const createdBank =
+          banksData.find(
+            (bank) => bank.name.toLowerCase() === trimmedName.toLowerCase(),
+          ) ?? banksData[0];
+
+        setBanks(banksData);
+        setSelectedBank(createdBank ?? null);
+      }
+      resetBankEditor();
+    } catch (error) {
+      console.error('Failed to save service credit bank:', error);
+    } finally {
+      setIsBankSaving(false);
+    }
+  }, [banks, editingBank, newBankName, resetBankEditor]);
 
   const handleDeleteBank = useCallback(
-    (bankId: string) => {
-      setBanks((prev) => {
-        const nextBanks = prev.filter((bank) => bank.id !== bankId);
-        if (selectedBank.id === bankId) {
-          setSelectedBank(nextBanks[0] || creditBanks[0]);
+    async (bank: IServiceCreditBank) => {
+      setDeletingBankId(bank.id);
+      try {
+        await api.deleteServiceCreditBank(bank.id);
+        const nextBanks = banks.filter((item) => item.id !== bank.id);
+
+        setBanks(nextBanks);
+        setSelectedBank((currentBank) =>
+          currentBank?.id === bank.id ? nextBanks[0] ?? null : currentBank,
+        );
+
+        if (editingBank?.id === bank.id) {
+          resetBankEditor();
         }
-        return nextBanks.length ? nextBanks : creditBanks;
-      });
+      } catch (error) {
+        console.error('Failed to delete service credit bank:', error);
+      } finally {
+        setDeletingBankId(null);
+      }
     },
-    [selectedBank.id],
+    [banks, editingBank?.id, resetBankEditor],
   );
 
   const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
-      onCreate({
-        client_name: clientName.trim(),
-        client_phone: clientPhone.replace(/[\s-]/g, ''),
-        service_types: selectedServiceTypes,
-        sessions_count: sessionsCount,
-        bank: selectedBank.name,
-        comment: comment.trim(),
-        sessions,
-        amount: totalPrice,
-        received_amount: receivedAmount,
-      });
-      handleHide();
+      setIsSubmitting(true);
+      try {
+        await onSave({
+          client_name: clientName.trim(),
+          client_phone: clientPhone.replace(/[\s-]/g, ''),
+          service_types: selectedServiceTypes,
+          sessions_count: sessionsCount,
+          bank: selectedBank,
+          comment: comment.trim(),
+          sessions,
+          amount: totalPrice,
+          received_amount: receivedAmount,
+        }, initialCredit);
+        handleHide();
+      } catch (error) {
+        console.error('Failed to save service credit:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     },
     [
       clientName,
@@ -183,7 +296,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       sessions,
       totalPrice,
       receivedAmount,
-      onCreate,
+      initialCredit,
+      onSave,
       handleHide,
     ],
   );
@@ -194,60 +308,12 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     !selectedServiceTypes.length ||
     sessions.some((session) => session.date && !session.doctor);
 
-  const bankItemTemplate = useCallback(
-    (option: CreditBankOption) => (
-      <div className="credit-bank-option">
-        <span>{option.name}</span>
-        <Button
-          type="button"
-          icon="pi pi-trash"
-          rounded
-          text
-          severity="danger"
-          aria-label={`${option.name} sil`}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            handleDeleteBank(option.id);
-          }}
-        />
-      </div>
-    ),
-    [handleDeleteBank],
-  );
-
-  const bankPanelFooterTemplate = useCallback(
-    () => (
-      <div className="credit-bank-footer">
-        <InputText
-          value={newBankName}
-          onChange={(event) => setNewBankName(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              handleAddBank();
-            }
-          }}
-          placeholder="Yeni bank"
-        />
-        <Button
-          type="button"
-          icon="pi pi-plus"
-          aria-label="Bank əlavə et"
-          onClick={handleAddBank}
-          disabled={!newBankName.trim()}
-        />
-      </div>
-    ),
-    [handleAddBank, newBankName],
-  );
-
   return (
     <Dialog
       visible={visible}
       modal
       onHide={handleHide}
-      header="Kredit"
+      header={initialCredit?.id ? 'Krediti yenilə' : 'Kredit'}
       style={{ maxWidth: '640px', width: '100%' }}
     >
       <form onSubmit={handleSubmit} className="dialog-form">
@@ -296,18 +362,20 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
             />
           </FormField>
 
-          <FormField label="Bank:" htmlFor="credit_bank">
-            <Dropdown
-              inputId="credit_bank"
-              value={selectedBank}
-              onChange={(event) => setSelectedBank(event.value)}
-              options={banks}
-              optionLabel="name"
-              placeholder="Bank seçin"
-              itemTemplate={bankItemTemplate}
-              panelFooterTemplate={bankPanelFooterTemplate}
-            />
-          </FormField>
+          <CreditBankSelect
+            banks={banks}
+            selectedBank={selectedBank}
+            editingBank={editingBank}
+            newBankName={newBankName}
+            isBankSaving={isBankSaving}
+            deletingBankId={deletingBankId}
+            onBankChange={setSelectedBank}
+            onEditingBankChange={handleEditBank}
+            onNewBankNameChange={setNewBankName}
+            onSaveBank={handleSaveBank}
+            onDeleteBank={handleDeleteBank}
+            onResetBankEditor={resetBankEditor}
+          />
         </div>
 
         <FormField label="Comment:" htmlFor="credit_comment">
@@ -346,49 +414,19 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
           </div>
         </div>
 
-        <div className="credit-sessions">
-          {sessions.map((session, index) => (
-            <div key={session.id} className="credit-session-row">
-              <span className="credit-session-index">{index + 1}</span>
-              <Calendar
-                value={session.date}
-                onChange={(event) =>
-                  handleSessionChange(index, { date: event.value as Date | null })
-                }
-                dateFormat="dd-mm-yy"
-                readOnlyInput
-                placeholder="Tarix"
-                showIcon
-              />
-              <Dropdown
-                filter
-                value={session.doctor}
-                onChange={(event) =>
-                  handleSessionChange(index, { doctor: event.value })
-                }
-                options={doctors}
-                optionLabel="full_name"
-                placeholder="Doktor seçin"
-                className="credit-session-doctor"
-              />
-              <Dropdown
-                value={creditSessionStatuses.find(
-                  (status) => status.id === session.status,
-                )}
-                onChange={(event) =>
-                  handleSessionChange(index, { status: event.value.id })
-                }
-                options={creditSessionStatuses}
-                optionLabel="name"
-                placeholder="Status"
-                className="credit-session-status"
-              />
-            </div>
-          ))}
-        </div>
+        <CreditSessionsEditor
+          sessions={sessions}
+          doctors={doctors}
+          onSessionChange={handleSessionChange}
+        />
 
         <div className="dialog-footer">
-          <Button label="Saxla" type="submit" disabled={isSubmitDisabled} />
+          <Button
+            label="Saxla"
+            type="submit"
+            loading={isSubmitting}
+            disabled={isSubmitDisabled || isSubmitting}
+          />
         </div>
       </form>
     </Dialog>

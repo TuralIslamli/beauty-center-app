@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -9,27 +15,52 @@ import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
+import { Skeleton } from 'primereact/skeleton';
 import { useDebounce } from 'primereact/hooks';
 
+import api from '@/app/api';
 import { formatDate, formatPhone, formatPrice } from '@/app/utils';
+import { bookingStatuses } from '../consts';
 import { TableHeader } from '../shared';
-import { creditStatuses, mockCredits } from './consts';
 import CreateCreditDialog from './CreateCreditDialog';
-import { CreditStatus, ICredit, ICreditFormPayload } from './types';
-
-const rows = 10;
+import CreditBankIncomeSummary from './CreditBankIncomeSummary';
+import CreditDeleteDialog from './CreditDeleteDialog';
+import CreditStatusTags from './CreditStatusTags';
+import CreditTableActions from './CreditTableActions';
+import { CREDIT_ROWS } from './consts';
+import {
+  ICredit,
+  ICreditFormPayload,
+  IServiceCreditBankIncome,
+  IServiceCreditBankIncomesData,
+  IServiceCreditData,
+  IServiceCreditsData,
+} from './types';
+import {
+  buildCreditFromPayload,
+  buildServiceCreditPayload,
+  getBookingStatusSeverity,
+  getCreditFromResponse,
+  ServiceCreditResponse,
+} from './utils';
 
 const CreditsTable: React.FC = () => {
-  const [credits, setCredits] = useState<ICredit[]>(mockCredits);
+  const [credits, setCredits] = useState<ICredit[]>([]);
+  const [bankIncomes, setBankIncomes] = useState<IServiceCreditBankIncome[]>([]);
+  const [selectedCredit, setSelectedCredit] = useState<ICredit>();
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [isCreateDialogVisible, setIsCreateDialogVisible] = useState(false);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [editingCreditId, setEditingCreditId] = useState<number | null>(null);
   const [filter, setFilter] = useState(false);
   const [filteredStatus, setFilteredStatus] = useState<{
-    id: CreditStatus;
+    id: number;
     name: string;
   } | null>(null);
   const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
   const [clientPhone, debouncedClientPhone, setClientPhone] = useDebounce('', 400);
-  const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
+  const [dates, setDates] = useState<Date[]>([]);
   const [page, setPage] = useState(1);
   const [first, setFirst] = useState(0);
 
@@ -45,133 +76,247 @@ const CreditsTable: React.FC = () => {
     });
   }, []);
 
-  const filteredCredits = useMemo(() => {
-    const fromDate = dates[0] ? formatDate(dates[0]) : '';
-    const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
-    const normalizedPhone = debouncedClientPhone.replace(/\D/g, '');
-    const normalizedName = debouncedClientName.trim().toLowerCase();
+  const getCredits = useCallback(
+    async (currentPage = 1, isOnPageChange = false) => {
+      const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+      const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+      const normalizedName = debouncedClientName.trim();
+      const normalizedPhone = debouncedClientPhone.replace(/\D/g, '');
+      const filters = {
+        status: filteredStatus?.id,
+        from_date: fromDate,
+        to_date: toDate,
+        client_name: normalizedName || undefined,
+        client_phone: normalizedPhone || undefined,
+      };
 
-    return credits.filter((credit) => {
-      const createdDate = credit.created_at.slice(0, 10);
-      const isInDateRange =
-        (!fromDate || createdDate >= fromDate) && (!toDate || createdDate <= toDate);
-      const matchesName =
-        !normalizedName || credit.client_name.toLowerCase().includes(normalizedName);
-      const matchesPhone =
-        !normalizedPhone || credit.client_phone.replace(/\D/g, '').includes(normalizedPhone);
-      const matchesStatus = !filteredStatus || credit.status === filteredStatus.id;
+      setIsLoading(true);
+      try {
+        const [
+          { data, meta },
+          { data: incomeData },
+        ] = await Promise.all([
+          api.getServiceCredits<IServiceCreditsData>({
+            page: currentPage,
+            size: CREDIT_ROWS,
+            ...filters,
+          }),
+          api.getServiceCreditBankIncomes<IServiceCreditBankIncomesData>(
+            filters,
+          ),
+        ]);
 
-      return isInDateRange && matchesName && matchesPhone && matchesStatus;
-    });
-  }, [credits, dates, debouncedClientName, debouncedClientPhone, filteredStatus]);
-
-  const pageCredits = useMemo(
-    () => filteredCredits.slice(first, first + rows),
-    [filteredCredits, first],
+        setCredits(data);
+        setBankIncomes(incomeData ?? []);
+        setTotal(meta?.total ?? data.length);
+        setPage(currentPage);
+      } catch (error) {
+        console.error('Failed to fetch service credits:', error);
+      } finally {
+        setIsLoading(false);
+        if (isOnPageChange) {
+          navigationRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    },
+    [dates, debouncedClientName, debouncedClientPhone, filteredStatus?.id],
   );
 
-  const totalAmount = useMemo(
-    () => filteredCredits.reduce((sum, credit) => sum + credit.received_amount, 0),
-    [filteredCredits],
-  );
+  useEffect(() => {
+    if (dates[0] && !dates[1]) return;
 
-  const handleCreateCredit = useCallback(
-    (payload: ICreditFormPayload) => {
-      const now = new Date();
-      const createdAt = `${formatDate(now)} ${now.toTimeString().slice(0, 5)}`;
+    setPage(1);
+    setFirst(0);
+    getCredits(1);
+  }, [dates, getCredits]);
 
-      setCredits((prev) => [
-        {
-          id: Math.max(...prev.map((credit) => credit.id), 0) + 1,
-          created_at: createdAt,
-          client_name: payload.client_name,
-          client_phone: payload.client_phone,
-          status: 'active',
-          sessions_count: payload.sessions_count,
-          bank: payload.bank,
-          amount: payload.amount,
-          received_amount: payload.received_amount,
-          comment: payload.comment,
-          service_types: payload.service_types,
-          sessions: payload.sessions,
-        },
-        ...prev,
-      ]);
+  const handleSaveCredit = useCallback(
+    async (payload: ICreditFormPayload, credit?: ICredit) => {
+      if (credit?.id) {
+        const response = await api.updateServiceCredit<ServiceCreditResponse>({
+          id: credit.id,
+          ...buildServiceCreditPayload(payload),
+        });
+        const updatedCredit =
+          getCreditFromResponse(response) ?? buildCreditFromPayload(payload, credit);
+
+        setCredits((prev) =>
+          prev.map((item) => (item.id === credit.id ? updatedCredit : item)),
+        );
+        await getCredits(page);
+        showSuccess('Kredit yeniləndi');
+        return;
+      }
+
+      await api.createServiceCredit<ServiceCreditResponse>(
+        buildServiceCreditPayload(payload),
+      );
       setPage(1);
       setFirst(0);
+      await getCredits(1);
       showSuccess('Kredit uğurla əlavə edildi');
     },
-    [showSuccess],
+    [getCredits, page, showSuccess],
   );
 
-  const handlePageChange = useCallback((event: PaginatorPageChangeEvent) => {
-    setFirst(event.first);
-    setPage(event.page + 1);
-    navigationRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handlePageChange = useCallback(
+    (event: PaginatorPageChangeEvent) => {
+      setFirst(event.first);
+      getCredits(event.page + 1, true);
+    },
+    [getCredits],
+  );
+
+  const handleCreateClick = useCallback(() => {
+    setSelectedCredit(undefined);
+    setIsCreateDialogVisible(true);
   }, []);
 
-  const getSeverity = useCallback((status: CreditStatus) => {
-    switch (status) {
-      case 'rejected':
-        return 'danger';
-      case 'finished':
-        return 'success';
-      case 'active':
-        return 'info';
-      default:
-        return undefined;
+  const handleEditClick = useCallback(async (credit: ICredit) => {
+    setEditingCreditId(credit.id);
+    try {
+      const { data }: IServiceCreditData = await api.getServiceCredit(credit.id);
+      setSelectedCredit(data);
+      setIsCreateDialogVisible(true);
+    } catch (error) {
+      console.error('Failed to fetch service credit:', error);
+    } finally {
+      setEditingCreditId(null);
     }
   }, []);
+
+  const handleDeleteClick = useCallback((credit: ICredit) => {
+    setSelectedCredit(credit);
+    setIsDeleteDialogVisible(true);
+  }, []);
+
+  const handleDeleteCredit = useCallback(async () => {
+    if (!selectedCredit?.id) return;
+
+    try {
+      await api.deleteServiceCredit(selectedCredit.id);
+      const nextPage = credits.length === 1 && page > 1 ? page - 1 : page;
+
+      setIsDeleteDialogVisible(false);
+      setSelectedCredit(undefined);
+      setFirst((nextPage - 1) * CREDIT_ROWS);
+      await getCredits(nextPage);
+      showSuccess('Kredit silindi');
+    } catch (error) {
+      console.error('Failed to delete service credit:', error);
+    }
+  }, [credits.length, getCredits, page, selectedCredit?.id, showSuccess]);
 
   const headerContent = useMemo(
     () => (
       <TableHeader
         onFilterToggle={() => setFilter((prev) => !prev)}
-        onRefresh={() => {
-          setCredits(mockCredits);
-          setPage(1);
-          setFirst(0);
-        }}
+        onRefresh={() => getCredits(page)}
         rightContent={
           <Button
             label="Əlavə et"
             icon="pi pi-plus"
-            onClick={() => setIsCreateDialogVisible(true)}
+            onClick={handleCreateClick}
           />
         }
       />
     ),
-    [],
+    [getCredits, handleCreateClick, page],
   );
 
   const idBodyTemplate = useCallback(
-    (_rowData: ICredit, options: { rowIndex: number }) => (
-      <div>{filteredCredits.length - options.rowIndex - first}</div>
-    ),
-    [filteredCredits.length, first],
+    (_rowData: ICredit, options: { rowIndex: number }) =>
+      isLoading ? (
+        <Skeleton width="20px" />
+      ) : (
+        <div>{total - options.rowIndex - first}</div>
+      ),
+    [isLoading, total, first],
   );
 
-  const servicesBodyTemplate = useCallback((rowData: ICredit) => (
-    <div>
-      {rowData.service_types.map((service) => (
-        <div key={service.id}>{service.name}</div>
-      ))}
-    </div>
-  ), []);
+  const dateBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? <Skeleton width="100px" /> : rowData.created_at?.slice(0, -3),
+    [isLoading],
+  );
+
+  const clientNameBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? <Skeleton width="100px" /> : <div>{rowData.client_name}</div>,
+    [isLoading],
+  );
+
+  const clientPhoneBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? (
+        <Skeleton width="100px" />
+      ) : (
+        <div>{formatPhone(rowData.client_phone)}</div>
+      ),
+    [isLoading],
+  );
 
   const statusBodyTemplate = useCallback(
-    (rowData: ICredit) => {
-      const status = creditStatuses.find((item) => item.id === rowData.status);
+    (rowData: ICredit) =>
+      isLoading ? <Skeleton width="100px" /> : <CreditStatusTags credit={rowData} />,
+    [isLoading],
+  );
 
-      return (
-        <Tag
-          value={status?.name}
-          severity={getSeverity(rowData.status)}
-          className="status-badge"
+  const sessionsCountBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? (
+        <Skeleton width="40px" />
+      ) : (
+        rowData.visits?.length ?? rowData.sessions_count ?? rowData.sessions?.length ?? 0
+      ),
+    [isLoading],
+  );
+
+  const bankBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? (
+        <Skeleton width="80px" />
+      ) : typeof rowData.bank === 'string' ? (
+        rowData.bank
+      ) : (
+        rowData.bank?.name
+      ),
+    [isLoading],
+  );
+
+  const servicesBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? (
+        <Skeleton width="100px" />
+      ) : (
+        <div>
+          {rowData.service_types.map((service) => (
+            <div key={service.id}>{service.name}</div>
+          ))}
+        </div>
+      ),
+    [isLoading],
+  );
+
+  const amountBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? <Skeleton width="80px" /> : formatPrice(rowData.amount),
+    [isLoading],
+  );
+
+  const actionBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? (
+        <Skeleton width="70px" />
+      ) : (
+        <CreditTableActions
+          credit={rowData}
+          editingCreditId={editingCreditId}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
         />
-      );
-    },
-    [getSeverity],
+      ),
+    [editingCreditId, handleDeleteClick, handleEditClick, isLoading],
   );
 
   const dateFilterTemplate = useCallback(
@@ -179,13 +324,14 @@ const CreditsTable: React.FC = () => {
       <Calendar
         value={dates}
         onChange={(event) => {
-          setDates(event.value as Date[]);
+          setDates((event.value as Date[]) ?? []);
           setPage(1);
           setFirst(0);
         }}
         selectionMode="range"
         readOnlyInput
         hideOnRangeSelection
+        showButtonBar
         className="filter-calendar"
         dateFormat="dd/mm/yy"
       />
@@ -229,14 +375,17 @@ const CreditsTable: React.FC = () => {
     () => (
       <Dropdown
         value={filteredStatus}
-        options={creditStatuses}
+        options={bookingStatuses}
         onChange={(event) => {
           setFilteredStatus(event.value);
           setPage(1);
           setFirst(0);
         }}
         itemTemplate={(option) => (
-          <Tag value={option.name} severity={getSeverity(option.id)} />
+          <Tag
+            value={option.name}
+            severity={getBookingStatusSeverity(option.name)}
+          />
         )}
         placeholder="Status"
         className="p-column-filter"
@@ -245,24 +394,23 @@ const CreditsTable: React.FC = () => {
         optionLabel="name"
       />
     ),
-    [filteredStatus, getSeverity],
+    [filteredStatus],
   );
 
   const totalContent = useMemo(
     () => (
       <div className="total-info-content">
-        <div className="ml-2">Kreditlər: {formatPrice(totalAmount)}</div>
-        <div className="ml-2">Say: {filteredCredits.length}</div>
+        <CreditBankIncomeSummary incomes={bankIncomes} />
       </div>
     ),
-    [totalAmount, filteredCredits.length],
+    [bankIncomes, total],
   );
 
   return (
     <>
       <div className="table-responsive">
         <DataTable
-          value={pageCredits}
+          value={credits}
           dataKey="id"
           header={headerContent}
           tableStyle={{ minWidth: '60rem' }}
@@ -276,7 +424,7 @@ const CreditsTable: React.FC = () => {
           />
           <Column
             header="Tarix"
-            field="created_at"
+            body={dateBodyTemplate}
             style={{ minWidth: '12rem' }}
             showFilterMenu={false}
             filter
@@ -284,7 +432,7 @@ const CreditsTable: React.FC = () => {
           />
           <Column
             header="Müştəri"
-            field="client_name"
+            body={clientNameBodyTemplate}
             style={{ minWidth: '12rem' }}
             showFilterMenu={false}
             filter
@@ -292,7 +440,7 @@ const CreditsTable: React.FC = () => {
           />
           <Column
             header="Telefon"
-            body={(rowData: ICredit) => formatPhone(rowData.client_phone)}
+            body={clientPhoneBodyTemplate}
             style={{ minWidth: '12rem' }}
             showFilterMenu={false}
             filter
@@ -308,10 +456,14 @@ const CreditsTable: React.FC = () => {
           />
           <Column
             header="Seans sayı"
-            field="sessions_count"
+            body={sessionsCountBodyTemplate}
             style={{ minWidth: '8rem' }}
           />
-          <Column header="Bank" field="bank" style={{ minWidth: '8rem' }} />
+          <Column
+            header="Bank"
+            body={bankBodyTemplate}
+            style={{ minWidth: '8rem' }}
+          />
           <Column
             header="Xidmət"
             body={servicesBodyTemplate}
@@ -319,12 +471,12 @@ const CreditsTable: React.FC = () => {
           />
           <Column
             header="Toplam"
-            body={(rowData: ICredit) => formatPrice(rowData.amount)}
+            body={amountBodyTemplate}
             style={{ minWidth: '8rem' }}
           />
           <Column
-            header="Alındı"
-            body={(rowData: ICredit) => formatPrice(rowData.received_amount)}
+            body={actionBodyTemplate}
+            exportable={false}
             style={{ minWidth: '8rem' }}
           />
         </DataTable>
@@ -333,8 +485,8 @@ const CreditsTable: React.FC = () => {
       <div ref={navigationRef}>
         <Paginator
           first={first}
-          rows={rows}
-          totalRecords={filteredCredits.length}
+          rows={CREDIT_ROWS}
+          totalRecords={total}
           onPageChange={handlePageChange}
         />
       </div>
@@ -351,8 +503,19 @@ const CreditsTable: React.FC = () => {
 
       <CreateCreditDialog
         visible={isCreateDialogVisible}
-        onHide={() => setIsCreateDialogVisible(false)}
-        onCreate={handleCreateCredit}
+        onHide={() => {
+          setIsCreateDialogVisible(false);
+          setSelectedCredit(undefined);
+        }}
+        onSave={handleSaveCredit}
+        initialCredit={selectedCredit}
+      />
+
+      <CreditDeleteDialog
+        credit={selectedCredit}
+        visible={isDeleteDialogVisible}
+        onHide={() => setIsDeleteDialogVisible(false)}
+        onConfirm={handleDeleteCredit}
       />
     </>
   );
