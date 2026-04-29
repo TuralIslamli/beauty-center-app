@@ -83,6 +83,13 @@ export interface IServicesTableProps extends INavigationProps {
   user_id?: number;
 }
 
+export interface IExpensesTableProps extends INavigationProps {
+  from_date: string;
+  to_date: string;
+  name?: string;
+  description?: string;
+}
+
 export interface IReportsTableProps extends INavigationProps {
   from_date: string;
   to_date: string;

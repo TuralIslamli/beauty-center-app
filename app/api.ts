@@ -7,6 +7,7 @@ import {
   IBookingTimeFields,
   IExpense,
   IExpenseFields,
+  IExpensesTableProps,
   ILoginFields,
   ILogsProps,
   INavigationProps,
@@ -145,11 +146,15 @@ export default {
     size,
     from_date,
     to_date,
-  }: IServicesTableProps): Promise<T> =>
+    name,
+    description,
+  }: IExpensesTableProps): Promise<T> =>
     axiosApi.get(`expenses?page=${page}&size=${size}&sort=desc`, {
       params: {
         from_date,
         to_date,
+        name,
+        description,
       },
     }),
   getServiceCredits: <T>({
@@ -210,11 +215,15 @@ export default {
   getExpensesTotal: <T>({
     from_date,
     to_date,
-  }: IServicesTableProps): Promise<T> =>
+    name,
+    description,
+  }: IExpensesTableProps): Promise<T> =>
     axiosApi.get(`expenses/total-amount`, {
       params: {
         from_date,
         to_date,
+        name,
+        description,
       },
     }),
   getReports: <T>({
