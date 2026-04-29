@@ -28,7 +28,7 @@ import {
   IUserRS,
 } from '@/app/types';
 import { bookingStatuses } from '../consts';
-import { formatDate } from '@/app/utils';
+import { formatDate, useHasPermission } from '@/app/utils';
 import { FormField } from '../shared';
 
 interface CreateUpdateDialogProps {
@@ -68,10 +68,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
   const [date, setDate] = useState<Nullable<Date>>(null);
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions]
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const schema = yup.object().shape({
     service_types:

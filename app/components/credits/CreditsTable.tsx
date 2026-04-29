@@ -19,7 +19,12 @@ import { Skeleton } from 'primereact/skeleton';
 import { useDebounce } from 'primereact/hooks';
 
 import api from '@/app/api';
-import { formatDate, formatPhone, formatPrice } from '@/app/utils';
+import {
+  formatDate,
+  formatPhone,
+  formatPrice,
+  useHasPermission,
+} from '@/app/utils';
 import { bookingStatuses } from '../consts';
 import { TableHeader } from '../shared';
 import CreateCreditDialog from './CreateCreditDialog';
@@ -44,7 +49,11 @@ import {
   ServiceCreditResponse,
 } from './utils';
 
-const CreditsTable: React.FC = () => {
+interface CreditsTableProps {
+  userPermissions: string[];
+}
+
+const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
   const [credits, setCredits] = useState<ICredit[]>([]);
   const [bankIncomes, setBankIncomes] = useState<IServiceCreditBankIncome[]>([]);
   const [selectedCredit, setSelectedCredit] = useState<ICredit>();
@@ -60,12 +69,22 @@ const CreditsTable: React.FC = () => {
   } | null>(null);
   const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
   const [clientPhone, debouncedClientPhone, setClientPhone] = useDebounce('', 400);
-  const [dates, setDates] = useState<Date[]>([]);
+  const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
   const [page, setPage] = useState(1);
   const [first, setFirst] = useState(0);
 
   const toast = useRef<Toast>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
+
+  const hasPermission = useHasPermission(userPermissions);
+  const canCreateCredit = hasPermission('service_credit.create');
+  const canEditCredit =
+    hasPermission('service_credit.update') &&
+    hasPermission('service_credit.get_one');
+  const canDeleteCredit = hasPermission('service_credit.delete');
+  const canViewBankIncome = hasPermission('service_credit.get_bank_income');
+  const canSetCreditBank = hasPermission('service_credit_bank.get_all');
+  const hasCreditActions = canEditCredit || canDeleteCredit;
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({
@@ -78,6 +97,10 @@ const CreditsTable: React.FC = () => {
 
   const getCredits = useCallback(
     async (currentPage = 1, isOnPageChange = false) => {
+      if (!hasPermission('service_credit.get_all')) {
+        return;
+      }
+
       const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
       const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
       const normalizedName = debouncedClientName.trim();
@@ -92,24 +115,25 @@ const CreditsTable: React.FC = () => {
 
       setIsLoading(true);
       try {
-        const [
-          { data, meta },
-          { data: incomeData },
-        ] = await Promise.all([
-          api.getServiceCredits<IServiceCreditsData>({
-            page: currentPage,
-            size: CREDIT_ROWS,
-            ...filters,
-          }),
-          api.getServiceCreditBankIncomes<IServiceCreditBankIncomesData>(
-            filters,
-          ),
-        ]);
+        const { data, meta } = await api.getServiceCredits<IServiceCreditsData>({
+          page: currentPage,
+          size: CREDIT_ROWS,
+          ...filters,
+        });
 
         setCredits(data);
-        setBankIncomes(incomeData ?? []);
         setTotal(meta?.total ?? data.length);
         setPage(currentPage);
+
+        if (canViewBankIncome) {
+          const { data: incomeData } =
+            await api.getServiceCreditBankIncomes<IServiceCreditBankIncomesData>(
+              filters,
+            );
+          setBankIncomes(incomeData ?? []);
+        } else {
+          setBankIncomes([]);
+        }
       } catch (error) {
         console.error('Failed to fetch service credits:', error);
       } finally {
@@ -119,7 +143,14 @@ const CreditsTable: React.FC = () => {
         }
       }
     },
-    [dates, debouncedClientName, debouncedClientPhone, filteredStatus?.id],
+    [
+      canViewBankIncome,
+      dates,
+      debouncedClientName,
+      debouncedClientPhone,
+      filteredStatus?.id,
+      hasPermission,
+    ],
   );
 
   useEffect(() => {
@@ -133,9 +164,15 @@ const CreditsTable: React.FC = () => {
   const handleSaveCredit = useCallback(
     async (payload: ICreditFormPayload, credit?: ICredit) => {
       if (credit?.id) {
+        if (!hasPermission('service_credit.update')) {
+          return;
+        }
+
         const response = await api.updateServiceCredit<ServiceCreditResponse>({
           id: credit.id,
-          ...buildServiceCreditPayload(payload),
+          ...buildServiceCreditPayload(payload, {
+            includeBank: canSetCreditBank,
+          }),
         });
         const updatedCredit =
           getCreditFromResponse(response) ?? buildCreditFromPayload(payload, credit);
@@ -148,15 +185,21 @@ const CreditsTable: React.FC = () => {
         return;
       }
 
+      if (!canCreateCredit) {
+        return;
+      }
+
       await api.createServiceCredit<ServiceCreditResponse>(
-        buildServiceCreditPayload(payload),
+        buildServiceCreditPayload(payload, {
+          includeBank: canSetCreditBank,
+        }),
       );
       setPage(1);
       setFirst(0);
       await getCredits(1);
       showSuccess('Kredit uğurla əlavə edildi');
     },
-    [getCredits, page, showSuccess],
+    [canCreateCredit, canSetCreditBank, getCredits, hasPermission, page, showSuccess],
   );
 
   const handlePageChange = useCallback(
@@ -168,11 +211,19 @@ const CreditsTable: React.FC = () => {
   );
 
   const handleCreateClick = useCallback(() => {
+    if (!canCreateCredit) {
+      return;
+    }
+
     setSelectedCredit(undefined);
     setIsCreateDialogVisible(true);
-  }, []);
+  }, [canCreateCredit]);
 
   const handleEditClick = useCallback(async (credit: ICredit) => {
+    if (!canEditCredit) {
+      return;
+    }
+
     setEditingCreditId(credit.id);
     try {
       const { data }: IServiceCreditData = await api.getServiceCredit(credit.id);
@@ -183,15 +234,19 @@ const CreditsTable: React.FC = () => {
     } finally {
       setEditingCreditId(null);
     }
-  }, []);
+  }, [canEditCredit]);
 
   const handleDeleteClick = useCallback((credit: ICredit) => {
+    if (!canDeleteCredit) {
+      return;
+    }
+
     setSelectedCredit(credit);
     setIsDeleteDialogVisible(true);
-  }, []);
+  }, [canDeleteCredit]);
 
   const handleDeleteCredit = useCallback(async () => {
-    if (!selectedCredit?.id) return;
+    if (!selectedCredit?.id || !canDeleteCredit) return;
 
     try {
       await api.deleteServiceCredit(selectedCredit.id);
@@ -205,7 +260,14 @@ const CreditsTable: React.FC = () => {
     } catch (error) {
       console.error('Failed to delete service credit:', error);
     }
-  }, [credits.length, getCredits, page, selectedCredit?.id, showSuccess]);
+  }, [
+    canDeleteCredit,
+    credits.length,
+    getCredits,
+    page,
+    selectedCredit?.id,
+    showSuccess,
+  ]);
 
   const headerContent = useMemo(
     () => (
@@ -213,15 +275,17 @@ const CreditsTable: React.FC = () => {
         onFilterToggle={() => setFilter((prev) => !prev)}
         onRefresh={() => getCredits(page)}
         rightContent={
-          <Button
-            label="Əlavə et"
-            icon="pi pi-plus"
-            onClick={handleCreateClick}
-          />
+          canCreateCredit ? (
+            <Button
+              label="Əlavə et"
+              icon="pi pi-plus"
+              onClick={handleCreateClick}
+            />
+          ) : null
         }
       />
     ),
-    [getCredits, handleCreateClick, page],
+    [canCreateCredit, getCredits, handleCreateClick, page],
   );
 
   const idBodyTemplate = useCallback(
@@ -312,11 +376,20 @@ const CreditsTable: React.FC = () => {
         <CreditTableActions
           credit={rowData}
           editingCreditId={editingCreditId}
+          canEdit={canEditCredit}
+          canDelete={canDeleteCredit}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
         />
       ),
-    [editingCreditId, handleDeleteClick, handleEditClick, isLoading],
+    [
+      canDeleteCredit,
+      canEditCredit,
+      editingCreditId,
+      handleDeleteClick,
+      handleEditClick,
+      isLoading,
+    ],
   );
 
   const dateFilterTemplate = useCallback(
@@ -474,11 +547,13 @@ const CreditsTable: React.FC = () => {
             body={amountBodyTemplate}
             style={{ minWidth: '8rem' }}
           />
-          <Column
-            body={actionBodyTemplate}
-            exportable={false}
-            style={{ minWidth: '8rem' }}
-          />
+          {hasCreditActions && (
+            <Column
+              body={actionBodyTemplate}
+              exportable={false}
+              style={{ minWidth: '8rem' }}
+            />
+          )}
         </DataTable>
       </div>
 
@@ -491,13 +566,15 @@ const CreditsTable: React.FC = () => {
         />
       </div>
 
-      <div className="total-info">
-        <Message
-          className="info-message mr-5"
-          severity="info"
-          content={totalContent}
-        />
-      </div>
+      {canViewBankIncome && (
+        <div className="total-info">
+          <Message
+            className="info-message mr-5"
+            severity="info"
+            content={totalContent}
+          />
+        </div>
+      )}
 
       <Toast ref={toast} />
 
@@ -509,6 +586,7 @@ const CreditsTable: React.FC = () => {
         }}
         onSave={handleSaveCredit}
         initialCredit={selectedCredit}
+        userPermissions={userPermissions}
       />
 
       <CreditDeleteDialog

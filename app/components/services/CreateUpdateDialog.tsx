@@ -22,6 +22,7 @@ import {
   IServiceTypeRS,
 } from '@/app/types';
 import { serviceStatuses } from '../consts';
+import { useHasPermission } from '@/app/utils';
 import { FormField } from '../shared';
 
 interface CreateUpdateDialogProps {
@@ -63,10 +64,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
 
   const isDoctor = role?.id === 4;
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions]
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const clientNameBase = yup.string().transform((value) => value ?? '').defined();
 

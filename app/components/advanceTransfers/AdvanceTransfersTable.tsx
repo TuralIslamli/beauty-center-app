@@ -18,6 +18,7 @@ import {
   getRoleName,
   haveFilterPermissions,
   getDaysAgo,
+  useHasPermission,
 } from '@/app/utils';
 import { TableHeader } from '../shared';
 
@@ -38,10 +39,7 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({
 
   const toast = useRef<Toast>(null);
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions],
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const fetchData = useCallback(
     async (currentPage: number) => {

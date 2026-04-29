@@ -13,6 +13,9 @@ interface CreditBankSelectProps {
   newBankName: string;
   isBankSaving: boolean;
   deletingBankId: number | null;
+  canCreateBank: boolean;
+  canUpdateBank: boolean;
+  canDeleteBank: boolean;
   onBankChange: (bank: IServiceCreditBank | null) => void;
   onEditingBankChange: (bank: IServiceCreditBank) => void;
   onNewBankNameChange: (name: string) => void;
@@ -28,6 +31,9 @@ const CreditBankSelect: React.FC<CreditBankSelectProps> = ({
   newBankName,
   isBankSaving,
   deletingBankId,
+  canCreateBank,
+  canUpdateBank,
+  canDeleteBank,
   onBankChange,
   onEditingBankChange,
   onNewBankNameChange,
@@ -39,40 +45,48 @@ const CreditBankSelect: React.FC<CreditBankSelectProps> = ({
     (option: IServiceCreditBank) => (
       <div className="credit-bank-option">
         <span>{option.name}</span>
-        <div className="flex gap-1">
-          <Button
-            type="button"
-            icon="pi pi-pencil"
-            rounded
-            text
-            severity="secondary"
-            aria-label={`${option.name} yenilə`}
-            disabled={isBankSaving || deletingBankId !== null}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onEditingBankChange(option);
-            }}
-          />
-          <Button
-            type="button"
-            icon="pi pi-trash"
-            rounded
-            text
-            severity="danger"
-            aria-label={`${option.name} sil`}
-            loading={deletingBankId === option.id}
-            disabled={isBankSaving || deletingBankId !== null}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onDeleteBank(option);
-            }}
-          />
-        </div>
+        {(canUpdateBank || canDeleteBank) && (
+          <div className="flex gap-1">
+            {canUpdateBank && (
+              <Button
+                type="button"
+                icon="pi pi-pencil"
+                rounded
+                text
+                severity="secondary"
+                aria-label={`${option.name} yenilə`}
+                disabled={isBankSaving || deletingBankId !== null}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onEditingBankChange(option);
+                }}
+              />
+            )}
+            {canDeleteBank && (
+              <Button
+                type="button"
+                icon="pi pi-trash"
+                rounded
+                text
+                severity="danger"
+                aria-label={`${option.name} sil`}
+                loading={deletingBankId === option.id}
+                disabled={isBankSaving || deletingBankId !== null}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onDeleteBank(option);
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
     ),
     [
+      canDeleteBank,
+      canUpdateBank,
       deletingBankId,
       isBankSaving,
       onDeleteBank,
@@ -81,40 +95,50 @@ const CreditBankSelect: React.FC<CreditBankSelectProps> = ({
   );
 
   const panelFooterTemplate = useCallback(
-    () => (
-      <div className="credit-bank-footer">
-        <InputText
-          value={newBankName}
-          onChange={(event) => onNewBankNameChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              onSaveBank();
-            }
-          }}
-          placeholder={editingBank ? 'Bank adını yenilə' : 'Yeni bank'}
-        />
-        {editingBank && (
+    () => {
+      const canSaveBank = editingBank ? canUpdateBank : canCreateBank;
+
+      if (!canSaveBank) {
+        return null;
+      }
+
+      return (
+        <div className="credit-bank-footer">
+          <InputText
+            value={newBankName}
+            onChange={(event) => onNewBankNameChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                onSaveBank();
+              }
+            }}
+            placeholder={editingBank ? 'Bank adını yenilə' : 'Yeni bank'}
+          />
+          {editingBank && (
+            <Button
+              type="button"
+              icon="pi pi-times"
+              severity="secondary"
+              aria-label="Düzəlişi ləğv et"
+              onClick={onResetBankEditor}
+              disabled={isBankSaving}
+            />
+          )}
           <Button
             type="button"
-            icon="pi pi-times"
-            severity="secondary"
-            aria-label="Düzəlişi ləğv et"
-            onClick={onResetBankEditor}
-            disabled={isBankSaving}
+            icon={editingBank ? 'pi pi-check' : 'pi pi-plus'}
+            aria-label={editingBank ? 'Bankı yenilə' : 'Bank əlavə et'}
+            onClick={onSaveBank}
+            loading={isBankSaving}
+            disabled={!newBankName.trim() || isBankSaving}
           />
-        )}
-        <Button
-          type="button"
-          icon={editingBank ? 'pi pi-check' : 'pi pi-plus'}
-          aria-label={editingBank ? 'Bankı yenilə' : 'Bank əlavə et'}
-          onClick={onSaveBank}
-          loading={isBankSaving}
-          disabled={!newBankName.trim() || isBankSaving}
-        />
-      </div>
-    ),
+        </div>
+      );
+    },
     [
+      canCreateBank,
+      canUpdateBank,
       editingBank,
       isBankSaving,
       newBankName,

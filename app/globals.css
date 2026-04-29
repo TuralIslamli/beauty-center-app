@@ -260,6 +260,14 @@
   width: 100%;
 }
 
+.credit-session-field {
+  min-width: 0;
+}
+
+.credit-session-field > .p-calendar {
+  width: 100%;
+}
+
 .credit-bank-option {
   display: flex;
   align-items: center;

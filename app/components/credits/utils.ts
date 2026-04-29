@@ -92,25 +92,33 @@ export const getInitialCreditBank = (
 
 export const buildServiceCreditPayload = (
   payload: ICreditFormPayload,
-): IServiceCreditFields => ({
-  client_name: payload.client_name,
-  client_phone: payload.client_phone,
-  service_types: payload.service_types.map((service) => ({ id: service.id })),
-  bank_id:
-    typeof payload.bank === 'string'
-      ? null
-      : payload.bank?.id ?? null,
-  comment: payload.comment,
-  amount: payload.amount,
-  visits: payload.sessions.map((session) => ({
-    id: session.id,
-    status: sessionStatusToReservationStatus[session.status],
-    doctor_id: session.doctor?.id,
-    reservation_date: session.date
-      ? `${formatDate(session.date)} 00:00:00`
-      : null,
-  })),
-});
+  options: { includeBank?: boolean } = {},
+): IServiceCreditFields => {
+  const requestPayload: IServiceCreditFields = {
+    client_name: payload.client_name,
+    client_phone: payload.client_phone,
+    service_types: payload.service_types.map((service) => ({ id: service.id })),
+    comment: payload.comment,
+    amount: payload.amount,
+    visits: payload.sessions.map((session) => ({
+      id: session.id,
+      status: sessionStatusToReservationStatus[session.status],
+      doctor_id: session.doctor?.id,
+      reservation_date: session.date
+        ? `${formatDate(session.date)} 00:00:00`
+        : null,
+    })),
+  };
+
+  if (options.includeBank !== false) {
+    requestPayload.bank_id =
+      typeof payload.bank === 'string'
+        ? null
+        : payload.bank?.id ?? null;
+  }
+
+  return requestPayload;
+};
 
 export const buildCreditFromPayload = (
   payload: ICreditFormPayload,

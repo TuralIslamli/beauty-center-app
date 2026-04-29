@@ -16,7 +16,12 @@ import { Message } from 'primereact/message';
 
 import api from '../../api';
 import { IExpense, IExpensesData } from '@/app/types';
-import { formatDate, formatPrice, haveFilterPermissions } from '@/app/utils';
+import {
+  formatDate,
+  formatPrice,
+  haveFilterPermissions,
+  useHasPermission,
+} from '@/app/utils';
 import { TableHeader } from '../shared';
 import AddDialog from './AddDialog';
 import DeleteDialog from './DeleteDialog';
@@ -40,10 +45,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
 
   const toast = useRef<Toast>(null);
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions],
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({

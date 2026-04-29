@@ -44,6 +44,7 @@ import {
   isToday,
   isSameDay,
   isTodayString,
+  useHasPermission,
 } from '@/app/utils';
 import { TableHeader, ConfirmDialog } from '../shared';
 import CreateUpdateDialog from './CreateUpdateDialog';
@@ -109,10 +110,7 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
     dates.length === 2 && isSameDay(new Date(dates[0]), new Date(dates[1]));
   const isTodayDate = isToday(new Date(dates[0]));
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions],
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({

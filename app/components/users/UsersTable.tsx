@@ -9,7 +9,7 @@ import { Checkbox } from 'primereact/checkbox';
 import api from '../../api';
 import { IUser, IUserData } from '../../types';
 import { daysOfWeek } from '../consts';
-import { getRoleName } from '@/app/utils';
+import { getRoleName, useHasPermission } from '@/app/utils';
 import { TableHeader } from '../shared';
 import DeleteUserDialog from './DeleteUserDialog';
 import EditUserDialog from './EditUserDialog';
@@ -30,10 +30,7 @@ const UsersTable: React.FC<UsersTableProps> = ({ userPermissions = [] }) => {
 
   const toast = useRef<Toast>(null);
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions]
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({
