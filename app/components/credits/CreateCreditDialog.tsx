@@ -43,11 +43,30 @@ interface CreateCreditDialogProps {
 }
 
 interface CreditFormErrors {
-  clientName?: string;
+  clientFirstName?: string;
+  clientLastName?: string;
   clientPhone?: string;
   serviceTypes?: string;
   sessions?: CreditSessionErrors;
 }
+
+const CLIENT_NAME_PATTERN = /^[A-Za-z ]+$/;
+
+const splitClientName = (fullName?: string) => {
+  const trimmed = (fullName || '').trim();
+  if (!trimmed) {
+    return { firstName: '', lastName: '' };
+  }
+
+  const [firstName, ...rest] = trimmed.split(/\s+/);
+  return { firstName, lastName: rest.join(' ') };
+};
+
+const getFullClientName = (firstName: string, lastName: string) =>
+  [firstName, lastName]
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .join(' ');
 
 const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   visible,
@@ -56,7 +75,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   initialCredit,
   userPermissions,
 }) => {
-  const [clientName, setClientName] = useState('');
+  const [clientFirstName, setClientFirstName] = useState('');
+  const [clientLastName, setClientLastName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [selectedServiceTypes, setSelectedServiceTypes] = useState<IServiceType[]>([]);
   const [sessionsCount, setSessionsCount] = useState(DEFAULT_CREDIT_SESSION_COUNT);
@@ -89,7 +109,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   );
 
   const resetForm = useCallback(() => {
-    setClientName('');
+    setClientFirstName('');
+    setClientLastName('');
     setClientPhone('');
     setSelectedServiceTypes([]);
     setSessionsCount(DEFAULT_CREDIT_SESSION_COUNT);
@@ -167,10 +188,17 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     const initialBank = canViewBanks
       ? getInitialCreditBank(initialCredit.bank, banks)
       : initialCredit.bank;
+    const initialServiceTypes = initialCredit.service_types.map(
+      (selectedService) =>
+        serviceTypes.find((service) => service.id === selectedService.id) ??
+        selectedService,
+    );
+    const { firstName, lastName } = splitClientName(initialCredit.client_name);
 
-    setClientName(initialCredit.client_name);
+    setClientFirstName(firstName);
+    setClientLastName(lastName);
     setClientPhone(initialCredit.client_phone);
-    setSelectedServiceTypes(initialCredit.service_types);
+    setSelectedServiceTypes(initialServiceTypes);
     setSessionsCount(creditSessions.length || 1);
     setSessions(
       creditSessions.length ? creditSessions : createDefaultCreditSessions(),
@@ -180,7 +208,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       initialCredit.received_amount ?? Number(initialCredit.amount || 0),
     );
     setComment(initialCredit.comment ?? '');
-  }, [banks, canViewBanks, doctors, initialCredit, visible]);
+  }, [banks, canViewBanks, doctors, initialCredit, serviceTypes, visible]);
 
   useEffect(() => {
     setSessions((prev) =>
@@ -232,6 +260,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
 
   const validateForm = useCallback(() => {
     const nextErrors: CreditFormErrors = {};
+    const trimmedFirstName = clientFirstName.trim();
+    const trimmedLastName = clientLastName.trim();
     const normalizedPhone = clientPhone.replace(/\D/g, '');
     const sessionErrors = sessions.reduce<CreditSessionErrors>(
       (errors, session, index) => {
@@ -244,8 +274,16 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       {},
     );
 
-    if (!clientName.trim()) {
-      nextErrors.clientName = 'Müştəri adı tələb olunur';
+    if (!trimmedFirstName) {
+      nextErrors.clientFirstName = 'Müştəri adı mütləqdir';
+    } else if (!CLIENT_NAME_PATTERN.test(trimmedFirstName)) {
+      nextErrors.clientFirstName = 'Yalnız ingilis şrifti';
+    }
+
+    if (!trimmedLastName) {
+      nextErrors.clientLastName = 'Müştəri soyadı mütləqdir';
+    } else if (!CLIENT_NAME_PATTERN.test(trimmedLastName)) {
+      nextErrors.clientLastName = 'Yalnız ingilis şrifti';
     }
 
     if (!normalizedPhone) {
@@ -265,7 +303,13 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     setFormErrors(nextErrors);
 
     return !Object.keys(nextErrors).length;
-  }, [clientName, clientPhone, selectedServiceTypes.length, sessions]);
+  }, [
+    clientFirstName,
+    clientLastName,
+    clientPhone,
+    selectedServiceTypes.length,
+    sessions,
+  ]);
 
   const resetBankEditor = useCallback(() => {
     setEditingBank(null);
@@ -390,8 +434,10 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
 
       setIsSubmitting(true);
       try {
+        const fullClientName = getFullClientName(clientFirstName, clientLastName);
+
         await onSave({
-          client_name: clientName.trim(),
+          client_name: fullClientName,
           client_phone: clientPhone.replace(/[\s-]/g, ''),
           service_types: selectedServiceTypes,
           sessions_count: sessionsCount,
@@ -409,7 +455,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       }
     },
     [
-      clientName,
+      clientFirstName,
+      clientLastName,
       clientPhone,
       selectedServiceTypes,
       sessionsCount,
@@ -434,21 +481,41 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       style={{ maxWidth: '640px', width: '100%' }}
     >
       <form onSubmit={handleSubmit} className="dialog-form">
-        <FormField
-          label="Müştəri adı:"
-          htmlFor="credit_client_name"
-          error={formErrors.clientName}
-        >
-          <InputText
-            id="credit_client_name"
-            value={clientName}
-            invalid={!!formErrors.clientName}
-            onChange={(event) => {
-              setClientName(event.target.value);
-              clearFieldError('clientName');
-            }}
-          />
-        </FormField>
+        <div className="form-row credit-form-row">
+          <FormField
+            label="Müştəri adı:"
+            htmlFor="credit_client_first_name"
+            error={formErrors.clientFirstName}
+          >
+            <InputText
+              id="credit_client_first_name"
+              className="w-full"
+              value={clientFirstName}
+              invalid={!!formErrors.clientFirstName}
+              onChange={(event) => {
+                setClientFirstName(event.target.value);
+                clearFieldError('clientFirstName');
+              }}
+            />
+          </FormField>
+
+          <FormField
+            label="Müştəri soyadı:"
+            htmlFor="credit_client_last_name"
+            error={formErrors.clientLastName}
+          >
+            <InputText
+              id="credit_client_last_name"
+              className="w-full"
+              value={clientLastName}
+              invalid={!!formErrors.clientLastName}
+              onChange={(event) => {
+                setClientLastName(event.target.value);
+                clearFieldError('clientLastName');
+              }}
+            />
+          </FormField>
+        </div>
 
         <FormField
           label="Telefon:"
@@ -482,6 +549,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
               clearFieldError('serviceTypes');
             }}
             options={serviceTypes}
+            dataKey="id"
             optionLabel="name"
             placeholder="Xidmət seçin"
             className="w-full"

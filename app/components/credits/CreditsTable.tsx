@@ -538,11 +538,6 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
             style={{ minWidth: '8rem' }}
           />
           <Column
-            header="Xidmət"
-            body={servicesBodyTemplate}
-            style={{ minWidth: '14rem' }}
-          />
-          <Column
             header="Toplam"
             body={amountBodyTemplate}
             style={{ minWidth: '8rem' }}

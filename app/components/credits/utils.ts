@@ -103,8 +103,8 @@ export const buildServiceCreditPayload = (
     visits: payload.sessions.map((session) => ({
       id: session.id,
       status: sessionStatusToReservationStatus[session.status],
-      doctor_id: session.doctor?.id,
-      reservation_date: session.date
+      doctor_id: session.doctor?.id ?? null,
+      reservation_date: session.doctor && session.date
         ? `${formatDate(session.date)} 00:00:00`
         : null,
     })),

@@ -142,7 +142,7 @@ export interface IServiceCreditBankData {
 export interface IServiceCreditVisitFields {
   id?: number;
   status: number;
-  doctor_id?: number;
+  doctor_id?: number | null;
   reservation_date?: string | null;
 }
 
