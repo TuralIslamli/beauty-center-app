@@ -68,6 +68,22 @@ const getFullClientName = (firstName: string, lastName: string) =>
     .filter(Boolean)
     .join(' ');
 
+const getCreditSessionErrors = (
+  session: ICreditSession,
+): CreditSessionErrors[number] => {
+  const errors: CreditSessionErrors[number] = {};
+
+  if (session.status === 'arrived' && !session.date) {
+    errors.date = 'Tarix seçilməlidir';
+  }
+
+  if ((session.status === 'arrived' || session.date) && !session.doctor) {
+    errors.doctor = 'Həkim seçilməlidir';
+  }
+
+  return errors;
+};
+
 const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   visible,
   onHide,
@@ -86,7 +102,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   const [newBankName, setNewBankName] = useState('');
   const [isBankSaving, setIsBankSaving] = useState(false);
   const [deletingBankId, setDeletingBankId] = useState<number | null>(null);
-  const [receivedAmount, setReceivedAmount] = useState(0);
+  const [creditAmount, setCreditAmount] = useState(0);
+  const [isCreditAmountDirty, setIsCreditAmountDirty] = useState(false);
   const [comment, setComment] = useState('');
   const [sessions, setSessions] = useState<ICreditSession[]>(
     createDefaultCreditSessions(),
@@ -118,7 +135,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     setEditingBank(null);
     setNewBankName('');
     setDeletingBankId(null);
-    setReceivedAmount(0);
+    setCreditAmount(0);
+    setIsCreditAmountDirty(false);
     setComment('');
     setSessions(createDefaultCreditSessions());
     setFormErrors({});
@@ -176,10 +194,10 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   }, [canViewBanks, visible]);
 
   useEffect(() => {
-    if (!initialCredit?.id) {
-      setReceivedAmount(totalPrice);
+    if (!initialCredit?.id && !isCreditAmountDirty) {
+      setCreditAmount(totalPrice);
     }
-  }, [initialCredit?.id, totalPrice]);
+  }, [initialCredit?.id, isCreditAmountDirty, totalPrice]);
 
   useEffect(() => {
     if (!visible || !initialCredit?.id) return;
@@ -204,9 +222,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       creditSessions.length ? creditSessions : createDefaultCreditSessions(),
     );
     setSelectedBank(initialBank);
-    setReceivedAmount(
-      initialCredit.received_amount ?? Number(initialCredit.amount || 0),
-    );
+    setCreditAmount(Number(initialCredit.amount || 0));
+    setIsCreditAmountDirty(false);
     setComment(initialCredit.comment ?? '');
   }, [banks, canViewBanks, doctors, initialCredit, serviceTypes, visible]);
 
@@ -223,35 +240,37 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
 
   const handleSessionChange = useCallback(
     (index: number, value: Partial<ICreditSession>) => {
+      const nextSession = { ...sessions[index], ...value };
+
       setSessions((prev) =>
         prev.map((session, sessionIndex) =>
           sessionIndex === index ? { ...session, ...value } : session,
         ),
       );
 
-      if ('doctor' in value || value.date === null) {
-        setFormErrors((prev) => {
-          if (!prev.sessions?.[index]?.doctor) {
-            return prev;
-          }
+      setFormErrors((prev) => {
+        if (!prev.sessions?.[index]) {
+          return prev;
+        }
 
-          const nextSessions = { ...prev.sessions };
-          delete nextSessions[index].doctor;
+        const nextSessionErrors = getCreditSessionErrors(nextSession);
+        const nextSessions = { ...prev.sessions };
 
-          if (!Object.keys(nextSessions[index]).length) {
-            delete nextSessions[index];
-          }
+        if (Object.keys(nextSessionErrors).length) {
+          nextSessions[index] = nextSessionErrors;
+        } else {
+          delete nextSessions[index];
+        }
 
-          return {
-            ...prev,
-            sessions: Object.keys(nextSessions).length
-              ? nextSessions
-              : undefined,
-          };
-        });
-      }
+        return {
+          ...prev,
+          sessions: Object.keys(nextSessions).length
+            ? nextSessions
+            : undefined,
+        };
+      });
     },
-    [],
+    [sessions],
   );
 
   const clearFieldError = useCallback((field: keyof CreditFormErrors) => {
@@ -265,8 +284,10 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     const normalizedPhone = clientPhone.replace(/\D/g, '');
     const sessionErrors = sessions.reduce<CreditSessionErrors>(
       (errors, session, index) => {
-        if (session.date && !session.doctor) {
-          errors[index] = { doctor: 'Həkim seçilməlidir' };
+        const currentSessionErrors = getCreditSessionErrors(session);
+
+        if (Object.keys(currentSessionErrors).length) {
+          errors[index] = currentSessionErrors;
         }
 
         return errors;
@@ -444,8 +465,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
           bank: selectedBank,
           comment: comment.trim(),
           sessions,
-          amount: totalPrice,
-          received_amount: receivedAmount,
+          amount: creditAmount,
         }, initialCredit);
         handleHide();
       } catch (error) {
@@ -463,8 +483,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       selectedBank,
       comment,
       sessions,
-      totalPrice,
-      receivedAmount,
+      creditAmount,
       initialCredit,
       onSave,
       handleHide,
@@ -619,8 +638,11 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
           <div>
             <label>Alındı:</label>
             <InputNumber
-              value={receivedAmount}
-              onValueChange={(event) => setReceivedAmount(event.value || 0)}
+              value={creditAmount}
+              onValueChange={(event) => {
+                setCreditAmount(event.value || 0);
+                setIsCreditAmountDirty(true);
+              }}
               mode="currency"
               currency="AZN"
               locale="de-DE"

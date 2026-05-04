@@ -138,7 +138,6 @@ export const buildCreditFromPayload = (
     sessions_count: payload.sessions_count,
     bank: payload.bank,
     amount: payload.amount,
-    received_amount: payload.received_amount,
     comment: payload.comment,
     service_types: payload.service_types,
     sessions: payload.sessions,

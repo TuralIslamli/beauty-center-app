@@ -31,7 +31,6 @@ export interface ICredit {
   sessions_count?: number;
   bank: ICreditBank | string | null;
   amount: number | string;
-  received_amount?: number;
   comment?: string;
   service_types: IServiceType[];
   visits?: ICreditVisit[];
@@ -70,5 +69,4 @@ export interface ICreditFormPayload {
   comment?: string;
   sessions: ICreditSession[];
   amount: number;
-  received_amount: number;
 }

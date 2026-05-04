@@ -6,7 +6,10 @@ import { IDoctor } from '@/app/types';
 import { creditSessionStatuses } from './consts';
 import { ICreditSession } from './types';
 
-export type CreditSessionErrors = Record<number, { doctor?: string }>;
+export type CreditSessionErrors = Record<number, {
+  date?: string;
+  doctor?: string;
+}>;
 
 interface CreditSessionsEditorProps {
   sessions: ICreditSession[];
@@ -32,10 +35,14 @@ const CreditSessionsEditor: React.FC<CreditSessionsEditorProps> = ({
               onSessionChange(index, { date: event.value as Date | null })
             }
             dateFormat="dd-mm-yy"
+            invalid={!!errors?.[index]?.date}
             readOnlyInput
             placeholder="Tarix"
             showIcon
           />
+          {errors?.[index]?.date && (
+            <div className="form-error">{errors[index].date}</div>
+          )}
         </div>
         <div className="credit-session-field">
           <Dropdown
