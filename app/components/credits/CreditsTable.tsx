@@ -25,14 +25,13 @@ import {
   formatPrice,
   useHasPermission,
 } from '@/app/utils';
-import { bookingStatuses } from '../consts';
 import { TableHeader } from '../shared';
 import CreateCreditDialog from './CreateCreditDialog';
 import CreditBankIncomeSummary from './CreditBankIncomeSummary';
 import CreditDeleteDialog from './CreditDeleteDialog';
 import CreditStatusTags from './CreditStatusTags';
 import CreditTableActions from './CreditTableActions';
-import { CREDIT_ROWS } from './consts';
+import { CREDIT_ROWS, creditVisitStatuses } from './consts';
 import {
   ICredit,
   ICreditFormPayload,
@@ -448,7 +447,7 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
     () => (
       <Dropdown
         value={filteredStatus}
-        options={bookingStatuses}
+        options={creditVisitStatuses}
         onChange={(event) => {
           setFilteredStatus(event.value);
           setPage(1);
