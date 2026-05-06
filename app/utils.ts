@@ -1,4 +1,8 @@
+import { useCallback } from 'react';
+
 import { roles } from './components/consts';
+
+const EMPTY_PERMISSIONS: string[] = [];
 
 /**
  * Получить название роли по ID
@@ -63,6 +67,23 @@ export const formatPhone = (phone: string | null | undefined): string => {
 };
 
 /**
+ * Проверка наличия разрешения
+ */
+export const hasPermission = (
+  permissions: string[] = EMPTY_PERMISSIONS,
+  permission: string,
+): boolean => permissions.includes(permission);
+
+/**
+ * Хелпер для проверки разрешений внутри компонентов
+ */
+export const useHasPermission = (permissions: string[] = EMPTY_PERMISSIONS) =>
+  useCallback(
+    (permission: string) => hasPermission(permissions, permission),
+    [permissions],
+  );
+
+/**
  * Проверка наличия разрешений на фильтрацию
  */
 export const haveFilterPermissions = (permissions: string[]): boolean => {
@@ -81,7 +102,7 @@ export const haveFilterPermissions = (permissions: string[]): boolean => {
     'reservation.filter.doctor',
   ];
   
-  return filters.some((filter) => permissions.includes(filter));
+  return filters.some((filter) => hasPermission(permissions, filter));
 };
 
 /**

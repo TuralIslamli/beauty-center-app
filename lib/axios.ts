@@ -11,7 +11,6 @@ let toast: any = null;
 export const setToastInstance = (toastInstance: any) => {
   toast = toastInstance;
 };
-console.log(toast, 'toast');
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACK_API + "/api",

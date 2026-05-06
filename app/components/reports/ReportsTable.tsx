@@ -36,6 +36,7 @@ import {
   formatPrice,
   formatPhone,
   haveFilterPermissions,
+  useHasPermission,
 } from '@/app/utils';
 import { TableHeader } from '../shared';
 
@@ -62,10 +63,7 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ userPermissions }) => {
 
   const toast = useRef<Toast>(null);
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions],
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const getReports = useCallback(async () => {
     setIsLoading(true);

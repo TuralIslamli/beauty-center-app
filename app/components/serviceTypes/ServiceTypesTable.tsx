@@ -14,7 +14,7 @@ import { useDebounce } from 'primereact/hooks';
 
 import api from '../../api';
 import { IServiceType, IServiceTypesData } from '@/app/types';
-import { formatPrice } from '@/app/utils';
+import { formatPrice, useHasPermission } from '@/app/utils';
 import { TableHeader } from '../shared';
 import AddDialog from './AddDialog';
 import DeleteServiceTypeDialog from './DeleteDialog';
@@ -189,10 +189,7 @@ const ServiceTypesTable: React.FC<ServiceTypesTableProps> = ({
     [],
   );
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions],
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const headerContent = (
     <TableHeader

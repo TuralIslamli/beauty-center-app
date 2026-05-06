@@ -26,6 +26,7 @@ import {
   formatPrice,
   formatPhone,
   haveFilterPermissions,
+  useHasPermission,
 } from '@/app/utils';
 import { TableHeader } from '../shared';
 import CreateUpdateDialog from './CreateUpdateDialog';
@@ -65,10 +66,7 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
   const toast = useRef<Toast>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions],
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({

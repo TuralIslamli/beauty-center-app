@@ -83,6 +83,13 @@ export interface IServicesTableProps extends INavigationProps {
   user_id?: number;
 }
 
+export interface IExpensesTableProps extends INavigationProps {
+  from_date: string;
+  to_date: string;
+  name?: string;
+  description?: string;
+}
+
 export interface IReportsTableProps extends INavigationProps {
   from_date: string;
   to_date: string;
@@ -99,6 +106,55 @@ export interface IBookingTableProps extends INavigationProps {
   client_phone?: number | null;
   service_types?: IServiceType[] | number[];
   doctor_id?: number;
+}
+
+export interface IServiceCreditsTableProps extends INavigationProps {
+  status?: number;
+  from_date?: string;
+  to_date?: string;
+  client_name?: string;
+  client_phone?: string;
+}
+
+export interface IServiceCreditBank {
+  id: number;
+  name: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface IServiceCreditBankFields {
+  name: string;
+}
+
+export interface IUpdateServiceCreditBank extends IServiceCreditBankFields {
+  id: number;
+}
+
+export interface IServiceCreditBanksData {
+  data: IServiceCreditBank[];
+}
+
+export interface IServiceCreditBankData {
+  data: IServiceCreditBank;
+}
+
+export interface IServiceCreditVisitFields {
+  id?: number;
+  status: number;
+  doctor_id?: number | null;
+  reservation_date?: string | null;
+}
+
+export interface IServiceCreditFields {
+  id?: number;
+  client_name: string;
+  client_phone: string;
+  service_types: { id: number }[];
+  bank_id?: number | null;
+  comment?: string;
+  amount: number;
+  visits: IServiceCreditVisitFields[];
 }
 
 export interface IServiceTypesData {

@@ -11,12 +11,18 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Calendar } from 'primereact/calendar';
+import { InputText } from 'primereact/inputtext';
 import { Skeleton } from 'primereact/skeleton';
 import { Message } from 'primereact/message';
+import { useDebounce } from 'primereact/hooks';
 
 import api from '../../api';
 import { IExpense, IExpensesData } from '@/app/types';
-import { formatDate, formatPrice, haveFilterPermissions } from '@/app/utils';
+import {
+  formatDate,
+  formatPrice,
+  useHasPermission,
+} from '@/app/utils';
 import { TableHeader } from '../shared';
 import AddDialog from './AddDialog';
 import DeleteDialog from './DeleteDialog';
@@ -35,15 +41,17 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [totalAmount, setTotalAmount] = useState('0');
   const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
+  const [name, debouncedName, setName] = useDebounce('', 400);
+  const [description, debouncedDescription, setDescription] = useDebounce(
+    '',
+    400,
+  );
   const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
 
   const toast = useRef<Toast>(null);
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions],
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({
@@ -63,10 +71,14 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
           size: rows,
           from_date: formatDate(dates[0]),
           to_date: formatDate(dates[1]),
+          name: debouncedName || undefined,
+          description: debouncedDescription || undefined,
         });
         const { amount }: { amount: string } = await api.getExpensesTotal({
           from_date: formatDate(dates[0]),
           to_date: formatDate(dates[1]),
+          name: debouncedName || undefined,
+          description: debouncedDescription || undefined,
         });
         setTotalAmount(amount);
         setExpenses(data);
@@ -77,7 +89,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
         setIsLoading(false);
       }
     },
-    [rows, dates],
+    [rows, dates, debouncedName, debouncedDescription],
   );
 
   useEffect(() => {
@@ -154,7 +166,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
   // Filter Templates
   const dateFilterTemplate = useCallback(
     () =>
-      hasPermission('service.filter.date') ? (
+      hasPermission('service.filter.date') || hasPermission('expense.filter.date') ? (
         <Calendar
           value={dates}
           onChange={(e) => setDates(e.value as Date[])}
@@ -168,28 +180,53 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
     [hasPermission, dates],
   );
 
+  const nameFilterTemplate = useCallback(
+    () => (
+      <InputText
+        placeholder="Ad ilə axtarış"
+        className="filter-input"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+    ),
+    [name, setName],
+  );
+
+  const descriptionFilterTemplate = useCallback(
+    () => (
+      <InputText
+        placeholder="Izah ilə axtarış"
+        className="filter-input"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
+    ),
+    [description, setDescription],
+  );
+
   const headerContent = useMemo(
-    () =>
-      hasPermission('expense.create') ? (
-        <TableHeader
-          onFilterToggle={() => setFilter((prev) => !prev)}
-          onRefresh={() => fetchData()}
-          leftContent={
-            <Message
-              className="info-message"
-              severity="info"
-              content={<div>{totalAmount} AZN</div>}
-            />
-          }
-          rightContent={
+    () => (
+      <TableHeader
+        onFilterToggle={() => setFilter((prev) => !prev)}
+        onRefresh={() => fetchData()}
+        leftContent={
+          <Message
+            className="info-message"
+            severity="info"
+            content={<div>{totalAmount} AZN</div>}
+          />
+        }
+        rightContent={
+          hasPermission('expense.create') ? (
             <Button
               label="Əlavə et"
               icon="pi pi-plus"
               onClick={() => setIsAddDialogVisible(true)}
             />
-          }
-        />
-      ) : null,
+          ) : null
+        }
+      />
+    ),
     [hasPermission, fetchData, totalAmount],
   );
 
@@ -214,15 +251,21 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
             filterElement={dateFilterTemplate}
           />
           <Column
+            field="name"
             header="Ad"
             body={nameBodyTemplate}
             style={{ minWidth: '12rem' }}
+            filter
+            filterElement={nameFilterTemplate}
             showFilterMenu={false}
           />
           <Column
+            field="description"
             header="Izah"
             body={descriptionBodyTemplate}
             style={{ minWidth: '12rem' }}
+            filter
+            filterElement={descriptionFilterTemplate}
             showFilterMenu={false}
           />
           <Column

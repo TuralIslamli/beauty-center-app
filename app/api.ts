@@ -7,11 +7,16 @@ import {
   IBookingTimeFields,
   IExpense,
   IExpenseFields,
+  IExpensesTableProps,
   ILoginFields,
   ILogsProps,
   INavigationProps,
   IReportsTableProps,
   IServiceFields,
+  IServiceCreditBankFields,
+  IServiceCreditFields,
+  IUpdateServiceCreditBank,
+  IServiceCreditsTableProps,
   IServiceType,
   IServiceTypeFields,
   IServicesTableProps,
@@ -141,21 +146,84 @@ export default {
     size,
     from_date,
     to_date,
-  }: IServicesTableProps): Promise<T> =>
+    name,
+    description,
+  }: IExpensesTableProps): Promise<T> =>
     axiosApi.get(`expenses?page=${page}&size=${size}&sort=desc`, {
       params: {
         from_date,
         to_date,
+        name,
+        description,
       },
     }),
+  getServiceCredits: <T>({
+    page,
+    size,
+    status,
+    from_date,
+    to_date,
+    client_name,
+    client_phone,
+  }: IServiceCreditsTableProps): Promise<T> =>
+    axiosApi.get(`service-credits?page=${page}&size=${size}&sort=desc`, {
+      params: {
+        status,
+        from_date,
+        to_date,
+        client_name,
+        client_phone,
+      },
+    }),
+  getServiceCredit: <T>(id: number): Promise<T> =>
+    axiosApi.get(`service-credits/${id}`),
+  createServiceCredit: <T>(payload: IServiceCreditFields): Promise<T> =>
+    axiosApi.post('service-credits', payload),
+  updateServiceCredit: <T>({ id, ...payload }: IServiceCreditFields): Promise<T> =>
+    axiosApi.put(`service-credits/${id}`, payload),
+  deleteServiceCredit: (id: number | undefined) =>
+    axiosApi.delete(`service-credits/${id}`),
+  getServiceCreditBankIncomes: <T>({
+    status,
+    from_date,
+    to_date,
+    client_name,
+    client_phone,
+  }: IServiceCreditsTableProps): Promise<T> =>
+    axiosApi.get('service-credits/bank-incomes', {
+      params: {
+        status,
+        from_date,
+        to_date,
+        client_name,
+        client_phone,
+      },
+    }),
+  getServiceCreditBanks: <T>(): Promise<T> =>
+    axiosApi.get('service-credit-banks'),
+  createServiceCreditBank: <T>({
+    name,
+  }: IServiceCreditBankFields): Promise<T> =>
+    axiosApi.post('service-credit-banks', { name }),
+  updateServiceCreditBank: <T>({
+    id,
+    name,
+  }: IUpdateServiceCreditBank): Promise<T> =>
+    axiosApi.put(`service-credit-banks/${id}`, { name }),
+  deleteServiceCreditBank: (id: number | undefined) =>
+    axiosApi.delete(`service-credit-banks/${id}`),
   getExpensesTotal: <T>({
     from_date,
     to_date,
-  }: IServicesTableProps): Promise<T> =>
+    name,
+    description,
+  }: IExpensesTableProps): Promise<T> =>
     axiosApi.get(`expenses/total-amount`, {
       params: {
         from_date,
         to_date,
+        name,
+        description,
       },
     }),
   getReports: <T>({

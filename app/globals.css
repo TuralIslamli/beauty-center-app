@@ -223,6 +223,71 @@
   gap: 0.25rem;
 }
 
+.credit-form-row > .form-field {
+  flex: 1;
+}
+
+.credit-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.credit-session-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(10rem, 1fr) minmax(12rem, 1.2fr) minmax(9rem, 0.8fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.credit-session-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--surface-100);
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.credit-session-doctor {
+  width: 100%;
+}
+
+.credit-session-status {
+  width: 100%;
+}
+
+.credit-session-field {
+  min-width: 0;
+}
+
+.credit-session-field > .p-calendar {
+  width: 100%;
+}
+
+.credit-bank-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.credit-bank-footer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.credit-bank-footer .p-inputtext {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ============================================
    Confirmation Dialog Styles
 ============================================ */

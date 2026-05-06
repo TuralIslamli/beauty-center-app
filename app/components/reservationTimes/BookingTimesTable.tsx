@@ -9,6 +9,7 @@ import { Toast } from 'primereact/toast';
 
 import api from '../../api';
 import { IBookingTime, IBookingTimeData } from '@/app/types';
+import { useHasPermission } from '@/app/utils';
 import { TableHeader } from '../shared';
 import AddDialog from './AddDialog';
 import DeleteDialog from './DeleteDialog';
@@ -28,10 +29,7 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
 
   const toast = useRef<Toast>(null);
 
-  const hasPermission = useCallback(
-    (permission: string) => userPermissions.includes(permission),
-    [userPermissions]
-  );
+  const hasPermission = useHasPermission(userPermissions);
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({
