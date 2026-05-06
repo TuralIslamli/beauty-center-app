@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tag } from 'primereact/tag';
 
-import { bookingStatuses } from '../consts';
+import { creditVisitStatuses } from './consts';
 import { ICredit } from './types';
 import { getBookingStatusSeverity, getVisitStatusCounts } from './utils';
 
@@ -15,7 +15,7 @@ const CreditStatusTags: React.FC<CreditStatusTagsProps> = ({ credit }) => {
   return (
     <div className="flex flex-column gap-1">
       {Object.entries(statusCounts).map(([statusId, count]) => {
-        const status = bookingStatuses.find(
+        const status = creditVisitStatuses.find(
           (item) => item.id === Number(statusId),
         );
 

@@ -18,6 +18,11 @@ export const sessionStatusToReservationStatus: Record<CreditSessionStatus, numbe
   pending: 2,
 };
 
+export const creditVisitStatuses = creditSessionStatuses.map((status) => ({
+  id: sessionStatusToReservationStatus[status.id],
+  name: status.name,
+}));
+
 export const reservationStatusToSessionStatus: Record<number, CreditSessionStatus> = {
   0: 'rejected',
   1: 'arrived',

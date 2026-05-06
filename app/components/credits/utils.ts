@@ -169,6 +169,7 @@ export const getVisitStatusCounts = (credit: ICredit): Record<number, number> =>
 export const getBookingStatusSeverity = (status?: string) => {
   switch (status) {
     case 'Ləğv':
+    case 'İmtina':
       return 'danger';
     case 'Gəldi':
       return 'warning';
