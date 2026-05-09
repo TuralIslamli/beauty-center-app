@@ -11,7 +11,7 @@ import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
 import { Tag } from 'primereact/tag';
-import { Dropdown } from 'primereact/dropdown';
+import { Checkbox, CheckboxChangeEvent } from 'primereact/checkbox';
 import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
@@ -62,10 +62,7 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
   const [editingCreditId, setEditingCreditId] = useState<number | null>(null);
   const [filter, setFilter] = useState(false);
-  const [filteredStatus, setFilteredStatus] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
+  const [filteredStatuses, setFilteredStatuses] = useState<number[]>([]);
   const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
   const [clientPhone, debouncedClientPhone, setClientPhone] = useDebounce('', 400);
   const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
@@ -105,7 +102,7 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
       const normalizedName = debouncedClientName.trim();
       const normalizedPhone = debouncedClientPhone.replace(/\D/g, '');
       const filters = {
-        status: filteredStatus?.id,
+        status: filteredStatuses.length ? filteredStatuses : undefined,
         from_date: fromDate,
         to_date: toDate,
         client_name: normalizedName || undefined,
@@ -147,7 +144,7 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
       dates,
       debouncedClientName,
       debouncedClientPhone,
-      filteredStatus?.id,
+      filteredStatuses,
       hasPermission,
     ],
   );
@@ -443,30 +440,40 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
     [clientPhone, setClientPhone],
   );
 
+  const handleStatusFilterChange = useCallback(
+    (statusId: number, event: CheckboxChangeEvent) => {
+      const isChecked = event.checked ?? false;
+
+      setFilteredStatuses((prev) =>
+        isChecked
+          ? Array.from(new Set([...prev, statusId]))
+          : prev.filter((id) => id !== statusId),
+      );
+      setPage(1);
+      setFirst(0);
+    },
+    [],
+  );
+
   const statusFilterTemplate = useCallback(
     () => (
-      <Dropdown
-        value={filteredStatus}
-        options={creditVisitStatuses}
-        onChange={(event) => {
-          setFilteredStatus(event.value);
-          setPage(1);
-          setFirst(0);
-        }}
-        itemTemplate={(option) => (
-          <Tag
-            value={option.name}
-            severity={getBookingStatusSeverity(option.name)}
-          />
-        )}
-        placeholder="Status"
-        className="p-column-filter"
-        showClear
-        style={{ minWidth: '10rem' }}
-        optionLabel="name"
-      />
+      <div className="credit-status-filter">
+        {creditVisitStatuses.map((status) => (
+          <label className="credit-status-filter-option" key={status.id}>
+            <Checkbox
+              inputId={`credit-status-filter-${status.id}`}
+              checked={filteredStatuses.includes(status.id)}
+              onChange={(event) => handleStatusFilterChange(status.id, event)}
+            />
+            <Tag
+              value={status.name}
+              severity={getBookingStatusSeverity(status.name)}
+            />
+          </label>
+        ))}
+      </div>
     ),
-    [filteredStatus],
+    [filteredStatuses, handleStatusFilterChange],
   );
 
   const totalContent = useMemo(

@@ -168,7 +168,7 @@ export default {
   }: IServiceCreditsTableProps): Promise<T> =>
     axiosApi.get(`service-credits?page=${page}&size=${size}&sort=desc`, {
       params: {
-        status,
+        status: status?.length ? `[${status.join(',')}]` : undefined,
         from_date,
         to_date,
         client_name,
@@ -192,7 +192,7 @@ export default {
   }: IServiceCreditsTableProps): Promise<T> =>
     axiosApi.get('service-credits/bank-incomes', {
       params: {
-        status,
+        status: status?.length ? `[${status.join(',')}]` : undefined,
         from_date,
         to_date,
         client_name,

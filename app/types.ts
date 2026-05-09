@@ -109,7 +109,7 @@ export interface IBookingTableProps extends INavigationProps {
 }
 
 export interface IServiceCreditsTableProps extends INavigationProps {
-  status?: number;
+  status?: number[];
   from_date?: string;
   to_date?: string;
   client_name?: string;
