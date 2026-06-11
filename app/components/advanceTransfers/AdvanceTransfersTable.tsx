@@ -44,11 +44,14 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({
   const fetchData = useCallback(
     async (currentPage: number) => {
       try {
+        const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+        const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
         const { data, meta }: IAdvanceListData = await api.getAdvances({
           page: currentPage,
           size: rows,
-          from_date: formatDate(dates[0]),
-          to_date: formatDate(dates[1]),
+          from_date: fromDate,
+          to_date: toDate,
         });
         setAdvanceList(data);
         setTotal(meta?.total);
@@ -60,9 +63,9 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({
   );
 
   useEffect(() => {
-    if (dates[1]) {
-      fetchData(page);
-    }
+    if (dates[0] && !dates[1]) return;
+
+    fetchData(page);
   }, [fetchData, dates, page]);
 
   const handlePageChange = useCallback(
@@ -99,11 +102,18 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({
       hasPermission('service.filter.date') ? (
         <Calendar
           value={dates}
-          onChange={(e) => setDates(e.value as Date[])}
+          onChange={(e) => {
+            setDates((e.value as Date[]) ?? []);
+            setPage(1);
+            setFirst(0);
+          }}
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
+          showButtonBar
           className="filter-calendar"
+          panelClassName="filter-calendar-panel"
+          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

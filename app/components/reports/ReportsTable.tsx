@@ -68,9 +68,12 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ userPermissions }) => {
   const getReports = useCallback(async () => {
     setIsLoading(true);
     try {
+      const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+      const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
       const { data }: IReportsData = await api.getReports({
-        from_date: formatDate(dates[0]),
-        to_date: formatDate(dates[1]),
+        from_date: fromDate,
+        to_date: toDate,
         client_name: debouncedClientName,
         client_phone: debouncedClientPhone,
         user_id: doctor?.id,
@@ -80,8 +83,8 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ userPermissions }) => {
 
       if (hasPermission('service.advance.info')) {
         const total: ITotalAmount = await api.getTotalAmount({
-          from_date: formatDate(dates[0]),
-          to_date: formatDate(dates[1]),
+          from_date: fromDate,
+          to_date: toDate,
           client_name: debouncedClientName,
           client_phone: debouncedClientPhone,
           user_id: doctor?.id,
@@ -102,9 +105,9 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ userPermissions }) => {
   ]);
 
   useEffect(() => {
-    if (dates[1]) {
-      getReports();
-    }
+    if (dates[0] && !dates[1]) return;
+
+    getReports();
   }, [getReports]);
 
   useEffect(() => {
@@ -178,11 +181,14 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ userPermissions }) => {
       hasPermission('service.filter.date') ? (
         <Calendar
           value={dates}
-          onChange={(e) => setDates(e.value as Date[])}
+          onChange={(e) => setDates((e.value as Date[]) ?? [])}
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
+          showButtonBar
           className="filter-calendar"
+          panelClassName="filter-calendar-panel"
+          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

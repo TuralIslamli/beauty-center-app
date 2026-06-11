@@ -107,8 +107,11 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
 
   const isDoctor = role?.id === 4;
   const areDatesEqual =
-    dates.length === 2 && isSameDay(new Date(dates[0]), new Date(dates[1]));
-  const isTodayDate = isToday(new Date(dates[0]));
+    dates.length === 2 &&
+    !!dates[0] &&
+    !!dates[1] &&
+    isSameDay(new Date(dates[0]), new Date(dates[1]));
+  const isTodayDate = dates[0] ? isToday(new Date(dates[0])) : false;
 
   const hasPermission = useHasPermission(userPermissions);
 
@@ -125,12 +128,15 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
     async (currentPage: number, isOnPageChange = false) => {
       setIsLoading(true);
       try {
+        const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+        const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
         const { data, meta }: IServicesData = await api.getServices({
           page: currentPage,
           size: rows,
           status: filteredStatus?.id,
-          from_date: formatDate(dates[0]),
-          to_date: formatDate(dates[1]),
+          from_date: fromDate,
+          to_date: toDate,
           client_name: debouncedClientName,
           client_phone: debouncedClientPhone,
           service_types: serviceTypesFilter?.map((i) => i.id),
@@ -140,17 +146,19 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
         setServices(data);
         setTotal(meta?.total);
 
-        if (hasPermission('service.get_all.total_amount')) {
+        if (hasPermission('service.get_all.total_amount') && fromDate) {
           const { data: advanceInfoData }: IAdvanceInfoRs =
-            await api.getAdvanceInfo(formatDate(dates[0]));
+            await api.getAdvanceInfo(fromDate);
           setAdvanceInfo(advanceInfoData);
+        } else {
+          setAdvanceInfo(undefined);
         }
 
         if (hasPermission('service.advance.info')) {
           const totalData: ITotalAmount = await api.getTotalAmount({
             status: filteredStatus?.id,
-            from_date: formatDate(dates[0]),
-            to_date: formatDate(dates[1]),
+            from_date: fromDate,
+            to_date: toDate,
             client_name: debouncedClientName,
             client_phone: debouncedClientPhone,
             service_types: serviceTypesFilter?.map((i) => i.id),
@@ -183,9 +191,9 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
   );
 
   useEffect(() => {
-    if (dates[1]) {
-      getServices(page);
-    }
+    if (dates[0] && !dates[1]) return;
+
+    getServices(page);
   }, [
     filteredStatus?.name,
     dates,
@@ -229,10 +237,13 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
   }, []);
 
   const handleExportAll = useCallback(() => {
+    const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+    const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
     api.getAllReportsExcel({
       status: filteredStatus?.id,
-      from_date: formatDate(dates[0]),
-      to_date: formatDate(dates[1]),
+      from_date: fromDate,
+      to_date: toDate,
       client_name: debouncedClientName,
       client_phone: debouncedClientPhone,
       service_types: serviceTypesFilter?.map((i) => i.id),
@@ -248,12 +259,13 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
   ]);
 
   const handleAdvanceTransfer = useCallback(async () => {
+    const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+    if (!fromDate) return;
+
     try {
       await api.advanceTransfer();
       setIsAdvanceTransferDialogVisible(false);
-      const { data }: IAdvanceInfoRs = await api.getAdvanceInfo(
-        formatDate(dates[0]),
-      );
+      const { data }: IAdvanceInfoRs = await api.getAdvanceInfo(fromDate);
       setAdvanceInfo(data);
       showSuccess('Növbə bağlandı');
     } catch (error) {
@@ -262,11 +274,12 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
   }, [dates, showSuccess]);
 
   const handleAdvanceCancel = useCallback(async () => {
+    const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+    if (!fromDate) return;
+
     try {
-      await api.advanceCancel(formatDate(dates[0]));
-      const { data }: IAdvanceInfoRs = await api.getAdvanceInfo(
-        formatDate(dates[0]),
-      );
+      await api.advanceCancel(fromDate);
+      const { data }: IAdvanceInfoRs = await api.getAdvanceInfo(fromDate);
       setAdvanceInfo(data);
       showSuccess('Növbə yenidən açıldı');
     } catch (error) {
@@ -439,11 +452,18 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
       hasPermission('service.filter.date') ? (
         <Calendar
           value={dates}
-          onChange={(e) => setDates(e.value as Date[])}
+          onChange={(e) => {
+            setDates((e.value as Date[]) ?? []);
+            setPage(1);
+            setFirst(0);
+          }}
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
+          showButtonBar
           className="filter-calendar"
+          panelClassName="filter-calendar-panel"
+          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

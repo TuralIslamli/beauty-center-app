@@ -75,8 +75,8 @@ export interface IServiceTypesTableProps extends INavigationProps {
 
 export interface IServicesTableProps extends INavigationProps {
   status?: number;
-  from_date: string;
-  to_date: string;
+  from_date?: string;
+  to_date?: string;
   client_name?: string;
   client_phone?: number | null;
   service_types?: IServiceType[] | number[];
@@ -84,15 +84,15 @@ export interface IServicesTableProps extends INavigationProps {
 }
 
 export interface IExpensesTableProps extends INavigationProps {
-  from_date: string;
-  to_date: string;
+  from_date?: string;
+  to_date?: string;
   name?: string;
   description?: string;
 }
 
 export interface IReportsTableProps extends INavigationProps {
-  from_date: string;
-  to_date: string;
+  from_date?: string;
+  to_date?: string;
   client_name?: string;
   client_phone?: number | null;
   user_id?: number;
@@ -100,8 +100,8 @@ export interface IReportsTableProps extends INavigationProps {
 
 export interface IBookingTableProps extends INavigationProps {
   status?: number;
-  from_date: string;
-  to_date: string;
+  from_date?: string;
+  to_date?: string;
   client_name?: string;
   client_phone?: number | null;
   service_types?: IServiceType[] | number[];
@@ -114,6 +114,7 @@ export interface IServiceCreditsTableProps extends INavigationProps {
   to_date?: string;
   client_name?: string;
   client_phone?: string;
+  doctor_id?: number;
 }
 
 export interface IServiceCreditBank {

@@ -28,9 +28,12 @@ const BonusesTable: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
+      const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+      const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
       const { data }: IBonusesRS = await api.getBonuses({
-        from_date: formatDate(dates[0]),
-        to_date: formatDate(dates[1]),
+        from_date: fromDate,
+        to_date: toDate,
         user_id: doctor?.id,
       });
       const { data: coefficientData }: IBonusesCoefficientRS = await api.getBonusesCoefficient();
@@ -42,9 +45,9 @@ const BonusesTable: React.FC = () => {
   }, [dates, doctor?.id]);
 
   useEffect(() => {
-    if (dates[1]) {
-      fetchData();
-    }
+    if (dates[0] && !dates[1]) return;
+
+    fetchData();
   }, [fetchData]);
 
   useEffect(() => {
@@ -88,9 +91,12 @@ const BonusesTable: React.FC = () => {
   ), [calculateBonus]);
 
   const handleExport = useCallback(() => {
+    const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+    const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
     api.getBonusesExcel({
-      from_date: formatDate(dates[0]),
-      to_date: formatDate(dates[1]),
+      from_date: fromDate,
+      to_date: toDate,
       user_id: doctor?.id,
     });
   }, [dates, doctor?.id]);
@@ -115,11 +121,14 @@ const BonusesTable: React.FC = () => {
         <div className="flex align-center gap-3">
           <Calendar
             value={dates}
-            onChange={(e) => setDates(e.value as Date[])}
+            onChange={(e) => setDates((e.value as Date[]) ?? [])}
             selectionMode="range"
             readOnlyInput
             hideOnRangeSelection
+            showButtonBar
             className="filter-calendar"
+            panelClassName="filter-calendar-panel"
+            appendTo={typeof document !== 'undefined' ? document.body : undefined}
             dateFormat="dd/mm/yy"
           />
           <Dropdown

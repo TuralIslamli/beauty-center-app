@@ -16,9 +16,11 @@ import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
+import { Dropdown } from 'primereact/dropdown';
 import { useDebounce } from 'primereact/hooks';
 
 import api from '@/app/api';
+import { IDoctor, IDoctorRS } from '@/app/types';
 import {
   formatDate,
   formatPhone,
@@ -63,6 +65,8 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
   const [editingCreditId, setEditingCreditId] = useState<number | null>(null);
   const [filter, setFilter] = useState(false);
   const [filteredStatuses, setFilteredStatuses] = useState<number[]>([]);
+  const [doctors, setDoctors] = useState<IDoctor[]>([]);
+  const [doctor, setDoctor] = useState<IDoctor>();
   const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
   const [clientPhone, debouncedClientPhone, setClientPhone] = useDebounce('', 400);
   const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
@@ -107,6 +111,7 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
         to_date: toDate,
         client_name: normalizedName || undefined,
         client_phone: normalizedPhone || undefined,
+        doctor_id: doctor?.id,
       };
 
       setIsLoading(true);
@@ -144,10 +149,25 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
       dates,
       debouncedClientName,
       debouncedClientPhone,
+      doctor?.id,
       filteredStatuses,
       hasPermission,
     ],
   );
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const { data }: IDoctorRS = await api.getDoctors();
+        setDoctors(data ?? []);
+      } catch (error) {
+        console.error('Failed to fetch doctors:', error);
+        setDoctors([]);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   useEffect(() => {
     if (dates[0] && !dates[1]) return;
@@ -322,6 +342,42 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
     [isLoading],
   );
 
+  const getCreditDoctors = useCallback((credit: ICredit) => {
+    const creditDoctors = new Map<number, string>();
+
+    credit.visits?.forEach((visit) => {
+      if (!visit.doctor) return;
+
+      const fullName = `${visit.doctor.name} ${visit.doctor.surname}`.trim();
+
+      if (fullName) {
+        creditDoctors.set(visit.doctor.id, fullName);
+      }
+    });
+
+    credit.sessions?.forEach((session) => {
+      if (session.doctor?.id && session.doctor.full_name) {
+        creditDoctors.set(session.doctor.id, session.doctor.full_name);
+      }
+    });
+
+    return Array.from(creditDoctors, ([id, name]) => ({ id, name }));
+  }, []);
+
+  const doctorBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? (
+        <Skeleton width="100px" />
+      ) : (
+        <div>
+          {getCreditDoctors(rowData).map((creditDoctor) => (
+            <div key={creditDoctor.id}>{creditDoctor.name}</div>
+          ))}
+        </div>
+      ),
+    [getCreditDoctors, isLoading],
+  );
+
   const sessionsCountBodyTemplate = useCallback(
     (rowData: ICredit) =>
       isLoading ? (
@@ -402,6 +458,8 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
         hideOnRangeSelection
         showButtonBar
         className="filter-calendar"
+        panelClassName="filter-calendar-panel"
+        appendTo={typeof document !== 'undefined' ? document.body : undefined}
         dateFormat="dd/mm/yy"
       />
     ),
@@ -476,6 +534,25 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
     [filteredStatuses, handleStatusFilterChange],
   );
 
+  const doctorFilterTemplate = useCallback(
+    () => (
+      <Dropdown
+        filter
+        value={doctor}
+        onChange={(event) => {
+          setDoctor(event.value ?? undefined);
+          setPage(1);
+          setFirst(0);
+        }}
+        options={doctors}
+        placeholder="Həkim seçin"
+        optionLabel="full_name"
+        showClear
+      />
+    ),
+    [doctor, doctors],
+  );
+
   const totalContent = useMemo(
     () => (
       <div className="total-info-content">
@@ -532,6 +609,14 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
             showFilterMenu={false}
             filter
             filterElement={statusFilterTemplate}
+          />
+          <Column
+            header="Həkim"
+            body={doctorBodyTemplate}
+            style={{ minWidth: '12rem' }}
+            showFilterMenu={false}
+            filter
+            filterElement={doctorFilterTemplate}
           />
           <Column
             header="Seans sayı"

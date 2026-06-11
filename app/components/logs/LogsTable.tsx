@@ -29,9 +29,12 @@ const LogsTable: React.FC<LogsTableProps> = ({ userPermissions }) => {
   const getLogs = useCallback(async (page = 1) => {
     setIsLoading(true);
     try {
+      const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+      const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
       const { data, meta }: ILogsData = await api.getLogs({
-        from_date: formatDate(dates[0]),
-        to_date: formatDate(dates[1]),
+        from_date: fromDate,
+        to_date: toDate,
         page,
       });
       setLogs(data);
@@ -44,9 +47,9 @@ const LogsTable: React.FC<LogsTableProps> = ({ userPermissions }) => {
   }, [dates]);
 
   useEffect(() => {
-    if (dates[1]) {
-      getLogs();
-    }
+    if (dates[0] && !dates[1]) return;
+
+    getLogs();
   }, [getLogs]);
 
   const handlePageChange = useCallback((event: PaginatorPageChangeEvent) => {
@@ -139,11 +142,17 @@ const LogsTable: React.FC<LogsTableProps> = ({ userPermissions }) => {
       leftContent={
         <Calendar
           value={dates}
-          onChange={(e) => setDates(e.value as Date[])}
+          onChange={(e) => {
+            setDates((e.value as Date[]) ?? []);
+            setFirst(0);
+          }}
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
+          showButtonBar
           className="filter-calendar"
+          panelClassName="filter-calendar-panel"
+          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       }

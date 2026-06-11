@@ -81,10 +81,13 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
     async (isOnPageChange = false) => {
       setIsLoading(true);
       try {
+        const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+        const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
         const { data }: IBookingsData = await api.getBookings({
           status: filteredStatus?.id,
-          from_date: formatDate(dates[0]),
-          to_date: formatDate(dates[1]),
+          from_date: fromDate,
+          to_date: toDate,
           client_name: debouncedClientName,
           client_phone: debouncedClientPhone,
         });
@@ -103,9 +106,9 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
   );
 
   useEffect(() => {
-    if (dates[1]) {
-      getBookings();
-    }
+    if (dates[0] && !dates[1]) return;
+
+    getBookings();
   }, [
     filteredStatus?.name,
     dates,
@@ -288,11 +291,14 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
             hasPermission('reservation.get_past_data') ? undefined : new Date()
           }
           value={dates}
-          onChange={(e) => setDates(e.value as Date[])}
+          onChange={(e) => setDates((e.value as Date[]) ?? [])}
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
+          showButtonBar
           className="filter-calendar"
+          panelClassName="filter-calendar-panel"
+          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

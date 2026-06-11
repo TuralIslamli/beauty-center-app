@@ -203,6 +203,21 @@
   width: 13.75rem;
 }
 
+.filter-calendar-panel .p-datepicker-buttonbar {
+  display: flex !important;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.filter-calendar-panel .p-datepicker-buttonbar .p-button {
+  display: inline-flex !important;
+  width: auto;
+}
+
+.filter-calendar-panel .p-datepicker-buttonbar .p-button-label {
+  display: inline !important;
+}
+
 .credit-status-filter {
   display: flex;
   flex-direction: column;

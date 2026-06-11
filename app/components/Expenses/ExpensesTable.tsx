@@ -66,17 +66,20 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
     async (page = 1) => {
       setIsLoading(true);
       try {
+        const fromDate = dates[0] ? formatDate(dates[0]) : undefined;
+        const toDate = dates[1] ? formatDate(dates[1]) : fromDate;
+
         const { data, meta }: IExpensesData = await api.getExpenses({
           page,
           size: rows,
-          from_date: formatDate(dates[0]),
-          to_date: formatDate(dates[1]),
+          from_date: fromDate,
+          to_date: toDate,
           name: debouncedName || undefined,
           description: debouncedDescription || undefined,
         });
         const { amount }: { amount: string } = await api.getExpensesTotal({
-          from_date: formatDate(dates[0]),
-          to_date: formatDate(dates[1]),
+          from_date: fromDate,
+          to_date: toDate,
           name: debouncedName || undefined,
           description: debouncedDescription || undefined,
         });
@@ -93,9 +96,9 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
   );
 
   useEffect(() => {
-    if (dates[1]) {
-      fetchData();
-    }
+    if (dates[0] && !dates[1]) return;
+
+    fetchData();
   }, [fetchData]);
 
   const handlePageChange = useCallback(
@@ -169,11 +172,17 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
       hasPermission('service.filter.date') || hasPermission('expense.filter.date') ? (
         <Calendar
           value={dates}
-          onChange={(e) => setDates(e.value as Date[])}
+          onChange={(e) => {
+            setDates((e.value as Date[]) ?? []);
+            setFirst(0);
+          }}
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
+          showButtonBar
           className="filter-calendar"
+          panelClassName="filter-calendar-panel"
+          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

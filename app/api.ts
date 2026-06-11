@@ -165,6 +165,7 @@ export default {
     to_date,
     client_name,
     client_phone,
+    doctor_id,
   }: IServiceCreditsTableProps): Promise<T> =>
     axiosApi.get(`service-credits?page=${page}&size=${size}&sort=desc`, {
       params: {
@@ -173,6 +174,7 @@ export default {
         to_date,
         client_name,
         client_phone,
+        doctor_id,
       },
     }),
   getServiceCredit: <T>(id: number): Promise<T> =>
@@ -189,6 +191,7 @@ export default {
     to_date,
     client_name,
     client_phone,
+    doctor_id,
   }: IServiceCreditsTableProps): Promise<T> =>
     axiosApi.get('service-credits/bank-incomes', {
       params: {
@@ -197,6 +200,7 @@ export default {
         to_date,
         client_name,
         client_phone,
+        doctor_id,
       },
     }),
   getServiceCreditBanks: <T>(): Promise<T> =>
