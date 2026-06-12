@@ -218,6 +218,10 @@
   display: inline !important;
 }
 
+.filter-calendar-panel-header {
+  display: none;
+}
+
 .credit-status-filter {
   display: flex;
   flex-direction: column;

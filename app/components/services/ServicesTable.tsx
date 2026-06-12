@@ -13,7 +13,6 @@ import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
 import { Tag } from 'primereact/tag';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
-import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Message } from 'primereact/message';
@@ -46,7 +45,7 @@ import {
   isTodayString,
   useHasPermission,
 } from '@/app/utils';
-import { TableHeader, ConfirmDialog } from '../shared';
+import { FilterDateCalendar, TableHeader, ConfirmDialog } from '../shared';
 import CreateUpdateDialog from './CreateUpdateDialog';
 import ReportsDialog from './ReportsDialog';
 import DeleteServiceDialog from './DeleteServiceDialog';
@@ -450,7 +449,7 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
   const dateFilterTemplate = useCallback(
     () =>
       hasPermission('service.filter.date') ? (
-        <Calendar
+        <FilterDateCalendar
           value={dates}
           onChange={(e) => {
             setDates((e.value as Date[]) ?? []);
@@ -460,10 +459,6 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
-          showButtonBar
-          className="filter-calendar"
-          panelClassName="filter-calendar-panel"
-          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

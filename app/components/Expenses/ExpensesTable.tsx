@@ -10,7 +10,6 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { Skeleton } from 'primereact/skeleton';
 import { Message } from 'primereact/message';
@@ -23,7 +22,7 @@ import {
   formatPrice,
   useHasPermission,
 } from '@/app/utils';
-import { TableHeader } from '../shared';
+import { FilterDateCalendar, TableHeader } from '../shared';
 import AddDialog from './AddDialog';
 import DeleteDialog from './DeleteDialog';
 
@@ -170,7 +169,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
   const dateFilterTemplate = useCallback(
     () =>
       hasPermission('service.filter.date') || hasPermission('expense.filter.date') ? (
-        <Calendar
+        <FilterDateCalendar
           value={dates}
           onChange={(e) => {
             setDates((e.value as Date[]) ?? []);
@@ -179,10 +178,6 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ userPermissions }) => {
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
-          showButtonBar
-          className="filter-calendar"
-          panelClassName="filter-calendar-panel"
-          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

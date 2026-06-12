@@ -13,7 +13,6 @@ import {
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { Calendar } from 'primereact/calendar';
 import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
 import { InputText } from 'primereact/inputtext';
@@ -38,7 +37,7 @@ import {
   haveFilterPermissions,
   useHasPermission,
 } from '@/app/utils';
-import { TableHeader } from '../shared';
+import { FilterDateCalendar, TableHeader } from '../shared';
 
 interface ReportsTableProps {
   userPermissions: string[];
@@ -179,16 +178,12 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ userPermissions }) => {
   const dateFilterTemplate = useCallback(
     () =>
       hasPermission('service.filter.date') ? (
-        <Calendar
+        <FilterDateCalendar
           value={dates}
           onChange={(e) => setDates((e.value as Date[]) ?? [])}
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
-          showButtonBar
-          className="filter-calendar"
-          panelClassName="filter-calendar-panel"
-          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

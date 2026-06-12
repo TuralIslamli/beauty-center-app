@@ -12,7 +12,6 @@ import { Toast } from 'primereact/toast';
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
 import { Tag } from 'primereact/tag';
 import { Checkbox, CheckboxChangeEvent } from 'primereact/checkbox';
-import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
@@ -27,7 +26,7 @@ import {
   formatPrice,
   useHasPermission,
 } from '@/app/utils';
-import { TableHeader } from '../shared';
+import { FilterDateCalendar, TableHeader } from '../shared';
 import CreateCreditDialog from './CreateCreditDialog';
 import CreditBankIncomeSummary from './CreditBankIncomeSummary';
 import CreditDeleteDialog from './CreditDeleteDialog';
@@ -446,7 +445,7 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
 
   const dateFilterTemplate = useCallback(
     () => (
-      <Calendar
+      <FilterDateCalendar
         value={dates}
         onChange={(event) => {
           setDates((event.value as Date[]) ?? []);
@@ -456,10 +455,6 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
         selectionMode="range"
         readOnlyInput
         hideOnRangeSelection
-        showButtonBar
-        className="filter-calendar"
-        panelClassName="filter-calendar-panel"
-        appendTo={typeof document !== 'undefined' ? document.body : undefined}
         dateFormat="dd/mm/yy"
       />
     ),

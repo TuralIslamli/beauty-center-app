@@ -3,7 +3,6 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
-import { Calendar } from 'primereact/calendar';
 import { Skeleton } from 'primereact/skeleton';
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
 import { JSONTree } from 'react-json-tree';
@@ -11,7 +10,7 @@ import { JSONTree } from 'react-json-tree';
 import api from '../../api';
 import { ILog, ILogsData, IService } from '../../types';
 import { formatDate, formatPrice } from '@/app/utils';
-import { TableHeader } from '../shared';
+import { FilterDateCalendar, TableHeader } from '../shared';
 
 interface LogsTableProps {
   userPermissions: string[];
@@ -140,7 +139,7 @@ const LogsTable: React.FC<LogsTableProps> = ({ userPermissions }) => {
   const headerContent = useMemo(() => (
     <TableHeader
       leftContent={
-        <Calendar
+        <FilterDateCalendar
           value={dates}
           onChange={(e) => {
             setDates((e.value as Date[]) ?? []);
@@ -149,10 +148,6 @@ const LogsTable: React.FC<LogsTableProps> = ({ userPermissions }) => {
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
-          showButtonBar
-          className="filter-calendar"
-          panelClassName="filter-calendar-panel"
-          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       }

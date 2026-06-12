@@ -9,7 +9,6 @@ import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
 import { Toast } from 'primereact/toast';
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
-import { Calendar } from 'primereact/calendar';
 
 import api from '../../api';
 import { IAdvanceInfo, IAdvanceListData } from '../../types';
@@ -20,7 +19,7 @@ import {
   getDaysAgo,
   useHasPermission,
 } from '@/app/utils';
-import { TableHeader } from '../shared';
+import { FilterDateCalendar, TableHeader } from '../shared';
 
 interface AdvanceTransfersTableProps {
   userPermissions: string[];
@@ -100,7 +99,7 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({
   const dateFilterTemplate = useCallback(
     () =>
       hasPermission('service.filter.date') ? (
-        <Calendar
+        <FilterDateCalendar
           value={dates}
           onChange={(e) => {
             setDates((e.value as Date[]) ?? []);
@@ -110,10 +109,6 @@ const AdvanceTransfersTable: React.FC<AdvanceTransfersTableProps> = ({
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
-          showButtonBar
-          className="filter-calendar"
-          panelClassName="filter-calendar-panel"
-          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,

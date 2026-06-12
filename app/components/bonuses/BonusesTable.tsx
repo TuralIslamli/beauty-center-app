@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { DataTable, DataTableExpandedRows } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
-import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 
@@ -16,7 +15,7 @@ import {
   IPerDayBonus,
 } from '@/app/types';
 import { formatDate, formatPrice } from '@/app/utils';
-import { TableHeader } from '../shared';
+import { FilterDateCalendar, TableHeader } from '../shared';
 
 const BonusesTable: React.FC = () => {
   const [bonuses, setBonuses] = useState<IBonus[]>();
@@ -119,16 +118,12 @@ const BonusesTable: React.FC = () => {
     <TableHeader
       leftContent={
         <div className="flex align-center gap-3">
-          <Calendar
+          <FilterDateCalendar
             value={dates}
             onChange={(e) => setDates((e.value as Date[]) ?? [])}
             selectionMode="range"
             readOnlyInput
             hideOnRangeSelection
-            showButtonBar
-            className="filter-calendar"
-            panelClassName="filter-calendar-panel"
-            appendTo={typeof document !== 'undefined' ? document.body : undefined}
             dateFormat="dd/mm/yy"
           />
           <Dropdown

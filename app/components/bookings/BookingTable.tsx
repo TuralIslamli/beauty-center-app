@@ -12,7 +12,6 @@ import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
-import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Skeleton } from 'primereact/skeleton';
@@ -28,7 +27,7 @@ import {
   haveFilterPermissions,
   useHasPermission,
 } from '@/app/utils';
-import { TableHeader } from '../shared';
+import { FilterDateCalendar, TableHeader } from '../shared';
 import CreateUpdateDialog from './CreateUpdateDialog';
 import DeleteBookingDialog from './DeleteBookingDialoq';
 
@@ -286,7 +285,7 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
   const dateFilterTemplate = useCallback(
     () =>
       hasPermission('reservation.filter.date') ? (
-        <Calendar
+        <FilterDateCalendar
           minDate={
             hasPermission('reservation.get_past_data') ? undefined : new Date()
           }
@@ -295,10 +294,6 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
           selectionMode="range"
           readOnlyInput
           hideOnRangeSelection
-          showButtonBar
-          className="filter-calendar"
-          panelClassName="filter-calendar-panel"
-          appendTo={typeof document !== 'undefined' ? document.body : undefined}
           dateFormat="dd/mm/yy"
         />
       ) : null,
