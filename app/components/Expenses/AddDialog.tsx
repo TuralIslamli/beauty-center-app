@@ -28,7 +28,7 @@ const AddDialog: React.FC<AddDialogProps> = ({
     control,
     setValue,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     reset,
   } = useForm<IExpenseFields>();
 
@@ -114,7 +114,12 @@ const AddDialog: React.FC<AddDialogProps> = ({
         </FormField>
 
         <div className="dialog-footer">
-          <Button label="Saxla" type="submit" />
+          <Button
+            label="Saxla"
+            type="submit"
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          />
         </div>
       </form>
     </Dialog>
