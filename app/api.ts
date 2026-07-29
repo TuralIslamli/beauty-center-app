@@ -25,6 +25,16 @@ import {
   IUserFields,
 } from './types';
 
+// The API expects a single comma separated param: service_types[]=61,84,103
+// (axios would otherwise serialize an array as service_types[]=61&service_types[]=84)
+const serviceTypesParams = (service_types?: IServiceType[] | number[]) => {
+  const ids = (service_types as (IServiceType | number)[] | undefined)?.map(
+    (i) => (typeof i === 'number' ? i : i.id)
+  );
+
+  return ids?.length ? { 'service_types[]': ids.join(',') } : {};
+};
+
 export default {
   postLogin: <T>(payload: ILoginFields): Promise<T> =>
     axiosApi.post('login', payload),
@@ -115,7 +125,7 @@ export default {
         to_date,
         client_name,
         client_phone,
-        service_types,
+        ...serviceTypesParams(service_types),
         doctor_id,
       },
     }),
@@ -137,7 +147,7 @@ export default {
         to_date,
         client_name,
         client_phone,
-        service_types,
+        ...serviceTypesParams(service_types),
         user_id,
       },
     }),
@@ -294,7 +304,7 @@ export default {
         to_date,
         client_name,
         client_phone,
-        service_types,
+        ...serviceTypesParams(service_types),
         user_id,
       },
     }),
@@ -356,7 +366,7 @@ export default {
             to_date,
             client_name,
             client_phone,
-            service_types,
+            ...serviceTypesParams(service_types),
             user_id,
           },
         })

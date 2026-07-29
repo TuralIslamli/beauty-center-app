@@ -198,7 +198,7 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
     dates,
     debouncedClientName,
     debouncedClientPhone,
-    serviceTypesFilter?.length,
+    serviceTypesFilter?.map((i) => i.id).join(','),
     doctor,
   ]);
 
