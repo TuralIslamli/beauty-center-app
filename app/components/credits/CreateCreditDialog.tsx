@@ -17,7 +17,7 @@ import {
   IServiceTypeRS,
 } from '@/app/types';
 import { useHasPermission } from '@/app/utils';
-import { FormField } from '../shared';
+import { FormField, useSelectedFirstOptions } from '../shared';
 import {
   createDefaultCreditSessions,
   DEFAULT_CREDIT_SESSION_COUNT,
@@ -123,6 +123,11 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   const totalPrice = useMemo(
     () => selectedServiceTypes.reduce((sum, service) => sum + Number(service.price || 0), 0),
     [selectedServiceTypes],
+  );
+
+  const serviceTypeOptions = useSelectedFirstOptions(
+    serviceTypes,
+    selectedServiceTypes,
   );
 
   const resetForm = useCallback(() => {
@@ -567,7 +572,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
               setSelectedServiceTypes(event.value);
               clearFieldError('serviceTypes');
             }}
-            options={serviceTypes}
+            {...serviceTypeOptions}
             dataKey="id"
             optionLabel="name"
             placeholder="Xidmət seçin"

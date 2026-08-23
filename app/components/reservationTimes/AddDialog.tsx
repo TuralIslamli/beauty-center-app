@@ -8,12 +8,14 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import api from '../../api';
 import { IBookingTimeFields, IBookingTime, IBookingTimeData } from '@/app/types';
 import { FormField } from '../shared';
+import { ReservationType } from '../reservationTypes';
 
 interface AddDialogProps {
   visible: boolean;
   onHide: () => void;
   onSuccess: (message: string) => void;
   setBookingTimes: Dispatch<SetStateAction<IBookingTime[]>>;
+  reservationType: ReservationType;
 }
 
 const AddDialog: React.FC<AddDialogProps> = ({
@@ -21,6 +23,7 @@ const AddDialog: React.FC<AddDialogProps> = ({
   onHide,
   onSuccess,
   setBookingTimes,
+  reservationType,
 }) => {
   const {
     control,
@@ -42,6 +45,7 @@ const AddDialog: React.FC<AddDialogProps> = ({
       const { data }: IBookingTimeData = await api.createBookingTime({
         reservation_count,
         time,
+        reservation_type: reservationType,
       });
       setBookingTimes((prev) => [...prev, data as unknown as IBookingTime]);
       onSuccess('Rezervasiya saatı uğurla yaradıldı');
@@ -49,7 +53,7 @@ const AddDialog: React.FC<AddDialogProps> = ({
     } catch (error) {
       console.error('Failed to create booking time:', error);
     }
-  }, [setBookingTimes, onSuccess, handleFormHide]);
+  }, [setBookingTimes, onSuccess, handleFormHide, reservationType]);
 
   return (
     <Dialog

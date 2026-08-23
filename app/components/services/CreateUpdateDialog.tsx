@@ -21,9 +21,9 @@ import {
   IServiceType,
   IServiceTypeRS,
 } from '@/app/types';
-import { serviceStatuses } from '../consts';
+import { serviceStatuses, PERFORMER_ROLE_IDS } from '../consts';
 import { useHasPermission } from '@/app/utils';
-import { FormField } from '../shared';
+import { FormField, useSelectedFirstOptions } from '../shared';
 
 interface CreateUpdateDialogProps {
   visible: boolean;
@@ -62,7 +62,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>();
 
-  const isDoctor = role?.id === 4;
+  const isPerformer = PERFORMER_ROLE_IDS.includes(role?.id);
 
   const hasPermission = useHasPermission(userPermissions);
 
@@ -190,7 +190,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
 
       const actualStatus = service.status !== 0
         ? serviceStatuses.find((status) => status?.id === service.status)
-        : isDoctor
+        : isPerformer
           ? { id: 0, name: 'New' }
           : { id: 1, name: 'Accepted' };
 
@@ -198,7 +198,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       setSelectedStatus(actualStatus);
       setSelectedDoctor(doctors?.find((doc) => doc.id === service.user?.id));
     }
-  }, [service, setValue, doctors, isDoctor, splitClientName]);
+  }, [service, setValue, doctors, isPerformer, splitClientName]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -223,6 +223,11 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       setValue('service_types', service.service_types.map((i) => ({ id: i.id })));
     }
   }, [serviceTypes, service?.service_types, setValue]);
+
+  const serviceTypeOptions = useSelectedFirstOptions(
+    serviceTypes,
+    selectedServiceTypes,
+  );
 
   const handleMultiSelectChange = useCallback((e: { value: IServiceType[] }) => {
     const selectedTypes = e.value;
@@ -289,7 +294,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
           </FormField>
         )}
 
-        {hasPermission('service.variable.user_id') && !isDoctor && (
+        {hasPermission('service.variable.user_id') && !isPerformer && (
           <FormField label="Həkim:" htmlFor="user_id">
             <Controller
               name="user_id"
@@ -322,7 +327,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
                   filter
                   value={selectedServiceTypes}
                   onChange={handleMultiSelectChange}
-                  options={serviceTypes}
+                  {...serviceTypeOptions}
                   optionLabel="name"
                   placeholder="Xidmət seçin"
                   className="w-full"
@@ -359,7 +364,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
         </div>
 
         <div className="form-row">
-          {!isDoctor && (
+          {!isPerformer && (
             <div>
               <label>Alınacaq məbləğ:</label>
               <InputNumber
@@ -373,7 +378,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
             </div>
           )}
           <div>
-            <label>{isDoctor ? 'Alınacaq' : 'Alındı'}:</label>
+            <label>{isPerformer ? 'Alınacaq' : 'Alındı'}:</label>
             <Controller
               name="amount"
               control={control}
@@ -424,7 +429,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
           </FormField>
         )}
 
-        {hasPermission('service.variable.status') && service?.id && !isDoctor && (
+        {hasPermission('service.variable.status') && service?.id && !isPerformer && (
           <div className="flex mb-3">
             {serviceStatuses.map((status) =>
               status?.id !== 0 && (

@@ -18,7 +18,14 @@ import { Skeleton } from 'primereact/skeleton';
 import { useDebounce } from 'primereact/hooks';
 
 import api from '../../api';
-import { IBooking, IBookingsData, IService, IServiceType } from '../../types';
+import {
+  IBooking,
+  IBookingsData,
+  IDoctor,
+  IDoctorRS,
+  IService,
+  IServiceType,
+} from '../../types';
 import { bookingStatuses } from '../consts';
 import {
   formatDate,
@@ -28,6 +35,13 @@ import {
   useHasPermission,
 } from '@/app/utils';
 import { FilterDateCalendar, TableHeader } from '../shared';
+import {
+  ReservationType,
+  getReservationTypeConfig,
+  getStoredReservationType,
+  reservationTypes,
+  storeReservationType,
+} from '../reservationTypes';
 import CreateUpdateDialog from './CreateUpdateDialog';
 import DeleteBookingDialog from './DeleteBookingDialoq';
 
@@ -37,6 +51,9 @@ interface BookingTableProps {
 
 const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
   const [bookings, setBookings] = useState<IBooking[]>([]);
+  const [reservationType, setReservationType] = useState<ReservationType>(
+    getStoredReservationType,
+  );
   const [filteredStatus, setFilteredStatus] = useState<{
     id: number;
     name: string;
@@ -57,6 +74,8 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
   const [serviceTypesFilter, setServiceTypesFilter] =
     useState<IServiceType[]>();
   const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
+  const [doctors, setDoctors] = useState<IDoctor[]>();
+  const [doctor, setDoctor] = useState<IDoctor>();
 
   // Other
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +85,19 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
   const navigationRef = useRef<HTMLDivElement>(null);
 
   const hasPermission = useHasPermission(userPermissions);
+
+  const typeConfig = useMemo(
+    () => getReservationTypeConfig(reservationType),
+    [reservationType],
+  );
+  const typePermissions = typeConfig.permissions;
+
+  const handleTypeChange = useCallback((type: ReservationType) => {
+    setReservationType(type);
+    storeReservationType(type);
+    // Выбранный исполнитель к другому типу обычно не относится
+    setDoctor(undefined);
+  }, []);
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({
@@ -89,6 +121,8 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
           to_date: toDate,
           client_name: debouncedClientName,
           client_phone: debouncedClientPhone,
+          doctor_id: doctor?.id,
+          reservation_type: reservationType,
         });
 
         setBookings(data);
@@ -101,7 +135,14 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
         }
       }
     },
-    [filteredStatus?.id, dates, debouncedClientName, debouncedClientPhone],
+    [
+      filteredStatus?.id,
+      dates,
+      debouncedClientName,
+      debouncedClientPhone,
+      doctor?.id,
+      reservationType,
+    ],
   );
 
   useEffect(() => {
@@ -114,7 +155,25 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
     debouncedClientName,
     debouncedClientPhone,
     serviceTypesFilter?.length,
+    doctor?.id,
+    reservationType,
   ]);
+
+  // Список исполнителей свой у каждого типа резерва
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      if (!hasPermission('user.input_search')) return;
+
+      try {
+        const { data }: IDoctorRS = await api.getDoctors(reservationType);
+        setDoctors(data);
+      } catch (error) {
+        console.error('Failed to fetch doctors:', error);
+      }
+    };
+
+    fetchDoctors();
+  }, [hasPermission, reservationType]);
 
   const handleEditBooking = useCallback((bookingData: IBooking) => {
     setBooking(bookingData);
@@ -246,7 +305,7 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
             className="btn-icon-right"
             onClick={() => handleEditBooking(rowData)}
           />
-          {hasPermission('reservation.delete') && (
+          {hasPermission(typePermissions.delete) && (
             <Button
               icon="pi pi-trash"
               rounded
@@ -258,13 +317,19 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
           )}
         </>
       ),
-    [isLoading, hasPermission, handleEditBooking, handleDeleteClick],
+    [
+      isLoading,
+      hasPermission,
+      typePermissions.delete,
+      handleEditBooking,
+      handleDeleteClick,
+    ],
   );
 
   // Filter Templates
   const statusFilterTemplate = useCallback(
     () =>
-      hasPermission('reservation.filter.status') ? (
+      hasPermission(typePermissions.filterStatus) ? (
         <Dropdown
           value={filteredStatus}
           options={[...bookingStatuses]}
@@ -279,15 +344,15 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
           optionLabel="name"
         />
       ) : null,
-    [hasPermission, filteredStatus, getSeverity],
+    [hasPermission, typePermissions.filterStatus, filteredStatus, getSeverity],
   );
 
   const dateFilterTemplate = useCallback(
     () =>
-      hasPermission('reservation.filter.date') ? (
+      hasPermission(typePermissions.filterDate) ? (
         <FilterDateCalendar
           minDate={
-            hasPermission('reservation.get_past_data') ? undefined : new Date()
+            hasPermission(typePermissions.getPastData) ? undefined : new Date()
           }
           value={dates}
           onChange={(e) => setDates((e.value as Date[]) ?? [])}
@@ -297,12 +362,17 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
           dateFormat="dd/mm/yy"
         />
       ) : null,
-    [hasPermission, dates],
+    [
+      hasPermission,
+      typePermissions.filterDate,
+      typePermissions.getPastData,
+      dates,
+    ],
   );
 
   const clientNameFilterTemplate = useCallback(
     () =>
-      hasPermission('reservation.filter.client_name') ? (
+      hasPermission(typePermissions.filterClientName) ? (
         <InputText
           placeholder="Ad ilə axtarış"
           className="filter-input"
@@ -310,12 +380,12 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
           onChange={(e) => setClientName(e.target.value)}
         />
       ) : null,
-    [hasPermission, clientName, setClientName],
+    [hasPermission, typePermissions.filterClientName, clientName, setClientName],
   );
 
   const clientPhoneFilterTemplate = useCallback(
     () =>
-      hasPermission('reservation.filter.client_phone') ? (
+      hasPermission(typePermissions.filterClientPhone) ? (
         <InputNumber
           className="input-phone-filter"
           id="client_phone"
@@ -326,7 +396,34 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
           useGrouping={false}
         />
       ) : null,
-    [hasPermission, clientPhone, setClientPhone],
+    [
+      hasPermission,
+      typePermissions.filterClientPhone,
+      clientPhone,
+      setClientPhone,
+    ],
+  );
+
+  const doctorFilterTemplate = useCallback(
+    () =>
+      hasPermission(typePermissions.filterDoctor) ? (
+        <Dropdown
+          filter
+          value={doctor}
+          onChange={(e) => setDoctor(e.value)}
+          options={doctors}
+          placeholder={typeConfig.performerPlaceholder}
+          optionLabel="full_name"
+          showClear
+        />
+      ) : null,
+    [
+      hasPermission,
+      typePermissions.filterDoctor,
+      typeConfig.performerPlaceholder,
+      doctor,
+      doctors,
+    ],
   );
 
   const headerContent = useMemo(
@@ -338,6 +435,16 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
             : undefined
         }
         onRefresh={() => getBookings()}
+        leftContent={
+          <Dropdown
+            value={reservationType}
+            options={reservationTypes}
+            optionLabel="name"
+            optionValue="id"
+            onChange={(e: DropdownChangeEvent) => handleTypeChange(e.value)}
+            style={{ minWidth: '12rem' }}
+          />
+        }
         rightContent={
           <Button
             label="Əlavə et"
@@ -347,7 +454,7 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
         }
       />
     ),
-    [userPermissions, getBookings],
+    [userPermissions, getBookings, reservationType, handleTypeChange],
   );
 
   return (
@@ -410,17 +517,19 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
             body={serviceTypesBodyTemplate}
           />
           <Column
-            header="Həkim"
+            header={typeConfig.performerLabel}
             body={doctorBodyTemplate}
             style={{ minWidth: '12rem' }}
             showFilterMenu={false}
+            filter
+            filterElement={doctorFilterTemplate}
           />
           <Column
             header="Depozit"
             body={priceBodyTemplate}
             style={{ minWidth: '8rem' }}
           />
-          {hasPermission('reservation.update') && (
+          {hasPermission(typePermissions.update) && (
             <Column
               body={actionBodyTemplate}
               exportable={false}
@@ -434,6 +543,7 @@ const BookingTable: React.FC<BookingTableProps> = ({ userPermissions }) => {
 
       <CreateUpdateDialog
         userPermissions={userPermissions}
+        reservationType={reservationType}
         visible={isCreateDialogVisible}
         onHide={() => {
           setIsCreateDialogVisible(false);

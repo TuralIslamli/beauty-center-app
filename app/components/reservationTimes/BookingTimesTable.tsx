@@ -4,6 +4,7 @@ import { DataTable, DataTableRowEditCompleteEvent } from 'primereact/datatable';
 import { Column, ColumnEditorOptions } from 'primereact/column';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { InputMask, InputMaskChangeEvent } from 'primereact/inputmask';
+import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 
@@ -11,6 +12,12 @@ import api from '../../api';
 import { IBookingTime, IBookingTimeData } from '@/app/types';
 import { useHasPermission } from '@/app/utils';
 import { TableHeader } from '../shared';
+import {
+  ReservationType,
+  getStoredReservationType,
+  reservationTypes,
+  storeReservationType,
+} from '../reservationTypes';
 import AddDialog from './AddDialog';
 import DeleteDialog from './DeleteDialog';
 
@@ -26,10 +33,19 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
   const [first, setFirst] = useState(0);
   const [isAddDialogVisible, setIsAddDialogVisible] = useState(false);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [reservationType, setReservationType] = useState<ReservationType>(
+    getStoredReservationType,
+  );
 
   const toast = useRef<Toast>(null);
 
   const hasPermission = useHasPermission(userPermissions);
+
+  const handleTypeChange = useCallback((type: ReservationType) => {
+    setReservationType(type);
+    storeReservationType(type);
+    setFirst(0);
+  }, []);
 
   const showSuccess = useCallback((message: string) => {
     toast.current?.show({
@@ -56,13 +72,14 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
       const { data, meta }: IBookingTimeData = await api.getBookingTimes({
         page,
         size: rows,
+        reservation_type: reservationType,
       });
       setBookingTimes(sortTimes(data));
       setTotal(meta?.total);
     } catch (error) {
       console.error('Failed to fetch booking times:', error);
     }
-  }, [rows, sortTimes]);
+  }, [rows, sortTimes, reservationType]);
 
   useEffect(() => {
     fetchData();
@@ -77,8 +94,13 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
     const { id, time, reservation_count = 0 } = newData;
 
     try {
-      await api.updateBookingTime({ id, time, reservation_count });
-      
+      await api.updateBookingTime({
+        id,
+        time,
+        reservation_count,
+        reservation_type: reservationType,
+      });
+
       setBookingTimes((prev) =>
         prev.map((item) =>
           item.id === id ? { ...newData, time, reservation_count, id } : item
@@ -89,7 +111,7 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
     } catch (error) {
       console.error('Failed to update booking time:', error);
     }
-  }, [showSuccess]);
+  }, [showSuccess, reservationType]);
 
   const handleDeleteClick = useCallback((time: IBookingTime) => {
     setBookingTime(time);
@@ -124,17 +146,29 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
     />
   ), [handleDeleteClick]);
 
-  const headerContent = hasPermission('reservation_time.create') ? (
+  const headerContent = (
     <TableHeader
-      rightContent={
-        <Button
-          label="Əlavə et"
-          icon="pi pi-plus"
-          onClick={() => setIsAddDialogVisible(true)}
+      leftContent={
+        <Dropdown
+          value={reservationType}
+          options={reservationTypes}
+          optionLabel="name"
+          optionValue="id"
+          onChange={(e: DropdownChangeEvent) => handleTypeChange(e.value)}
+          style={{ minWidth: '12rem' }}
         />
       }
+      rightContent={
+        hasPermission('reservation_time.create') ? (
+          <Button
+            label="Əlavə et"
+            icon="pi pi-plus"
+            onClick={() => setIsAddDialogVisible(true)}
+          />
+        ) : null
+      }
     />
-  ) : null;
+  );
 
   return (
     <div>
@@ -188,6 +222,7 @@ const BookingTimesTable: React.FC<BookingTimesTableProps> = ({ userPermissions =
 
       <AddDialog
         visible={isAddDialogVisible}
+        reservationType={reservationType}
         onHide={() => setIsAddDialogVisible(false)}
         onSuccess={showSuccess}
         setBookingTimes={setBookingTimes}

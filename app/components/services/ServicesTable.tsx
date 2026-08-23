@@ -34,7 +34,7 @@ import {
   ITimeZone,
   ITotalAmount,
 } from '../../types';
-import { serviceStatuses } from '../consts';
+import { serviceStatuses, PERFORMER_ROLE_IDS } from '../consts';
 import {
   formatDate,
   formatPrice,
@@ -45,7 +45,12 @@ import {
   isTodayString,
   useHasPermission,
 } from '@/app/utils';
-import { FilterDateCalendar, TableHeader, ConfirmDialog } from '../shared';
+import {
+  FilterDateCalendar,
+  TableHeader,
+  ConfirmDialog,
+  useSelectedFirstOptions,
+} from '../shared';
 import CreateUpdateDialog from './CreateUpdateDialog';
 import ReportsDialog from './ReportsDialog';
 import DeleteServiceDialog from './DeleteServiceDialog';
@@ -104,7 +109,7 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
   const toast = useRef<Toast>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
 
-  const isDoctor = role?.id === 4;
+  const isPerformer = PERFORMER_ROLE_IDS.includes(role?.id);
   const areDatesEqual =
     dates.length === 2 &&
     !!dates[0] &&
@@ -400,7 +405,7 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
         <Skeleton width="60px" />
       ) : (
         <>
-          {((rowData?.status === 0 && isDoctor) || !isDoctor) && (
+          {((rowData?.status === 0 && isPerformer) || !isPerformer) && (
             <Button
               icon="pi pi-pencil"
               rounded
@@ -422,7 +427,7 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
           )}
         </>
       ),
-    [isLoading, isDoctor, hasPermission, handleEditService, handleDeleteClick],
+    [isLoading, isPerformer, hasPermission, handleEditService, handleDeleteClick],
   );
 
   // Filter Templates
@@ -494,6 +499,11 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
     [hasPermission, clientPhone, setClientPhone],
   );
 
+  const serviceTypeOptions = useSelectedFirstOptions(
+    serviceTypes,
+    serviceTypesFilter,
+  );
+
   const serviceTypeFilterTemplate = useCallback(
     () =>
       hasPermission('service.filter.service_type') ? (
@@ -501,13 +511,13 @@ const ServicesTable: React.FC<ServicesTableProps> = ({
           filter
           value={serviceTypesFilter}
           onChange={(e) => setServiceTypesFilter(e.value)}
-          options={serviceTypes}
+          {...serviceTypeOptions}
           placeholder="Xidmət seçin"
           optionLabel="name"
           showClear
         />
       ) : null,
-    [hasPermission, serviceTypesFilter, serviceTypes],
+    [hasPermission, serviceTypesFilter, serviceTypeOptions],
   );
 
   const doctorFilterTemplate = useCallback(

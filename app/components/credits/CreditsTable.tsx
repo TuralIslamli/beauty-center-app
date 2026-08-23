@@ -16,10 +16,16 @@ import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
 import { Dropdown } from 'primereact/dropdown';
+import { MultiSelect } from 'primereact/multiselect';
 import { useDebounce } from 'primereact/hooks';
 
 import api from '@/app/api';
-import { IDoctor, IDoctorRS } from '@/app/types';
+import {
+  IDoctor,
+  IDoctorRS,
+  IServiceCreditBank,
+  IServiceCreditBanksData,
+} from '@/app/types';
 import {
   formatDate,
   formatPhone,
@@ -66,6 +72,8 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
   const [filteredStatuses, setFilteredStatuses] = useState<number[]>([]);
   const [doctors, setDoctors] = useState<IDoctor[]>([]);
   const [doctor, setDoctor] = useState<IDoctor>();
+  const [banks, setBanks] = useState<IServiceCreditBank[]>([]);
+  const [filteredBanks, setFilteredBanks] = useState<IServiceCreditBank[]>([]);
   const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
   const [clientPhone, debouncedClientPhone, setClientPhone] = useDebounce('', 400);
   const [dates, setDates] = useState<Date[]>([new Date(), new Date()]);
@@ -111,6 +119,9 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
         client_name: normalizedName || undefined,
         client_phone: normalizedPhone || undefined,
         doctor_id: doctor?.id,
+        bank_id: filteredBanks.length
+          ? filteredBanks.map((bank) => bank.id)
+          : undefined,
       };
 
       setIsLoading(true);
@@ -149,6 +160,7 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
       debouncedClientName,
       debouncedClientPhone,
       doctor?.id,
+      filteredBanks,
       filteredStatuses,
       hasPermission,
     ],
@@ -167,6 +179,23 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
 
     fetchDoctors();
   }, []);
+
+  useEffect(() => {
+    if (!canSetCreditBank) return;
+
+    const fetchBanks = async () => {
+      try {
+        const { data }: IServiceCreditBanksData =
+          await api.getServiceCreditBanks();
+        setBanks(data ?? []);
+      } catch (error) {
+        console.error('Failed to fetch service credit banks:', error);
+        setBanks([]);
+      }
+    };
+
+    fetchBanks();
+  }, [canSetCreditBank]);
 
   useEffect(() => {
     if (dates[0] && !dates[1]) return;
@@ -548,6 +577,26 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
     [doctor, doctors],
   );
 
+  const bankFilterTemplate = useCallback(
+    () => (
+      <MultiSelect
+        filter
+        value={filteredBanks}
+        onChange={(event) => {
+          setFilteredBanks(event.value ?? []);
+          setPage(1);
+          setFirst(0);
+        }}
+        options={banks}
+        placeholder="Bank seçin"
+        optionLabel="name"
+        showClear
+        style={{ minWidth: '12rem' }}
+      />
+    ),
+    [banks, filteredBanks],
+  );
+
   const totalContent = useMemo(
     () => (
       <div className="total-info-content">
@@ -622,6 +671,9 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
             header="Bank"
             body={bankBodyTemplate}
             style={{ minWidth: '8rem' }}
+            showFilterMenu={false}
+            filter={canSetCreditBank}
+            filterElement={bankFilterTemplate}
           />
           <Column
             header="Toplam"

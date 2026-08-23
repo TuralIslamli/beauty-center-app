@@ -1,8 +1,15 @@
+export const DOCTOR_ROLE_ID = 4;
+export const COSMETOLOGIST_ROLE_ID = 6;
+
+/** Роли, которые сами оказывают услуги: свои записи, без выбора исполнителя */
+export const PERFORMER_ROLE_IDS = [DOCTOR_ROLE_ID, COSMETOLOGIST_ROLE_ID];
+
 export const roles = [
   { id: 2, name: 'Admin' },
   { id: 3, name: 'Cashier' },
-  { id: 4, name: 'Doctor' },
+  { id: DOCTOR_ROLE_ID, name: 'Doctor' },
   { id: 5, name: 'Reserver' },
+  { id: COSMETOLOGIST_ROLE_ID, name: 'Cosmetolog' },
 ];
 
 export const paymentTypes = [

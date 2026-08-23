@@ -28,13 +28,18 @@ import {
   IUserRS,
 } from '@/app/types';
 import { bookingStatuses } from '../consts';
+import {
+  ReservationType,
+  getReservationTypeConfig,
+} from '../reservationTypes';
 import { formatDate, useHasPermission } from '@/app/utils';
-import { FormField } from '../shared';
+import { FormField, useSelectedFirstOptions } from '../shared';
 
 interface CreateUpdateDialogProps {
   visible: boolean;
   onHide: () => void;
   userPermissions: string[];
+  reservationType: ReservationType;
   onSuccess: (message: string) => void;
   getBookings: () => Promise<void>;
   booking?: IBooking;
@@ -51,6 +56,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
   visible,
   onHide,
   userPermissions,
+  reservationType,
   onSuccess,
   getBookings,
   booking,
@@ -69,6 +75,10 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
   const [date, setDate] = useState<Nullable<Date>>(null);
 
   const hasPermission = useHasPermission(userPermissions);
+
+  // Резерв редактируется в своём типе, даже если фильтр таблицы уже переключили
+  const currentType = booking?.reservation_type ?? reservationType;
+  const typeConfig = getReservationTypeConfig(currentType);
 
   const schema = yup.object().shape({
     service_types:
@@ -152,6 +162,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
         advance_amount,
         client_name: fullName,
         doctor_id: payload.doctor_id,
+        reservation_type: currentType,
         client_phone: payload.client_phone?.toString().replace(/[\s-]/g, ''),
       };
 
@@ -180,7 +191,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [booking?.id, booking?.reservation_date, selectedStatus?.id, date, selectedHour?.time, onSuccess, getBookings, handleFormHide]);
+  }, [booking?.id, booking?.reservation_date, currentType, selectedStatus?.id, date, selectedHour?.time, onSuccess, getBookings, handleFormHide]);
 
   // Load booking data
   useEffect(() => {
@@ -233,7 +244,10 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       if (hasPermission('user.input_search') && selectedHour?.time && !doctors?.map((i) => i?.id).includes(selectedDoctor?.id || 0)) {
         const { data }: IDoctorRS = isOutOfTurn
           ? await api.getDoctors()
-          : await api.getBookingDoctors(`${formatDate(date)} ${selectedHour?.time}`);
+          : await api.getBookingDoctors(
+              `${formatDate(date)} ${selectedHour?.time}`,
+              currentType,
+            );
         setDoctors(data);
       } else {
         const { data }: IDoctorRS = await api.getDoctors();
@@ -247,7 +261,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       }
     };
     fetchData();
-  }, [selectedHour?.time, isOutOfTurn]);
+  }, [selectedHour?.time, isOutOfTurn, currentType]);
 
   // Fetch service types
   useEffect(() => {
@@ -275,7 +289,10 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       if (date) {
-        const { data: hoursData }: IHourRS = await api.getHours(formatDate(date));
+        const { data: hoursData }: IHourRS = await api.getHours(
+          formatDate(date),
+          currentType,
+        );
         setHours(hoursData);
         if (booking?.id) {
           setSelectedHour(
@@ -286,7 +303,24 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
       }
     };
     fetchData();
-  }, [date, booking?.id, booking?.real_reservation_date, setValue]);
+  }, [date, currentType, booking?.id, booking?.real_reservation_date, setValue]);
+
+  // У типов свои сетки часов и свои исполнители — сбрасываем выбранное при смене
+  useEffect(() => {
+    if (booking?.id) return;
+
+    setHours(undefined);
+    setSelectedHour(undefined);
+    setDoctors([]);
+    setSelectedDoctor(undefined);
+    setValue('hour', '');
+    setValue('doctor_id', undefined);
+  }, [reservationType, booking?.id, setValue]);
+
+  const serviceTypeOptions = useSelectedFirstOptions(
+    serviceTypes,
+    selectedServiceTypes,
+  );
 
   const handleMultiSelectChange = useCallback((e: { value: IServiceType[] }) => {
     const selectedTypes = e.value;
@@ -343,7 +377,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
         </FormField>
 
         <div className="flex justify-between mb-2">
-          <label>Həkim:</label>
+          <label>{`${typeConfig.performerLabel}:`}</label>
           <div className="flex align-center gap-2">
             <label>Növbədən kənar:</label>
             <Controller
@@ -377,7 +411,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
               }}
               optionLabel="full_name"
               options={doctors}
-              placeholder="Doktor seçin"
+              placeholder={typeConfig.performerPlaceholder}
               invalid={!!errors.doctor_id}
             />
           )}
@@ -393,7 +427,7 @@ const CreateUpdateDialog: React.FC<CreateUpdateDialogProps> = ({
                   filter
                   value={selectedServiceTypes}
                   onChange={handleMultiSelectChange}
-                  options={serviceTypes}
+                  {...serviceTypeOptions}
                   optionLabel="name"
                   placeholder="Xidmət seçin"
                   className="w-full"

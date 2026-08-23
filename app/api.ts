@@ -5,6 +5,7 @@ import {
   IBookingTableProps,
   IBookingTime,
   IBookingTimeFields,
+  IBookingTimesProps,
   IExpense,
   IExpenseFields,
   IExpensesTableProps,
@@ -24,6 +25,7 @@ import {
   IUpdateUser,
   IUserFields,
 } from './types';
+import { ReservationType } from './components/reservationTypes';
 
 export default {
   postLogin: <T>(payload: ILoginFields): Promise<T> =>
@@ -33,19 +35,35 @@ export default {
     axiosApi.get(`service-types?page=${page}&size=${size}`, {
       params: { name },
     }),
-  getBookingTimes: <T>({ page, size }: INavigationProps): Promise<T> =>
-    axiosApi.get(`reservation-times?page=${page}&size=${size}`),
+  getBookingTimes: <T>({
+    page,
+    size,
+    reservation_type,
+  }: IBookingTimesProps): Promise<T> =>
+    axiosApi.get(`reservation-times?page=${page}&size=${size}`, {
+      params: { reservation_type },
+    }),
   createBookingTime: <T>({
     time,
     reservation_count,
+    reservation_type,
   }: IBookingTimeFields): Promise<T> =>
-    axiosApi.post('reservation-times', { time, reservation_count }),
+    axiosApi.post('reservation-times', {
+      time,
+      reservation_count,
+      reservation_type,
+    }),
   updateBookingTime: <T>({
     id,
     time,
     reservation_count,
+    reservation_type,
   }: IBookingTime): Promise<T> =>
-    axiosApi.put(`reservation-times/${id}`, { time, reservation_count }),
+    axiosApi.put(`reservation-times/${id}`, {
+      time,
+      reservation_count,
+      reservation_type,
+    }),
   updateExpense: <T>({ id, name, description, amount }: IExpense): Promise<T> =>
     axiosApi.put(`expenses/${id}`, {
       name,
@@ -107,6 +125,7 @@ export default {
     client_phone,
     service_types,
     doctor_id,
+    reservation_type,
   }: IBookingTableProps): Promise<T> =>
     axiosApi.get(`reservations?&sort=asc&sorted_column=date_time`, {
       params: {
@@ -117,6 +136,7 @@ export default {
         client_phone,
         service_types,
         doctor_id,
+        reservation_type,
       },
     }),
   getServices: <T>({
@@ -166,6 +186,7 @@ export default {
     client_name,
     client_phone,
     doctor_id,
+    bank_id,
   }: IServiceCreditsTableProps): Promise<T> =>
     axiosApi.get(`service-credits?page=${page}&size=${size}&sort=desc`, {
       params: {
@@ -175,6 +196,7 @@ export default {
         client_name,
         client_phone,
         doctor_id,
+        bank_id: bank_id?.length ? `[${bank_id.join(',')}]` : undefined,
       },
     }),
   getServiceCredit: <T>(id: number): Promise<T> =>
@@ -192,6 +214,7 @@ export default {
     client_name,
     client_phone,
     doctor_id,
+    bank_id,
   }: IServiceCreditsTableProps): Promise<T> =>
     axiosApi.get('service-credits/bank-incomes', {
       params: {
@@ -201,6 +224,7 @@ export default {
         client_name,
         client_phone,
         doctor_id,
+        bank_id: bank_id?.length ? `[${bank_id.join(',')}]` : undefined,
       },
     }),
   getServiceCreditBanks: <T>(): Promise<T> =>
@@ -274,8 +298,13 @@ export default {
     axiosApi.post(`reservations/advance/next-day-transfer/cancel`, { date }),
   deleteBooking: (id: number | undefined) =>
     axiosApi.delete(`reservations/${id}`),
-  getBookingDoctors: <T>(dateTime: string): Promise<T> =>
-    axiosApi.get(`reservations/users/input-search?date_time=${dateTime}`),
+  getBookingDoctors: <T>(
+    dateTime: string,
+    reservation_type?: ReservationType,
+  ): Promise<T> =>
+    axiosApi.get(`reservations/users/input-search?date_time=${dateTime}`, {
+      params: { reservation_type },
+    }),
   getAdvanceInfo: <T>(date: string): Promise<T> =>
     axiosApi.get(`services/advance/info?date=${date}`),
   getTotalAmount: <T>({
@@ -298,10 +327,18 @@ export default {
         user_id,
       },
     }),
-  getDoctors: <T>(): Promise<T> => axiosApi.get('users/input-search'),
+  getDoctors: <T>(reservation_type?: ReservationType): Promise<T> =>
+    axiosApi.get('users/input-search', {
+      params: { reservation_type },
+    }),
   getDoctorById: <T>(id: number): Promise<T> => axiosApi.get(`users/${id}`),
-  getHours: <T>(date: string): Promise<T> =>
-    axiosApi.get(`reservation-times/input-search?date=${date}`),
+  getHours: <T>(
+    date: string,
+    reservation_type?: ReservationType,
+  ): Promise<T> =>
+    axiosApi.get(`reservation-times/input-search?date=${date}`, {
+      params: { reservation_type },
+    }),
   getInputServices: <T>(): Promise<T> =>
     axiosApi.get('service-types/input-search'),
   createService: <T>(payload: IServiceFields): Promise<T> =>
