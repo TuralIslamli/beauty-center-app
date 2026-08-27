@@ -7,9 +7,9 @@ export const PERFORMER_ROLE_IDS = [DOCTOR_ROLE_ID, COSMETOLOGIST_ROLE_ID];
 export const roles = [
   { id: 2, name: 'Admin' },
   { id: 3, name: 'Cashier' },
-  { id: DOCTOR_ROLE_ID, name: 'Doctor' },
+  { id: DOCTOR_ROLE_ID, name: 'Çistkaçı' },
   { id: 5, name: 'Reserver' },
-  { id: COSMETOLOGIST_ROLE_ID, name: 'Cosmetolog' },
+  { id: COSMETOLOGIST_ROLE_ID, name: 'Kosmetoloq' },
 ];
 
 export const paymentTypes = [
