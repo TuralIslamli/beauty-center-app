@@ -45,9 +45,9 @@ const reservationPermissions: IReservationPermissions = {
 export const reservationTypes: IReservationTypeConfig[] = [
   {
     id: ReservationType.DOCTOR,
-    name: 'Doktor',
-    performerLabel: 'Doktor',
-    performerPlaceholder: 'Doktor seçin',
+    name: 'Çistkaçı',
+    performerLabel: 'Çistkaçı',
+    performerPlaceholder: 'Çistkaçı seçin',
     permissions: reservationPermissions,
   },
   {
