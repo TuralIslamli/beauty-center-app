@@ -1,5 +1,7 @@
 import { Nullable } from 'primereact/ts-helpers';
 
+import { ReservationType } from './components/reservationTypes';
+
 export interface ITotalAmount {
   advance: string;
   amount: string;
@@ -106,6 +108,11 @@ export interface IBookingTableProps extends INavigationProps {
   client_phone?: number | null;
   service_types?: IServiceType[] | number[];
   doctor_id?: number;
+  reservation_type?: ReservationType;
+}
+
+export interface IBookingTimesProps extends INavigationProps {
+  reservation_type?: ReservationType;
 }
 
 export interface IServiceCreditsTableProps extends INavigationProps {
@@ -115,6 +122,7 @@ export interface IServiceCreditsTableProps extends INavigationProps {
   client_name?: string;
   client_phone?: string;
   doctor_id?: number;
+  bank_id?: number[];
 }
 
 export interface IServiceCreditBank {
@@ -193,6 +201,7 @@ export interface IBookingTime {
   id: number;
   time: string;
   reservation_count: string;
+  reservation_type?: ReservationType;
 }
 
 export interface IServiceTypeFields {
@@ -210,6 +219,7 @@ export interface IExpenseFields {
 export interface IBookingTimeFields {
   time: string;
   reservation_count: number;
+  reservation_type?: ReservationType;
 }
 
 export interface IServiceTypeRS {
@@ -261,6 +271,8 @@ export interface IBooking {
   doctor: IUser;
   is_out_of_turn: boolean;
   advance_amount: number;
+  reservation_type?: ReservationType;
+  reservation_type_name?: string;
 }
 
 export interface IServiceRS {
@@ -330,6 +342,7 @@ export interface IBookingFields {
   service_types?: { id: number }[];
   is_out_of_turn?: boolean;
   advance_amount?: number;
+  reservation_type?: ReservationType;
 }
 
 export interface IDoctor {
