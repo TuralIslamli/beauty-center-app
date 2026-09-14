@@ -1,5 +1,5 @@
 export const DOCTOR_ROLE_ID = 4;
-export const COSMETOLOGIST_ROLE_ID = 6;
+export const COSMETOLOGIST_ROLE_ID = 7;
 
 /** Роли, которые сами оказывают услуги: свои записи, без выбора исполнителя */
 export const PERFORMER_ROLE_IDS = [DOCTOR_ROLE_ID, COSMETOLOGIST_ROLE_ID];
