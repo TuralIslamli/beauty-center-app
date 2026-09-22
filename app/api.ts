@@ -196,6 +196,7 @@ export default {
     client_name,
     client_phone,
     doctor_id,
+    main_doctor_id,
     bank_id,
   }: IServiceCreditsTableProps): Promise<T> =>
     axiosApi.get(`service-credits?page=${page}&size=${size}&sort=desc`, {
@@ -206,6 +207,7 @@ export default {
         client_name,
         client_phone,
         doctor_id,
+        main_doctor_id,
         bank_id: bank_id?.length ? `[${bank_id.join(',')}]` : undefined,
       },
     }),
@@ -224,6 +226,7 @@ export default {
     client_name,
     client_phone,
     doctor_id,
+    main_doctor_id,
     bank_id,
   }: IServiceCreditsTableProps): Promise<T> =>
     axiosApi.get('service-credits/bank-incomes', {
@@ -234,6 +237,7 @@ export default {
         client_name,
         client_phone,
         doctor_id,
+        main_doctor_id,
         bank_id: bank_id?.length ? `[${bank_id.join(',')}]` : undefined,
       },
     }),

@@ -6,6 +6,7 @@ import { Button } from 'primereact/button';
 import { InputNumber } from 'primereact/inputnumber';
 import { MultiSelect } from 'primereact/multiselect';
 import { InputTextarea } from 'primereact/inputtextarea';
+import { Dropdown } from 'primereact/dropdown';
 
 import api from '@/app/api';
 import {
@@ -17,6 +18,7 @@ import {
   IServiceTypeRS,
 } from '@/app/types';
 import { useHasPermission } from '@/app/utils';
+import { ReservationType } from '../reservationTypes';
 import { FormField, useSelectedFirstOptions } from '../shared';
 import {
   createDefaultCreditSessions,
@@ -31,6 +33,7 @@ import {
   getBankFromResponse,
   getInitialCreditBank,
   getInitialCreditSessions,
+  getInitialMainDoctor,
   ServiceCreditBankResponse,
 } from './utils';
 
@@ -78,7 +81,7 @@ const getCreditSessionErrors = (
   }
 
   if ((session.status === 'arrived' || session.date) && !session.doctor) {
-    errors.doctor = 'Həkim seçilməlidir';
+    errors.doctor = 'Kosmetoloq seçilməlidir';
   }
 
   return errors;
@@ -108,7 +111,9 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   const [sessions, setSessions] = useState<ICreditSession[]>(
     createDefaultCreditSessions(),
   );
-  const [doctors, setDoctors] = useState<IDoctor[]>([]);
+  const [cosmetologists, setCosmetologists] = useState<IDoctor[]>([]);
+  const [mainDoctors, setMainDoctors] = useState<IDoctor[]>([]);
+  const [mainDoctor, setMainDoctor] = useState<IDoctor | null>(null);
   const [serviceTypes, setServiceTypes] = useState<IServiceType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<CreditFormErrors>({});
@@ -143,6 +148,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     setCreditAmount(0);
     setIsCreditAmountDirty(false);
     setComment('');
+    setMainDoctor(null);
     setSessions(createDefaultCreditSessions());
     setFormErrors({});
   }, []);
@@ -157,14 +163,17 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       try {
         const [
           { data: servicesData },
-          { data: doctorsData },
+          { data: cosmetologistsData },
+          { data: mainDoctorsData },
         ] = await Promise.all([
           api.getInputServices<IServiceTypeRS>(),
-          api.getDoctors<IDoctorRS>(),
+          api.getDoctors<IDoctorRS>(ReservationType.COSMETOLOGIST),
+          api.getDoctors<IDoctorRS>(ReservationType.DOCTOR),
         ]);
 
         setServiceTypes(servicesData ?? []);
-        setDoctors(doctorsData ?? []);
+        setCosmetologists(cosmetologistsData ?? []);
+        setMainDoctors(mainDoctorsData ?? []);
 
         if (canViewBanks) {
           const { data: banksData } =
@@ -185,7 +194,8 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
         }
       } catch {
         setServiceTypes([]);
-        setDoctors([]);
+        setCosmetologists([]);
+        setMainDoctors([]);
         setBanks([]);
         if (canViewBanks) {
           setSelectedBank(null);
@@ -207,7 +217,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
   useEffect(() => {
     if (!visible || !initialCredit?.id) return;
 
-    const creditSessions = getInitialCreditSessions(initialCredit, doctors);
+    const creditSessions = getInitialCreditSessions(initialCredit, cosmetologists);
     const initialBank = canViewBanks
       ? getInitialCreditBank(initialCredit.bank, banks)
       : initialCredit.bank;
@@ -230,7 +240,16 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
     setCreditAmount(Number(initialCredit.amount || 0));
     setIsCreditAmountDirty(false);
     setComment(initialCredit.comment ?? '');
-  }, [banks, canViewBanks, doctors, initialCredit, serviceTypes, visible]);
+    setMainDoctor(getInitialMainDoctor(initialCredit, mainDoctors));
+  }, [
+    banks,
+    canViewBanks,
+    cosmetologists,
+    initialCredit,
+    mainDoctors,
+    serviceTypes,
+    visible,
+  ]);
 
   useEffect(() => {
     setSessions((prev) =>
@@ -469,6 +488,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
           sessions_count: sessionsCount,
           bank: selectedBank,
           comment: comment.trim(),
+          main_doctor: mainDoctor,
           sessions,
           amount: creditAmount,
         }, initialCredit);
@@ -487,6 +507,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
       sessionsCount,
       selectedBank,
       comment,
+      mainDoctor,
       sessions,
       creditAmount,
       initialCredit,
@@ -618,6 +639,21 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
           )}
         </div>
 
+        <FormField label="Çistkaçı:" htmlFor="credit_main_doctor">
+          <Dropdown
+            inputId="credit_main_doctor"
+            filter
+            showClear
+            value={mainDoctor}
+            onChange={(event) => setMainDoctor(event.value ?? null)}
+            options={mainDoctors}
+            dataKey="id"
+            optionLabel="full_name"
+            placeholder="Çistkaçı seçin"
+            className="w-full"
+          />
+        </FormField>
+
         <FormField label="Comment:" htmlFor="credit_comment">
           <InputTextarea
             id="credit_comment"
@@ -659,7 +695,7 @@ const CreateCreditDialog: React.FC<CreateCreditDialogProps> = ({
 
         <CreditSessionsEditor
           sessions={sessions}
-          doctors={doctors}
+          cosmetologists={cosmetologists}
           errors={formErrors.sessions}
           onSessionChange={handleSessionChange}
         />

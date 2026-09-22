@@ -122,6 +122,7 @@ export interface IServiceCreditsTableProps extends INavigationProps {
   client_name?: string;
   client_phone?: string;
   doctor_id?: number;
+  main_doctor_id?: number;
   bank_id?: number[];
 }
 
@@ -161,6 +162,7 @@ export interface IServiceCreditFields {
   client_phone: string;
   service_types: { id: number }[];
   bank_id?: number | null;
+  main_doctor_id?: number | null;
   comment?: string;
   amount: number;
   visits: IServiceCreditVisitFields[];

@@ -13,14 +13,14 @@ export type CreditSessionErrors = Record<number, {
 
 interface CreditSessionsEditorProps {
   sessions: ICreditSession[];
-  doctors: IDoctor[];
+  cosmetologists: IDoctor[];
   errors?: CreditSessionErrors;
   onSessionChange: (index: number, value: Partial<ICreditSession>) => void;
 }
 
 const CreditSessionsEditor: React.FC<CreditSessionsEditorProps> = ({
   sessions,
-  doctors,
+  cosmetologists,
   errors,
   onSessionChange,
 }) => (
@@ -49,9 +49,9 @@ const CreditSessionsEditor: React.FC<CreditSessionsEditorProps> = ({
             filter
             value={session.doctor}
             onChange={(event) => onSessionChange(index, { doctor: event.value })}
-            options={doctors}
+            options={cosmetologists}
             optionLabel="full_name"
-            placeholder="Doktor seçin"
+            placeholder="Kosmetoloq seçin"
             className="credit-session-doctor"
             invalid={!!errors?.[index]?.doctor}
           />

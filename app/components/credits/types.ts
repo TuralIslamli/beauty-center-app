@@ -33,6 +33,8 @@ export interface ICredit {
   amount: number | string;
   comment?: string;
   service_types: IServiceType[];
+  /** Çistkaçı — один на весь кредит, не привязан к дате */
+  main_doctor?: IUser | null;
   visits?: ICreditVisit[];
   sessions?: ICreditSession[];
 }
@@ -67,6 +69,7 @@ export interface ICreditFormPayload {
   sessions_count: number;
   bank: ICreditBank | string | null;
   comment?: string;
+  main_doctor?: IDoctor | null;
   sessions: ICreditSession[];
   amount: number;
 }

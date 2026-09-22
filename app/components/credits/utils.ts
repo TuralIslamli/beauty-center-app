@@ -73,6 +73,26 @@ export const getInitialCreditSessions = (
   return credit.sessions?.length ? credit.sessions : createDefaultCreditSessions();
 };
 
+export const getMainDoctorName = (credit: ICredit): string =>
+  credit.main_doctor
+    ? `${credit.main_doctor.name ?? ''} ${credit.main_doctor.surname ?? ''}`.trim()
+    : '';
+
+/** Çistkaçı из ответа сопоставляем со списком из input-search, чтобы дропдаун нашёл опцию */
+export const getInitialMainDoctor = (
+  credit: ICredit,
+  mainDoctors: IDoctor[],
+): IDoctor | null => {
+  if (!credit.main_doctor) return null;
+
+  return (
+    mainDoctors.find((doctor) => doctor.id === credit.main_doctor?.id) ?? {
+      id: credit.main_doctor.id,
+      full_name: getMainDoctorName(credit),
+    }
+  );
+};
+
 export const getInitialCreditBank = (
   creditBank: ICredit['bank'],
   banks: IServiceCreditBank[],
@@ -100,6 +120,7 @@ export const buildServiceCreditPayload = (
     service_types: payload.service_types.map((service) => ({ id: service.id })),
     comment: payload.comment,
     amount: payload.amount,
+    main_doctor_id: payload.main_doctor?.id ?? null,
     visits: payload.sessions.map((session) => ({
       id: session.id,
       status: sessionStatusToReservationStatus[session.status],
@@ -140,6 +161,15 @@ export const buildCreditFromPayload = (
     amount: payload.amount,
     comment: payload.comment,
     service_types: payload.service_types,
+    main_doctor: payload.main_doctor
+      ? {
+          id: payload.main_doctor.id,
+          name: payload.main_doctor.full_name ?? '',
+          surname: '',
+          email: '',
+          role: { id: 0, name: '', permissions: [] },
+        }
+      : null,
     sessions: payload.sessions,
     visits: payload.sessions.map((session) => ({
       id: session.id,

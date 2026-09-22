@@ -32,6 +32,7 @@ import {
   formatPrice,
   useHasPermission,
 } from '@/app/utils';
+import { ReservationType } from '../reservationTypes';
 import { FilterDateCalendar, TableHeader } from '../shared';
 import CreateCreditDialog from './CreateCreditDialog';
 import CreditBankIncomeSummary from './CreditBankIncomeSummary';
@@ -52,6 +53,7 @@ import {
   buildServiceCreditPayload,
   getBookingStatusSeverity,
   getCreditFromResponse,
+  getMainDoctorName,
   ServiceCreditResponse,
 } from './utils';
 
@@ -70,8 +72,10 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
   const [editingCreditId, setEditingCreditId] = useState<number | null>(null);
   const [filter, setFilter] = useState(false);
   const [filteredStatuses, setFilteredStatuses] = useState<number[]>([]);
-  const [doctors, setDoctors] = useState<IDoctor[]>([]);
-  const [doctor, setDoctor] = useState<IDoctor>();
+  const [cosmetologists, setCosmetologists] = useState<IDoctor[]>([]);
+  const [cosmetologist, setCosmetologist] = useState<IDoctor>();
+  const [mainDoctors, setMainDoctors] = useState<IDoctor[]>([]);
+  const [mainDoctor, setMainDoctor] = useState<IDoctor>();
   const [banks, setBanks] = useState<IServiceCreditBank[]>([]);
   const [filteredBanks, setFilteredBanks] = useState<IServiceCreditBank[]>([]);
   const [clientName, debouncedClientName, setClientName] = useDebounce('', 400);
@@ -118,7 +122,8 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
         to_date: toDate,
         client_name: normalizedName || undefined,
         client_phone: normalizedPhone || undefined,
-        doctor_id: doctor?.id,
+        doctor_id: cosmetologist?.id,
+        main_doctor_id: mainDoctor?.id,
         bank_id: filteredBanks.length
           ? filteredBanks.map((bank) => bank.id)
           : undefined,
@@ -159,25 +164,34 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
       dates,
       debouncedClientName,
       debouncedClientPhone,
-      doctor?.id,
+      cosmetologist?.id,
+      mainDoctor?.id,
       filteredBanks,
       filteredStatuses,
       hasPermission,
     ],
   );
 
+  // Списки исполнителей свои: сеансы ведёт косметолог, чистку — чисткачы
   useEffect(() => {
-    const fetchDoctors = async () => {
+    const fetchPerformers = async () => {
       try {
-        const { data }: IDoctorRS = await api.getDoctors();
-        setDoctors(data ?? []);
+        const [{ data: cosmetologistsData }, { data: mainDoctorsData }] =
+          await Promise.all([
+            api.getDoctors<IDoctorRS>(ReservationType.COSMETOLOGIST),
+            api.getDoctors<IDoctorRS>(ReservationType.DOCTOR),
+          ]);
+
+        setCosmetologists(cosmetologistsData ?? []);
+        setMainDoctors(mainDoctorsData ?? []);
       } catch (error) {
-        console.error('Failed to fetch doctors:', error);
-        setDoctors([]);
+        console.error('Failed to fetch performers:', error);
+        setCosmetologists([]);
+        setMainDoctors([]);
       }
     };
 
-    fetchDoctors();
+    fetchPerformers();
   }, []);
 
   useEffect(() => {
@@ -406,6 +420,12 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
     [getCreditDoctors, isLoading],
   );
 
+  const mainDoctorBodyTemplate = useCallback(
+    (rowData: ICredit) =>
+      isLoading ? <Skeleton width="100px" /> : getMainDoctorName(rowData),
+    [isLoading],
+  );
+
   const sessionsCountBodyTemplate = useCallback(
     (rowData: ICredit) =>
       isLoading ? (
@@ -558,23 +578,42 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
     [filteredStatuses, handleStatusFilterChange],
   );
 
-  const doctorFilterTemplate = useCallback(
+  const cosmetologistFilterTemplate = useCallback(
     () => (
       <Dropdown
         filter
-        value={doctor}
+        value={cosmetologist}
         onChange={(event) => {
-          setDoctor(event.value ?? undefined);
+          setCosmetologist(event.value ?? undefined);
           setPage(1);
           setFirst(0);
         }}
-        options={doctors}
-        placeholder="Həkim seçin"
+        options={cosmetologists}
+        placeholder="Kosmetoloq seçin"
         optionLabel="full_name"
         showClear
       />
     ),
-    [doctor, doctors],
+    [cosmetologist, cosmetologists],
+  );
+
+  const mainDoctorFilterTemplate = useCallback(
+    () => (
+      <Dropdown
+        filter
+        value={mainDoctor}
+        onChange={(event) => {
+          setMainDoctor(event.value ?? undefined);
+          setPage(1);
+          setFirst(0);
+        }}
+        options={mainDoctors}
+        placeholder="Çistkaçı seçin"
+        optionLabel="full_name"
+        showClear
+      />
+    ),
+    [mainDoctor, mainDoctors],
   );
 
   const bankFilterTemplate = useCallback(
@@ -655,12 +694,20 @@ const CreditsTable: React.FC<CreditsTableProps> = ({ userPermissions }) => {
             filterElement={statusFilterTemplate}
           />
           <Column
-            header="Həkim"
+            header="Kosmetoloq"
             body={doctorBodyTemplate}
             style={{ minWidth: '12rem' }}
             showFilterMenu={false}
             filter
-            filterElement={doctorFilterTemplate}
+            filterElement={cosmetologistFilterTemplate}
+          />
+          <Column
+            header="Çistkaçı"
+            body={mainDoctorBodyTemplate}
+            style={{ minWidth: '12rem' }}
+            showFilterMenu={false}
+            filter
+            filterElement={mainDoctorFilterTemplate}
           />
           <Column
             header="Seans sayı"
